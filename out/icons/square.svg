@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40">
+  <defs>
+    <pattern id="h" patternUnits="userSpaceOnUse" width="3" height="3" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="3" stroke="#90A4AE" stroke-width="0.6"/>
+    </pattern>
+  </defs>
+  <rect x="6" y="6" width="28" height="28" fill="url(#h)" stroke="#455A64" stroke-width="1.5"/>
+  <line x1="6" y1="37" x2="34" y2="37" stroke="#1565C0" stroke-width="1"/>
+  <line x1="6" y1="35" x2="6" y2="39" stroke="#1565C0" stroke-width="1"/>
+  <line x1="34" y1="35" x2="34" y2="39" stroke="#1565C0" stroke-width="1"/>
+  <text x="17" y="40" font-size="7" fill="#1565C0" font-family="sans-serif">a</text>
+</svg>

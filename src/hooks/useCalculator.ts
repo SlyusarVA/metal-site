@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from 'react'
 import { profiles, ProfileKey, autocorrectProfile, MetalProfile } from '@/data/profiles'
-import { materials, getMetalGroups, getGradesForGroup, getDensity, isNonFerrous } from '@/data/materials'
+import { materials, getMetalGroups, getGradesForGroup, isNonFerrous } from '@/data/materials'
 import { calcMass, calcLength } from '@/lib/calculations'
 import { saveRecord, HistoryRecord } from '@/lib/history'
 
@@ -112,35 +112,6 @@ export function useCalculator() {
   const [state, setState] = useState<CalculatorState>(makeInitialState)
   const snackbarTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // ── Сброс состояния после смены профиля (аналог _rebuild в Flutter) ──────────
-  const rebuildForProfile = useCallback((
-    profile: MetalProfile,
-    metalGroup: string,
-    grade: string,
-    density: number,
-  ) => {
-    const params: Record<string, number | null> = {}
-    for (const p of profile.params) {
-      params[p.key] = p.defaultValue
-    }
-    setState(s => ({
-      ...s,
-      profileKey: profile.key,
-      profile,
-      metalGroup,
-      grade,
-      density,
-      params,
-      length: null,
-      mass: null,
-      quantity: 1,
-      result: null,
-      prevResult: null,
-      error: null,
-      unchanged: false,
-    }))
-  }, [])
-
   // ── Показать снэкбар ───────────────────────────────────────────────────────
   const showSnackbar = useCallback((message: string) => {
     if (snackbarTimerRef.current) clearTimeout(snackbarTimerRef.current)
@@ -150,43 +121,8 @@ export function useCalculator() {
     }, 3000)
   }, [])
 
-  // ── Автокоррекция: Круг ↔ Пруток при смене металла ─────────────────────────
-  const applyAutocorrect = useCallback((
-    currentProfileKey: ProfileKey,
-    newGroup: string,
-    newGrade: string,
-    newDensity: number,
-  ) => {
-    const nonFerrous = isNonFerrous(newGroup)
-    const corrected = autocorrectProfile(currentProfileKey, nonFerrous)
-
-    if (corrected !== currentProfileKey) {
-      const oldProfile = profiles.find(p => p.key === currentProfileKey)!
-      const newProfile = profiles.find(p => p.key === corrected)!
-      showSnackbar(`Сортамент изменён: ${oldProfile.name} → ${newProfile.name}`)
-      rebuildForProfile(newProfile, newGroup, newGrade, newDensity)
-    } else {
-      setState(s => ({
-        ...s,
-        metalGroup: newGroup,
-        grade: newGrade,
-        density: newDensity,
-        result: null,
-        prevResult: null,
-        error: null,
-        unchanged: false,
-      }))
-    }
-  }, [rebuildForProfile, showSnackbar])
-
   // ── Выбор профиля ─────────────────────────────────────────────────────────
   const selectProfile = useCallback((key: ProfileKey) => {
-    const profile = profiles.find(p => p.key === key)!
-    setState(s => {
-      rebuildForProfile(profile, s.metalGroup, s.grade, s.density)
-      return s
-    })
-    // rebuildForProfile сам вызывает setState, здесь просто триггер
     setState(s => {
       const profile = profiles.find(p => p.key === key)!
       const params: Record<string, number | null> = {}
@@ -205,35 +141,58 @@ export function useCalculator() {
         unchanged: false,
       }
     })
-  }, [rebuildForProfile])
+  }, [])
 
   // ── Выбор металла / марки ──────────────────────────────────────────────────
   const selectMetal = useCallback((group: string, grade: string) => {
     const mat = materials.find(m => m.group === group && m.grade === grade)
     if (!mat) return
+
     setState(s => {
-      applyAutocorrect(s.profileKey, mat.group, mat.grade, mat.density)
-      return s
-    })
-    // applyAutocorrect сам вызывает setState
-    setState(s => {
-      const mat2 = materials.find(m => m.group === group && m.grade === grade)!
-      const nonFerrous = isNonFerrous(mat2.group)
+      const nonFerrous = isNonFerrous(mat.group)
       const correctedKey = autocorrectProfile(s.profileKey, nonFerrous)
-      if (correctedKey !== s.profileKey) return s // уже обработано в applyAutocorrect
+
+      if (correctedKey !== s.profileKey) {
+        // Нужна автокоррекция профиля
+        const oldProfile = profiles.find(p => p.key === s.profileKey)!
+        const newProfile = profiles.find(p => p.key === correctedKey)!
+        const params: Record<string, number | null> = {}
+        for (const p of newProfile.params) params[p.key] = p.defaultValue
+
+        // Показываем снэкбар отдельно (не внутри setState)
+        setTimeout(() => showSnackbar(`Сортамент изменён: ${oldProfile.name} → ${newProfile.name}`), 0)
+
+        return {
+          ...s,
+          profileKey: correctedKey,
+          profile: newProfile,
+          metalGroup: mat.group,
+          grade: mat.grade,
+          density: mat.density,
+          params,
+          length: null,
+          mass: null,
+          quantity: 1,
+          result: null,
+          prevResult: null,
+          error: null,
+          unchanged: false,
+          snackbar: null,
+        }
+      }
 
       return {
         ...s,
-        metalGroup: mat2.group,
-        grade: mat2.grade,
-        density: mat2.density,
+        metalGroup: mat.group,
+        grade: mat.grade,
+        density: mat.density,
         result: null,
         prevResult: null,
         error: null,
         unchanged: false,
       }
     })
-  }, [applyAutocorrect])
+  }, [showSnackbar])
 
   // ── Изменение размерного поля ─────────────────────────────────────────────
   const setParam = useCallback((key: string, value: number | null) => {

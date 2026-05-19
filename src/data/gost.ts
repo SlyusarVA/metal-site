@@ -523,3 +523,7 @@ export function findGostReference(code: string): GostReference | null {
     code.includes(r.code) || r.code.includes(code)
   ) ?? null
 }
+
+export function getAllGostCodes(): string[] {
+  return gostReferences.map(r => r.code)
+}

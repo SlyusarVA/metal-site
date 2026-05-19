@@ -90,7 +90,7 @@ export function search(query: string): SearchResult[] {
   }
 
   // 2. Группы металла
-  const groups = [...new Set(materials.map(m => m.group))]
+  const groups = Array.from(new Set(materials.map(m => m.group)))
   for (const group of groups) {
     const gn = normalize(group)
     let score = 0

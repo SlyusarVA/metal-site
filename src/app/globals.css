@@ -36,6 +36,56 @@
   --motion-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
 }
 
+/* Тёмная тема — ручное переключение */
+.dark {
+  --primary: #90CAF9;
+  --primary-dark: #64B5F6;
+  --primary-light: #BBDEFB;
+  --primary-container: #0D2A5C;
+  --on-primary-container: #90CAF9;
+
+  --surface: #1C1C1E;
+  --surface-variant: #121214;
+  --surface-container: #2A2A2E;
+  --on-surface: #E3E2E6;
+  --on-surface-variant: #C5C6D0;
+
+  --outline: #44464F;
+  --outline-variant: #2E3038;
+
+  --error: #FFB4AB;
+  --error-container: #93000A;
+
+  --shadow-1: 0 1px 2px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.4);
+  --shadow-2: 0 2px 4px rgba(0,0,0,.3), 0 4px 8px rgba(0,0,0,.35);
+}
+
+/* Системная тёмная тема (когда выбран режим "системная") */
+@media (prefers-color-scheme: dark) {
+  .theme-system {
+    --primary: #90CAF9;
+    --primary-dark: #64B5F6;
+    --primary-light: #BBDEFB;
+    --primary-container: #0D2A5C;
+    --on-primary-container: #90CAF9;
+
+    --surface: #1C1C1E;
+    --surface-variant: #121214;
+    --surface-container: #2A2A2E;
+    --on-surface: #E3E2E6;
+    --on-surface-variant: #C5C6D0;
+
+    --outline: #44464F;
+    --outline-variant: #2E3038;
+
+    --error: #FFB4AB;
+    --error-container: #93000A;
+
+    --shadow-1: 0 1px 2px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.4);
+    --shadow-2: 0 2px 4px rgba(0,0,0,.3), 0 4px 8px rgba(0,0,0,.35);
+  }
+}
+
 * { box-sizing: border-box; }
 
 html, body {
@@ -43,16 +93,5 @@ html, body {
   background: var(--surface-variant);
   color: var(--on-surface);
   -webkit-font-smoothing: antialiased;
-}
-
-.dark {
-  --surface: #1C1C1E;
-  --surface-variant: #121214;
-  --surface-container: #2A2A2E;
-  --on-surface: #E3E2E6;
-  --on-surface-variant: #C5C6D0;
-  --outline: #44464F;
-  --outline-variant: #2E3038;
-  --primary-container: #0D2A5C;
-  --on-primary-container: #90CAF9;
+  transition: background 0.2s var(--motion-standard), color 0.2s var(--motion-standard);
 }
