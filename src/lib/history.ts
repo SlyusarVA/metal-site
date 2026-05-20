@@ -1,53 +1,174 @@
-// История расчётов — localStorage
-import { ProfileKey } from '../data/profiles'
+'use client'
 
-export interface HistoryRecord {
-  id: string
-  timestamp: number
-  profileKey: ProfileKey
-  profileName: string
-  metalGroup: string
-  grade: string
-  params: Record<string, number>
-  quantity: number
-  length: number
-  mass: number
-  massOne: number
-  linearDensity: number
-}
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { loadHistory, clearHistory, formatTimestamp, HistoryRecord } from '@/lib/history'
 
-const STORAGE_KEY = 'metal_calc_history'
-const MAX_RECORDS = 50
+export default function HistoryPage() {
+  const router = useRouter()
+  const [records, setRecords] = useState<HistoryRecord[]>([])
+  const [loaded, setLoaded] = useState(false)
 
-export function loadHistory(): HistoryRecord[] {
-  if (typeof window === 'undefined') return []
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : []
-  } catch {
-    return []
+  useEffect(() => {
+    setRecords(loadHistory())
+    setLoaded(true)
+  }, [])
+
+  function handleClear() {
+    if (confirm('Очистить всю историю расчётов?')) {
+      clearHistory()
+      setRecords([])
+    }
   }
-}
 
-export function saveRecord(record: Omit<HistoryRecord, 'id' | 'timestamp'>): HistoryRecord {
-  const full: HistoryRecord = {
-    ...record,
-    id: crypto.randomUUID(),
-    timestamp: Date.now(),
-  }
-  const history = [full, ...loadHistory()].slice(0, MAX_RECORDS)
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(history))
-  return full
-}
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--surface-variant)' }}>
 
-export function clearHistory(): void {
-  localStorage.removeItem(STORAGE_KEY)
-}
+      {/* Шапка */}
+      <div style={{
+        background: '#1565C0',
+        height: 48,
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 16px',
+        gap: 12,
+        boxShadow: '0 2px 8px rgba(21,101,192,.4)',
+      }}>
+        <button
+          onClick={() => router.push('/')}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: '#fff', fontSize: 13, fontFamily: 'Manrope, sans-serif',
+            display: 'flex', alignItems: 'center', gap: 6, padding: 0,
+          }}
+        >
+          ← Калькулятор
+        </button>
+        <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 14 }}>/</span>
+        <span style={{ color: '#fff', fontSize: 13, fontWeight: 600 }}>История расчётов</span>
+      </div>
 
-export function formatTimestamp(ts: number): string {
-  const diff = Date.now() - ts
-  if (diff < 60_000) return 'только что'
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} мин назад`
-  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)} ч назад`
-  return new Date(ts).toLocaleDateString('ru-RU')
+      {/* Контент */}
+      <div style={{ maxWidth: 760, margin: '0 auto', padding: '20px 16px 60px' }}>
+
+        {/* Заголовок + кнопка очистки */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div>
+            <h1 style={{ fontSize: 18, fontWeight: 700, color: 'var(--on-surface)', margin: '0 0 2px' }}>
+              История расчётов
+            </h1>
+            {loaded && (
+              <p style={{ fontSize: 12, color: 'var(--on-surface-variant)', margin: 0 }}>
+                {records.length === 0 ? 'Нет записей' : `${records.length} из 50 записей`}
+              </p>
+            )}
+          </div>
+          {records.length > 0 && (
+            <button
+              onClick={handleClear}
+              style={{
+                background: 'none', border: '1px solid var(--outline)',
+                borderRadius: 'var(--radius-full)', padding: '6px 14px',
+                fontSize: 12, color: 'var(--on-surface-variant)',
+                cursor: 'pointer', fontFamily: 'Manrope, sans-serif',
+              }}
+            >
+              Очистить
+            </button>
+          )}
+        </div>
+
+        {/* Пустое состояние */}
+        {loaded && records.length === 0 && (
+          <div style={{
+            background: 'var(--surface)', borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--outline-variant)',
+            padding: '48px 24px', textAlign: 'center',
+          }}>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
+            <p style={{ fontSize: 14, color: 'var(--on-surface-variant)', margin: '0 0 16px' }}>
+              Здесь появятся ваши расчёты после нажатия кнопки «Рассчитать»
+            </p>
+            <button
+              onClick={() => router.push('/')}
+              style={{
+                background: '#1565C0', color: '#fff', border: 'none',
+                borderRadius: 'var(--radius-full)', padding: '10px 24px',
+                fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                fontFamily: 'Manrope, sans-serif',
+              }}
+            >
+              Перейти к калькулятору
+            </button>
+          </div>
+        )}
+
+        {/* Список записей */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {records.map(r => (
+            <div key={r.id} style={{
+              background: 'var(--surface)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--outline-variant)',
+              padding: '14px 16px',
+              display: 'flex', alignItems: 'center', gap: 16,
+            }}>
+
+              {/* Основная инфо */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--on-surface)' }}>
+                    {r.metalGroup} · {r.profileName}
+                  </span>
+                  <span style={{
+                    fontSize: 11, color: 'var(--on-surface-variant)',
+                    background: 'var(--surface-container)',
+                    borderRadius: 'var(--radius-full)', padding: '1px 8px',
+                  }}>
+                    {r.grade}
+                  </span>
+                </div>
+
+                {/* Параметры */}
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 6 }}>
+                  {Object.entries(r.params).map(([k, v]) => (
+                    <span key={k} style={{ fontSize: 12, color: 'var(--on-surface-variant)' }}>
+                      {k} = {v} мм
+                    </span>
+                  ))}
+                  {r.length > 0 && (
+                    <span style={{ fontSize: 12, color: 'var(--on-surface-variant)' }}>
+                      L = {r.length} м
+                    </span>
+                  )}
+                  {r.quantity > 1 && (
+                    <span style={{ fontSize: 12, color: 'var(--on-surface-variant)' }}>
+                      {r.quantity} шт
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ fontSize: 11, color: 'var(--on-surface-variant)' }}>
+                  {formatTimestamp(r.timestamp)}
+                </div>
+              </div>
+
+              {/* Результат */}
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--on-surface)', lineHeight: 1.2 }}>
+                  {r.mass.toFixed(3)}
+                  <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--on-surface-variant)', marginLeft: 4 }}>кг</span>
+                </div>
+                {r.linearDensity > 0 && (
+                  <div style={{ fontSize: 11, color: 'var(--on-surface-variant)', marginTop: 2 }}>
+                    {r.linearDensity.toFixed(4)} кг/м
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 }
