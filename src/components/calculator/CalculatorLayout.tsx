@@ -11,7 +11,6 @@ import SortamentNav from './SortamentNav'
 import CalcPanel from './CalcPanel'
 import SettingsPanel from './SettingsPanel'
 import GostPanel from './GostPanel'
-import ThemeToggle from '@/components/ThemeToggle'
 
 export default function CalculatorLayout() {
   const router = useRouter()
@@ -77,7 +76,8 @@ export default function CalculatorLayout() {
         height: 48,
         flexShrink: 0,
         boxShadow: '0 2px 8px rgba(21,101,192,.4)',
-        overflow: 'hidden',
+        position: 'relative',
+        zIndex: 100,
       }}>
         {isMobile ? (
           <>
@@ -112,16 +112,17 @@ export default function CalculatorLayout() {
             <TopTab onClick={() => {}}>Марочник металлов</TopTab>
             <TopTab onClick={() => setShowGost(true)}>ГОСТы</TopTab>
             <div style={{ flex: 1 }} />
-            <div style={{ padding: '0 12px', borderRight: '1px solid rgba(255,255,255,.15)' }}>
-              <ThemeToggle />
-            </div>
             <button onClick={() => router.push('/history')} style={{
               display: 'flex', alignItems: 'center', gap: 8,
               background: 'none', border: 'none', cursor: 'pointer',
               color: 'rgba(255,255,255,.85)', fontSize: 12, fontWeight: 500,
               fontFamily: 'Manrope, sans-serif', padding: '0 16px',
               letterSpacing: '.04em', height: '100%',
-            }}>
+              transition: 'background .15s',
+            }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,.1)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+            >
               <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#4ADE80', flexShrink: 0 }} />
               ИСТОРИЯ РАСЧЁТОВ
             </button>
@@ -162,6 +163,7 @@ export default function CalculatorLayout() {
               profiles={orderedProfiles}
               selected={state.profileKey}
               highlighted={highlightedProfiles}
+              metalGroup={state.metalGroup}
               onSelect={(key) => { selectProfile(key); setNeedsSortament(false) }}
               mobileOpen={mobileSortamentOpen}
               onMobileClose={() => setMobileSortamentOpen(false)}
@@ -189,6 +191,7 @@ export default function CalculatorLayout() {
               profiles={orderedProfiles}
               selected={state.profileKey}
               highlighted={highlightedProfiles}
+              metalGroup={state.metalGroup}
               onSelect={(key) => { selectProfile(key); setNeedsSortament(false) }}
             />
             <CalcPanel
