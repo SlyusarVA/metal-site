@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { profiles } from '@/data/profiles'
 import { getMetalGroups } from '@/data/materials'
 import { useSettings, GradeSortMode, GradeSort } from '@/data/settings'
@@ -10,11 +10,33 @@ interface Props {
   onClose: () => void
 }
 
-type Tab = 'metals' | 'sortament' | 'grades'
+type Tab = 'metals' | 'sortament' | 'grades' | 'theme'
+type Theme = 'light' | 'dark' | 'system'
+
+const THEME_OPTIONS: { value: Theme; label: string; icon: string; desc: string }[] = [
+  { value: 'light',  label: 'Светлая',   icon: '☀️', desc: 'Всегда светлый интерфейс' },
+  { value: 'dark',   label: 'Тёмная',    icon: '🌙', desc: 'Всегда тёмный интерфейс' },
+  { value: 'system', label: 'Системная', icon: '💻', desc: 'Следует настройкам устройства' },
+]
 
 export default function SettingsPanel({ onClose }: Props) {
   const [tab, setTab] = useState<Tab>('metals')
   const { settings, setMetalOrder, setProfileOrder, setGradeSort, resetToDefault } = useSettings()
+  const [currentTheme, setCurrentTheme] = useState<Theme>('system')
+
+  useEffect(() => {
+    const saved = (localStorage.getItem('theme') as Theme) || 'system'
+    setCurrentTheme(saved)
+  }, [])
+
+  function applyTheme(t: Theme) {
+    const root = document.documentElement
+    root.classList.remove('dark', 'theme-system')
+    if (t === 'dark') root.classList.add('dark')
+    else if (t === 'system') root.classList.add('theme-system')
+    localStorage.setItem('theme', t)
+    setCurrentTheme(t)
+  }
 
   return (
     <div style={{
@@ -49,11 +71,15 @@ export default function SettingsPanel({ onClose }: Props) {
         </div>
 
         {/* Табы */}
-        <div style={{ display: 'flex', gap: 0, padding: '12px 20px 0', borderBottom: '1px solid var(--outline-variant)', flexShrink: 0 }}>
+        <div style={{
+          display: 'flex', gap: 0, padding: '12px 20px 0',
+          borderBottom: '1px solid var(--outline-variant)', flexShrink: 0,
+        }}>
           {([
-            ['metals', 'Вид металла'],
-            ['sortament', 'Сортамент'],
-            ['grades', 'Марки'],
+            ['metals',   'Металл'],
+            ['sortament','Сортамент'],
+            ['grades',   'Марки'],
+            ['theme',    'Тема'],
           ] as [Tab, string][]).map(([id, label]) => (
             <button key={id} onClick={() => setTab(id)} style={{
               background: 'none', border: 'none',
@@ -93,6 +119,57 @@ export default function SettingsPanel({ onClose }: Props) {
               gradeSorts={settings.gradeSorts}
               onUpdate={setGradeSort}
             />
+          )}
+          {tab === 'theme' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <p style={{ fontSize: 12, color: 'var(--on-surface-variant)', margin: '0 0 8px' }}>
+                Выберите цветовую схему интерфейса
+              </p>
+              {THEME_OPTIONS.map(opt => {
+                const isActive = currentTheme === opt.value
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={() => applyTheme(opt.value)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 14,
+                      background: isActive ? 'var(--primary-container)' : 'var(--surface)',
+                      border: `1px solid ${isActive ? 'var(--primary)' : 'var(--outline-variant)'}`,
+                      borderRadius: 'var(--radius-md)',
+                      padding: '14px 16px',
+                      cursor: 'pointer',
+                      fontFamily: 'Manrope, sans-serif',
+                      textAlign: 'left',
+                      transition: 'all .15s',
+                    }}
+                  >
+                    <span style={{ fontSize: 22, flexShrink: 0 }}>{opt.icon}</span>
+                    <div style={{ flex: 1 }}>
+                      <div style={{
+                        fontSize: 13, fontWeight: isActive ? 600 : 500,
+                        color: isActive ? 'var(--primary)' : 'var(--on-surface)',
+                        marginBottom: 2,
+                      }}>
+                        {opt.label}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'var(--on-surface-variant)' }}>
+                        {opt.desc}
+                      </div>
+                    </div>
+                    {/* Radio */}
+                    <div style={{
+                      width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
+                      border: `2px solid ${isActive ? 'var(--primary)' : 'var(--outline)'}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {isActive && (
+                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--primary)' }} />
+                      )}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
           )}
         </div>
 
@@ -139,15 +216,8 @@ function DragList<T extends string>({
   const [over, setOver] = useState<number | null>(null)
   const dragItem = useRef<number | null>(null)
 
-  const handleDragStart = (i: number) => {
-    dragItem.current = i
-    setDragging(i)
-  }
-
-  const handleDragEnter = (i: number) => {
-    setOver(i)
-  }
-
+  const handleDragStart = (i: number) => { dragItem.current = i; setDragging(i) }
+  const handleDragEnter = (i: number) => { setOver(i) }
   const handleDrop = () => {
     if (dragItem.current === null || over === null || dragItem.current === over) {
       setDragging(null); setOver(null); return
@@ -188,7 +258,6 @@ function DragList<T extends string>({
                 userSelect: 'none',
               }}
             >
-              {/* Drag handle */}
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, color: 'var(--on-surface-variant)' }}>
                 <circle cx="9" cy="6" r="1.5" fill="currentColor"/>
                 <circle cx="15" cy="6" r="1.5" fill="currentColor"/>
@@ -197,9 +266,7 @@ function DragList<T extends string>({
                 <circle cx="9" cy="18" r="1.5" fill="currentColor"/>
                 <circle cx="15" cy="18" r="1.5" fill="currentColor"/>
               </svg>
-
               <span style={{ fontSize: 13, fontWeight: 500, flex: 1 }}>{renderLabel(item)}</span>
-
               <span style={{
                 fontSize: 11, color: 'var(--on-surface-variant)',
                 background: 'var(--surface-container)',
@@ -219,15 +286,13 @@ function DragList<T extends string>({
 // ── Настройки марок ───────────────────────────────────────────────────────────
 
 const SORT_OPTIONS: { mode: GradeSortMode; label: string; desc: string }[] = [
-  { mode: 'default',  label: 'По умолчанию', desc: 'Порядок из базы данных' },
-  { mode: 'alpha',    label: 'По алфавиту',  desc: 'А → Я → A → Z' },
-  { mode: 'density',  label: 'По плотности', desc: 'От наибольшей к наименьшей' },
-  { mode: 'numeric',  label: 'По номеру',    desc: 'По первому числу в марке' },
+  { mode: 'default', label: 'По умолчанию', desc: 'Порядок из базы данных' },
+  { mode: 'alpha',   label: 'По алфавиту',  desc: 'А → Я → A → Z' },
+  { mode: 'density', label: 'По плотности', desc: 'От наибольшей к наименьшей' },
+  { mode: 'numeric', label: 'По номеру',    desc: 'По первому числу в марке' },
 ]
 
-function GradesSettings({
-  groups, gradeSorts, onUpdate,
-}: {
+function GradesSettings({ groups, gradeSorts, onUpdate }: {
   groups: string[]
   gradeSorts: Record<string, GradeSort>
   onUpdate: (group: string, sort: GradeSort) => void
@@ -239,19 +304,14 @@ function GradesSettings({
       <p style={{ fontSize: 12, color: 'var(--on-surface-variant)', margin: '0 0 8px' }}>
         Включите кастомную сортировку для конкретной группы металла
       </p>
-
       {groups.map(group => {
         const sort = gradeSorts[group] ?? { enabled: false, mode: 'default' as GradeSortMode }
         const isExpanded = expanded === group
-
         return (
           <div key={group} style={{
             border: `1px solid ${sort.enabled ? 'var(--primary)' : 'var(--outline-variant)'}`,
-            borderRadius: 'var(--radius-sm)',
-            overflow: 'hidden',
-            transition: 'border-color .15s',
+            borderRadius: 'var(--radius-sm)', overflow: 'hidden', transition: 'border-color .15s',
           }}>
-            {/* Строка группы */}
             <div style={{
               display: 'flex', alignItems: 'center', gap: 10,
               padding: '10px 14px',
@@ -260,7 +320,6 @@ function GradesSettings({
             }}
               onClick={() => sort.enabled && setExpanded(isExpanded ? null : group)}
             >
-              {/* Чекбокс */}
               <div
                 onClick={e => {
                   e.stopPropagation()
@@ -283,28 +342,20 @@ function GradesSettings({
                   </svg>
                 )}
               </div>
-
               <span style={{
                 fontSize: 13, fontWeight: sort.enabled ? 600 : 400, flex: 1,
                 color: sort.enabled ? 'var(--primary)' : 'var(--on-surface)',
               }}>
                 {group}
               </span>
-
-              {/* Текущий режим */}
               {sort.enabled && (
                 <span style={{
-                  fontSize: 11, color: 'var(--primary)',
-                  background: '#fff',
-                  border: '1px solid var(--primary)',
-                  borderRadius: 'var(--radius-full)',
-                  padding: '2px 10px',
+                  fontSize: 11, color: 'var(--primary)', background: '#fff',
+                  border: '1px solid var(--primary)', borderRadius: 'var(--radius-full)', padding: '2px 10px',
                 }}>
                   {SORT_OPTIONS.find(o => o.mode === sort.mode)?.label ?? 'По умолчанию'}
                 </span>
               )}
-
-              {/* Шеврон */}
               {sort.enabled && (
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2"
                   style={{ transition: 'transform .2s', transform: isExpanded ? 'rotate(180deg)' : 'none', flexShrink: 0 }}>
@@ -312,29 +363,20 @@ function GradesSettings({
                 </svg>
               )}
             </div>
-
-            {/* Опции сортировки — раскрываются */}
             {sort.enabled && isExpanded && (
               <div style={{
                 borderTop: '1px solid var(--outline-variant)',
-                background: 'var(--surface-variant)',
-                padding: '8px 10px',
+                background: 'var(--surface-variant)', padding: '8px 10px',
                 display: 'flex', flexDirection: 'column', gap: 4,
               }}>
                 {SORT_OPTIONS.map(opt => (
-                  <button
-                    key={opt.mode}
-                    onClick={() => onUpdate(group, { enabled: true, mode: opt.mode })}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 10,
-                      background: sort.mode === opt.mode ? 'var(--primary-container)' : 'transparent',
-                      border: 'none', borderRadius: 'var(--radius-sm)',
-                      padding: '8px 12px', cursor: 'pointer',
-                      fontFamily: 'Manrope, sans-serif', textAlign: 'left',
-                      transition: 'background .12s',
-                    }}
-                  >
-                    {/* Radio dot */}
+                  <button key={opt.mode} onClick={() => onUpdate(group, { enabled: true, mode: opt.mode })} style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    background: sort.mode === opt.mode ? 'var(--primary-container)' : 'transparent',
+                    border: 'none', borderRadius: 'var(--radius-sm)',
+                    padding: '8px 12px', cursor: 'pointer',
+                    fontFamily: 'Manrope, sans-serif', textAlign: 'left', transition: 'background .12s',
+                  }}>
                     <div style={{
                       width: 16, height: 16, borderRadius: '50%', flexShrink: 0,
                       border: `2px solid ${sort.mode === opt.mode ? 'var(--primary)' : 'var(--outline)'}`,
@@ -360,8 +402,6 @@ function GradesSettings({
     </div>
   )
 }
-
-// ── Стили ─────────────────────────────────────────────────────────────────────
 
 const iconBtnStyle: React.CSSProperties = {
   background: 'none', border: 'none', cursor: 'pointer',
