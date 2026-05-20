@@ -1,4 +1,4 @@
-// Конвертировано из materials_data.dart
+// Конвертировано из profiles_data.dart
 // Сортировка марок: цифры → кириллица → латиница
 
 export interface MetalMaterial {
@@ -150,7 +150,6 @@ export function getMetalGroups(): string[] {
       result.push(g)
     }
   }
-  // Добавить группы не попавшие в ORDER (на случай расширения)
   for (const m of materials) {
     if (!seen.has(m.group)) {
       seen.add(m.group)
@@ -176,4 +175,44 @@ export const NON_FERROUS_GROUPS = new Set([
 
 export function isNonFerrous(group: string): boolean {
   return NON_FERROUS_GROUPS.has(group)
+}
+
+import type { ProfileKey } from '@/data/profiles'
+
+// Допустимые профили для каждой группы металлов.
+// Если группы нет в маппинге — доступны все профили.
+const ALLOWED_PROFILES: Record<string, ProfileKey[]> = {
+  'Сталь': [
+    'round', 'sheet', 'pipe', 'pipe_prof', 'strip', 'plate', 'wire',
+    'angle_equal', 'hexagon', 'armature', 'beam', 'square', 'flat',
+    'rail', 'angle_unequal', 'channel', 'shpunt',
+  ],
+  'Нержавейка': [
+    'round', 'sheet', 'pipe', 'pipe_prof', 'strip', 'plate', 'wire',
+    'angle_equal', 'hexagon', 'square', 'flat',
+  ],
+  'Латунь': [
+    'rod', 'sheet', 'pipe', 'strip', 'plate', 'wire', 'hexagon', 'square',
+  ],
+  'Медь': [
+    'rod', 'sheet', 'pipe', 'strip', 'plate', 'wire',
+  ],
+  'Бронза': [
+    'rod', 'sheet', 'strip', 'plate', 'wire',
+  ],
+  'Алюминий': [
+    'rod', 'sheet', 'pipe', 'pipe_prof', 'strip', 'plate', 'wire',
+    'angle_equal', 'hexagon', 'square', 'flat',
+  ],
+  'Вольфрам': ['rod', 'wire', 'sheet', 'plate'],
+  'Молибден': ['rod', 'wire', 'sheet', 'plate'],
+  'Никель':   ['rod', 'wire', 'sheet', 'strip', 'plate', 'pipe'],
+  'Нихром':   ['rod', 'wire', 'strip'],
+  'Титан':    ['rod', 'sheet', 'pipe', 'plate', 'wire'],
+  'Цинк':     ['sheet', 'strip', 'plate'],
+  'Цирконий': ['rod', 'wire', 'sheet'],
+}
+
+export function getAllowedProfiles(group: string): ProfileKey[] | null {
+  return ALLOWED_PROFILES[group] ?? null
 }
