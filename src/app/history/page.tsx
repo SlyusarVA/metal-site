@@ -1,113 +1,173 @@
 'use client'
 
-import { useParams, useRouter } from 'next/navigation'
-import { findGostReference } from '@/data/gost'
-import Link from 'next/link'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { loadHistory, clearHistory, formatTimestamp, HistoryRecord } from '@/lib/history'
 
-export default function GostPage() {
-  const params = useParams()
+export default function HistoryPage() {
   const router = useRouter()
-  const code = decodeURIComponent(params.code as string)
-  const ref = findGostReference(code)
+  const [records, setRecords] = useState<HistoryRecord[]>([])
+  const [loaded, setLoaded] = useState(false)
 
-  if (!ref) {
-    return (
-      <div style={{ maxWidth: 680, margin: '40px auto', padding: '0 20px' }}>
-        <p style={{ color: 'var(--on-surface-variant)' }}>ГОСТ не найден: {code}</p>
-        <Link href="/" style={{ color: 'var(--primary)', fontSize: 14 }}>← Назад</Link>
-      </div>
-    )
+  useEffect(() => {
+    setRecords(loadHistory())
+    setLoaded(true)
+  }, [])
+
+  function handleClear() {
+    if (confirm('Очистить всю историю расчётов?')) {
+      clearHistory()
+      setRecords([])
+    }
   }
 
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto', padding: '20px 20px 60px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+    <div style={{ minHeight: '100vh', background: 'var(--surface-variant)' }}>
+
+      {/* Шапка */}
+      <div style={{
+        background: '#1565C0',
+        height: 48,
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 16px',
+        gap: 12,
+        boxShadow: '0 2px 8px rgba(21,101,192,.4)',
+      }}>
         <button
-          onClick={() => router.back()}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: 'var(--primary)', fontSize: 14, fontFamily: 'Manrope, sans-serif', padding: 0 }}
+          onClick={() => router.push('/')}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: '#fff', fontSize: 13, fontFamily: 'Manrope, sans-serif',
+            display: 'flex', alignItems: 'center', gap: 6, padding: 0,
+          }}
         >
-          ← Назад
+          ← Калькулятор
         </button>
-        <span style={{ color: 'var(--outline)', fontSize: 14 }}>/</span>
-        <span style={{ fontSize: 14, color: 'var(--on-surface-variant)' }}>{ref.code}</span>
+        <span style={{ color: 'rgba(255,255,255,.4)', fontSize: 14 }}>/</span>
+        <span style={{ color: '#fff', fontSize: 13, fontWeight: 600 }}>История расчётов</span>
       </div>
 
-      <h1 style={{ fontSize: 20, fontWeight: 600, color: 'var(--on-surface)', marginBottom: 8 }}>
-        {ref.title}
-      </h1>
+      {/* Контент */}
+      <div style={{ maxWidth: 760, margin: '0 auto', padding: '20px 16px 60px' }}>
 
-      <Section title="Область применения">
-        <p style={{ fontSize: 14, lineHeight: 1.7, color: 'var(--on-surface-variant)' }}>{ref.scope}</p>
-      </Section>
-
-      {ref.keyParams.length > 0 && (
-        <Section title="Ключевые параметры">
-          <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {ref.keyParams.map((p, i) => (
-              <li key={i} style={{ fontSize: 14, color: 'var(--on-surface-variant)', display: 'flex', gap: 8 }}>
-                <span style={{ color: 'var(--primary)', flexShrink: 0 }}>·</span>
-                {p}
-              </li>
-            ))}
-          </ul>
-        </Section>
-      )}
-
-      {ref.tolerances.length > 0 && (
-        <Section title="Допуски и нормы">
-          <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {ref.tolerances.map((t, i) => (
-              <li key={i} style={{ fontSize: 14, fontWeight: 500, color: 'var(--on-surface)', display: 'flex', gap: 8 }}>
-                <span style={{ color: 'var(--primary)', flexShrink: 0 }}>·</span>
-                {t}
-              </li>
-            ))}
-          </ul>
-        </Section>
-      )}
-
-      {ref.critical.length > 0 && (
-        <Section title="Важно знать">
-          <div style={{ background: '#FFF3E0', borderRadius: 'var(--radius-md)', padding: '12px 16px', display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {ref.critical.map((c, i) => (
-              <p key={i} style={{ fontSize: 13, fontWeight: 500, color: '#E65100', margin: 0 }}>
-                ⚠ {c}
+        {/* Заголовок + кнопка очистки */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div>
+            <h1 style={{ fontSize: 18, fontWeight: 700, color: 'var(--on-surface)', margin: '0 0 2px' }}>
+              История расчётов
+            </h1>
+            {loaded && (
+              <p style={{ fontSize: 12, color: 'var(--on-surface-variant)', margin: 0 }}>
+                {records.length === 0 ? 'Нет записей' : `${records.length} из 50 записей`}
               </p>
-            ))}
+            )}
           </div>
-        </Section>
-      )}
-
-      {ref.marking && (
-        <Section title="Маркировка">
-          <p style={{ fontSize: 14, color: 'var(--on-surface-variant)', lineHeight: 1.7 }}>{ref.marking}</p>
-        </Section>
-      )}
-
-      {ref.fullTextUrl && !ref.fullTextUrl.endsWith('/') && (
-        <div style={{ marginTop: 24 }}>
-          <a
-            href={ref.fullTextUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--primary)', color: '#fff', borderRadius: 'var(--radius-full)', padding: '10px 20px', fontSize: 13, fontWeight: 500, textDecoration: 'none', fontFamily: 'Manrope, sans-serif' }}
-          >
-            Полный текст ↗
-          </a>
+          {records.length > 0 && (
+            <button
+              onClick={handleClear}
+              style={{
+                background: 'none', border: '1px solid var(--outline)',
+                borderRadius: 'var(--radius-full)', padding: '6px 14px',
+                fontSize: 12, color: 'var(--on-surface-variant)',
+                cursor: 'pointer', fontFamily: 'Manrope, sans-serif',
+              }}
+            >
+              Очистить
+            </button>
+          )}
         </div>
-      )}
-    </div>
-  )
-}
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div style={{ marginTop: 20 }}>
-      <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--primary)', letterSpacing: '.05em', textTransform: 'uppercase', marginBottom: 10 }}>
-        {title}
-      </p>
-      <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius-md)', padding: '14px 16px', border: '1px solid var(--outline-variant)' }}>
-        {children}
+        {/* Пустое состояние */}
+        {loaded && records.length === 0 && (
+          <div style={{
+            background: 'var(--surface)', borderRadius: 'var(--radius-lg)',
+            border: '1px solid var(--outline-variant)',
+            padding: '48px 24px', textAlign: 'center',
+          }}>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
+            <p style={{ fontSize: 14, color: 'var(--on-surface-variant)', margin: '0 0 16px' }}>
+              Здесь появятся ваши расчёты после нажатия кнопки «Рассчитать»
+            </p>
+            <button
+              onClick={() => router.push('/')}
+              style={{
+                background: '#1565C0', color: '#fff', border: 'none',
+                borderRadius: 'var(--radius-full)', padding: '10px 24px',
+                fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                fontFamily: 'Manrope, sans-serif',
+              }}
+            >
+              Перейти к калькулятору
+            </button>
+          </div>
+        )}
+
+        {/* Список записей */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {records.map(r => (
+            <div key={r.id} style={{
+              background: 'var(--surface)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--outline-variant)',
+              padding: '14px 16px',
+              display: 'flex', alignItems: 'center', gap: 16,
+            }}>
+
+              {/* Основная инфо */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--on-surface)' }}>
+                    {r.metalGroup} · {r.profileName}
+                  </span>
+                  <span style={{
+                    fontSize: 11, color: 'var(--on-surface-variant)',
+                    background: 'var(--surface-container)',
+                    borderRadius: 'var(--radius-full)', padding: '1px 8px',
+                  }}>
+                    {r.grade}
+                  </span>
+                </div>
+
+                {/* Параметры */}
+                <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 6 }}>
+                  {Object.entries(r.params).map(([k, v]) => (
+                    <span key={k} style={{ fontSize: 12, color: 'var(--on-surface-variant)' }}>
+                      {k} = {v} мм
+                    </span>
+                  ))}
+                  {r.length > 0 && (
+                    <span style={{ fontSize: 12, color: 'var(--on-surface-variant)' }}>
+                      L = {r.length} м
+                    </span>
+                  )}
+                  {r.quantity > 1 && (
+                    <span style={{ fontSize: 12, color: 'var(--on-surface-variant)' }}>
+                      {r.quantity} шт
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ fontSize: 11, color: 'var(--on-surface-variant)' }}>
+                  {formatTimestamp(r.timestamp)}
+                </div>
+              </div>
+
+              {/* Результат */}
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--on-surface)', lineHeight: 1.2 }}>
+                  {r.mass.toFixed(3)}
+                  <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--on-surface-variant)', marginLeft: 4 }}>кг</span>
+                </div>
+                {r.linearDensity > 0 && (
+                  <div style={{ fontSize: 11, color: 'var(--on-surface-variant)', marginTop: 2 }}>
+                    {r.linearDensity.toFixed(4)} кг/м
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )
