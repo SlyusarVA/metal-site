@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getWeightTolerance } from '@/data/gost'
 import { ProfileKey } from '@/data/profiles'
-import ProfileDiagram from './ProfileDiagram'
 import GostTags from './GostTags'
 import GostSearchBar from './GostSearchBar'
 
@@ -22,27 +21,47 @@ export default function CalcPanel({ calc, getGrades, onGostResult, onGostClear, 
   const [calcMode, setCalcMode] = useState<'mass' | 'length'>('mass')
 
   const grades = getGrades(state.metalGroup)
+
   const tolerance = getWeightTolerance(state.profileKey, Object.fromEntries(
-    Object.entries(state.params).filter(([,v]) => v !== null) as [string, number][]
+    Object.entries(state.params).filter(([, v]) => v !== null) as [string, number][]
   ))
 
   const resultMass = state.result?.target === 'mass' ? state.result.value : (state.mass ?? null)
   const resultLength = state.result?.target === 'length' ? state.result.value : (state.length ?? null)
   const displayResult = calcMode === 'mass' ? resultMass : resultLength
 
+  // Мин/макс с допуском по ГОСТ — используем plus/minus из WeightTolerance
+  const massMin = resultMass != null && tolerance != null
+    ? resultMass * (1 - tolerance.minus)
+    : null
+  const massMax = resultMass != null && tolerance != null
+    ? resultMass * (1 + tolerance.plus)
+    : null
+
   return (
-    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--surface-variant)' }}>
+    <div style={{
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden',
+      background: 'var(--surface-variant, #F3F4F6)',
+      minWidth: 0,
+    }}>
 
       {/* ── Шапка ── */}
       <div style={{
-        background: 'var(--surface)',
-        borderBottom: '1px solid var(--outline-variant)',
-        padding: '12px 16px',
+        background: 'var(--surface, #fff)',
+        borderBottom: '1px solid var(--outline-variant, #E5E7EB)',
+        padding: '10px 14px',
         flexShrink: 0,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 10,
+        flexWrap: 'wrap',
       }}>
-        <h2 style={{ fontSize: 14, fontWeight: 600, color: 'var(--on-surface)', margin: '0 0 6px' }}>
-          Расчёт веса {state.metalGroup.toLowerCase()} · {state.profile.name}
-        </h2>
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--on-surface, #111827)', whiteSpace: 'nowrap' }}>
+          {state.metalGroup} · {state.profile.name}
+        </span>
         <GostTags
           profile={state.profile}
           density={state.density}
@@ -50,11 +69,11 @@ export default function CalcPanel({ calc, getGrades, onGostResult, onGostClear, 
         />
       </div>
 
-      {/* ── Поиск ГОСТ — отдельная строка ── */}
+      {/* ── Поиск ГОСТ ── */}
       <div style={{
-        background: 'var(--surface)',
-        borderBottom: '1px solid var(--outline-variant)',
-        padding: '8px 16px',
+        background: 'var(--surface, #fff)',
+        borderBottom: '1px solid var(--outline-variant, #E5E7EB)',
+        padding: '7px 14px',
         flexShrink: 0,
       }}>
         <GostSearchBar onResult={onGostResult} onClear={onGostClear} />
@@ -65,210 +84,227 @@ export default function CalcPanel({ calc, getGrades, onGostResult, onGostClear, 
         <div style={{
           background: '#FFF8E1',
           borderBottom: '1px solid #FFE082',
-          padding: '8px 16px',
+          padding: '7px 14px',
           display: 'flex', alignItems: 'center', gap: 8,
           fontSize: 12, color: '#E65100', fontWeight: 500,
           flexShrink: 0,
         }}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ flexShrink: 0 }}>
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+            <line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
           Выберите сортамент в колонке слева
         </div>
       )}
 
-      {/* ── Рабочая зона ── */}
-      <div style={{ flex: 1, padding: 12, overflow: 'hidden', display: 'flex', gap: 12 }}>
+      {/* ── Форма ── */}
+      <div style={{
+        flex: 1,
+        padding: '12px 14px',
+        overflowY: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 10,
+      }}>
 
-        {/* Единая карточка: диаграмма слева + форма справа */}
+        {/* Переключатель режима */}
         <div style={{
-          flex: 1,
-          background: 'var(--surface)',
-          borderRadius: 'var(--radius-lg)',
-          border: '1px solid var(--outline-variant)',
           display: 'flex',
-          overflow: 'hidden',
-          minWidth: 0,
+          background: 'var(--surface-container, #F3F4F6)',
+          borderRadius: 20,
+          padding: 2,
+          border: '1px solid var(--outline-variant, #E5E7EB)',
+          width: 'fit-content',
         }}>
-
-          {/* Диаграмма */}
-          <div style={{
-            width: 200,
-            flexShrink: 0,
-            borderRight: '1px solid var(--outline-variant)',
-            background: 'var(--surface-variant)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: 16,
-          }}>
-            <ProfileDiagram
-              profileKey={state.profileKey}
-              params={Object.fromEntries(Object.entries(state.params).map(([k,v]) => [k, v ?? 0]))}
-            />
-          </div>
-
-          {/* Форма */}
-          <div style={{
-            flex: 1,
-            minWidth: 0,
-            maxWidth: 480,
-            padding: 16,
-            overflowY: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 12,
-          }}>
-
-            {/* Переключатель */}
-            <div style={{ display: 'flex', background: 'var(--surface-container)', borderRadius: 'var(--radius-full)', padding: 3 }}>
-              {(['mass', 'length'] as const).map(mode => (
-                <button
-                  key={mode}
-                  onClick={() => setCalcMode(mode)}
-                  style={{
-                    flex: 1, border: 'none', cursor: 'pointer',
-                    borderRadius: 'var(--radius-full)',
-                    padding: '6px 8px',
-                    fontSize: 12, fontWeight: 500,
-                    fontFamily: 'Manrope, sans-serif',
-                    background: calcMode === mode ? 'var(--surface)' : 'transparent',
-                    color: calcMode === mode ? 'var(--primary)' : 'var(--on-surface-variant)',
-                    boxShadow: calcMode === mode ? 'var(--shadow-1)' : 'none',
-                    transition: 'all .2s var(--motion-standard)',
-                  }}
-                >
-                  {mode === 'mass' ? 'Расчёт веса' : 'Расчёт длины'}
-                </button>
-              ))}
-            </div>
-
-            {/* Марка */}
-            <Field label="Марка металла">
-              <select
-                value={state.grade}
-                onChange={e => selectMetal(state.metalGroup, e.target.value)}
-                style={selectStyle}
-              >
-                {grades.map(g => <option key={g.grade}>{g.grade}</option>)}
-              </select>
-            </Field>
-
-            {/* Размерные поля — сетка 2 колонки */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-              {state.profile.params.map(p => (
-                <Field key={p.key} label={p.label}>
-                  <input
-                    type="number"
-                    value={state.params[p.key] ?? ''}
-                    min={0} step={0.1}
-                    onChange={e => setParam(p.key, e.target.value ? parseFloat(e.target.value) : null)}
-                    style={inputStyle}
-                  />
-                  <Unit>{p.unit}</Unit>
-                </Field>
-              ))}
-
-              {/* Длина / Масса */}
-              {!state.profile.isVolume && (
-                <Field label={calcMode === 'mass' ? 'Длина L' : 'Масса'}>
-                  <input
-                    type="number"
-                    value={calcMode === 'mass' ? (state.length ?? '') : (state.mass ?? '')}
-                    min={0} step={0.01}
-                    onChange={e => {
-                      const v = e.target.value ? parseFloat(e.target.value) : null
-                      calcMode === 'mass' ? setLength(v) : setMass(v)
-                    }}
-                    style={inputStyle}
-                  />
-                  <Unit>{calcMode === 'mass' ? 'м.' : 'кг.'}</Unit>
-                </Field>
-              )}
-
-              {/* Количество */}
-              <div>
-                <div style={labelStyle}>Количество</div>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <QtyBtn onClick={decrementQty}>−</QtyBtn>
-                  <div style={{
-                    flex: 1, textAlign: 'center', fontSize: 13, fontWeight: 600,
-                    background: 'var(--surface-container)', borderRadius: 'var(--radius-sm)',
-                    padding: '8px 0', color: 'var(--on-surface)',
-                  }}>
-                    {state.quantity} шт
-                  </div>
-                  <QtyBtn onClick={incrementQty}>+</QtyBtn>
-                </div>
-              </div>
-            </div>
-
-            {/* Кнопка */}
+          {(['mass', 'length'] as const).map(mode => (
             <button
-              onClick={calculate}
+              key={mode}
+              onClick={() => setCalcMode(mode)}
               style={{
-                background: '#1565C0', color: '#fff', border: 'none',
-                borderRadius: 'var(--radius-full)', padding: '11px 24px',
-                fontSize: 13, fontWeight: 700, fontFamily: 'Manrope, sans-serif',
-                cursor: 'pointer', letterSpacing: '.06em',
-                transition: 'background .15s', alignSelf: 'flex-start',
-                minWidth: 180,
+                border: 'none', cursor: 'pointer',
+                borderRadius: 18,
+                padding: '5px 14px',
+                fontSize: 11, fontWeight: 500,
+                fontFamily: 'Manrope, sans-serif',
+                background: calcMode === mode ? 'var(--surface, #fff)' : 'transparent',
+                color: calcMode === mode ? '#1565C0' : 'var(--on-surface-variant, #6B7280)',
+                boxShadow: calcMode === mode ? '0 1px 3px rgba(0,0,0,.1)' : 'none',
+                transition: 'all .15s',
+                whiteSpace: 'nowrap',
               }}
-              onMouseEnter={e => (e.currentTarget.style.background = '#1976D2')}
-              onMouseLeave={e => (e.currentTarget.style.background = '#1565C0')}
             >
-              РАССЧИТАТЬ
+              {mode === 'mass' ? 'Расчёт веса' : 'Расчёт длины'}
             </button>
+          ))}
+        </div>
 
-            {state.error && (
-              <div style={{ background: 'var(--error-container)', borderRadius: 'var(--radius-sm)', padding: '8px 12px', fontSize: 12, color: 'var(--error)' }}>
-                {state.error.message}
-              </div>
-            )}
+        {/* Марка — компактная строка */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={inlineLabelStyle}>Марка</span>
+          <select
+            value={state.grade}
+            onChange={e => selectMetal(state.metalGroup, e.target.value)}
+            style={{
+              flex: 1,
+              height: 30,
+              border: '1px solid var(--outline, #D1D5DB)',
+              borderRadius: 6,
+              background: 'var(--surface, #fff)',
+              padding: '0 8px',
+              fontSize: 12,
+              color: 'var(--on-surface, #111827)',
+              fontFamily: 'Manrope, sans-serif',
+              outline: 'none',
+              cursor: 'pointer',
+            }}
+          >
+            {grades.map(g => <option key={g.grade}>{g.grade}</option>)}
+          </select>
+        </div>
 
-            {state.snackbar && (
-              <div style={{ background: '#1A1C1E', borderRadius: 'var(--radius-sm)', padding: '8px 12px', fontSize: 12, color: '#fff', lineHeight: 1.5 }}>
-                {state.snackbar.message}
+        {/* Размерные поля — сетка 2 колонки */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          {state.profile.params.map(p => (
+            <div key={p.key}>
+              <div style={fieldLabelStyle}>{p.label}</div>
+              <InputWithUnit
+                value={state.params[p.key] ?? ''}
+                unit={p.unit}
+                onChange={v => setParam(p.key, v)}
+              />
+            </div>
+          ))}
+
+          {/* Длина / Масса */}
+          {!state.profile.isVolume && (
+            <div>
+              <div style={fieldLabelStyle}>{calcMode === 'mass' ? 'Длина L' : 'Масса'}</div>
+              <InputWithUnit
+                value={calcMode === 'mass' ? (state.length ?? '') : (state.mass ?? '')}
+                unit={calcMode === 'mass' ? 'м.' : 'кг.'}
+                onChange={v => calcMode === 'mass' ? setLength(v) : setMass(v)}
+              />
+            </div>
+          )}
+
+          {/* Количество */}
+          <div>
+            <div style={fieldLabelStyle}>Количество</div>
+            <div style={{ display: 'flex', height: 30, border: '1px solid var(--outline, #D1D5DB)', borderRadius: 6, overflow: 'hidden' }}>
+              <button onClick={decrementQty} style={qtyBtnStyle}>−</button>
+              <div style={{
+                flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 12, fontWeight: 600, color: 'var(--on-surface, #111827)',
+                background: 'var(--surface, #fff)',
+                borderLeft: '1px solid var(--outline-variant, #E5E7EB)',
+                borderRight: '1px solid var(--outline-variant, #E5E7EB)',
+              }}>
+                {state.quantity} шт
               </div>
-            )}
+              <button onClick={incrementQty} style={qtyBtnStyle}>+</button>
+            </div>
           </div>
         </div>
+
+        {/* Кнопка расчёта */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <button
+            onClick={calculate}
+            style={{
+              background: '#1565C0', color: '#fff', border: 'none',
+              borderRadius: 6, padding: '7px 20px',
+              fontSize: 12, fontWeight: 600, fontFamily: 'Manrope, sans-serif',
+              cursor: 'pointer', letterSpacing: '.04em',
+              transition: 'background .15s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = '#1344B8')}
+            onMouseLeave={e => (e.currentTarget.style.background = '#1565C0')}
+          >
+            Рассчитать
+          </button>
+        </div>
+
+        {state.error && (
+          <div style={{
+            background: 'var(--error-container, #FEE2E2)',
+            borderRadius: 6, padding: '7px 10px',
+            fontSize: 11, color: 'var(--error, #B91C1C)',
+          }}>
+            {state.error.message}
+          </div>
+        )}
+
+        {state.snackbar && (
+          <div style={{
+            background: '#1A1C1E', borderRadius: 6,
+            padding: '7px 10px', fontSize: 11, color: '#fff', lineHeight: 1.5,
+          }}>
+            {state.snackbar.message}
+          </div>
+        )}
       </div>
 
       {/* ── Строка результата ── */}
       <div style={{
-        background: 'var(--surface)',
-        borderTop: '1px solid var(--outline-variant)',
-        padding: '12px 16px',
-        display: 'flex', alignItems: 'center', gap: 24,
+        background: 'var(--surface, #fff)',
+        borderTop: '1px solid var(--outline-variant, #E5E7EB)',
+        padding: '10px 14px',
+        display: 'flex', alignItems: 'flex-start', gap: 0,
         flexShrink: 0,
       }}>
-        <div>
-          <div style={{ fontSize: 11, color: 'var(--on-surface-variant)', marginBottom: 2 }}>
-            {calcMode === 'mass' ? 'Вес' : 'Длина'}
-          </div>
-          <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--on-surface)', lineHeight: 1.2 }}>
-            {displayResult != null ? displayResult.toFixed(3) : '0.000'}
-            <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--on-surface-variant)', marginLeft: 6 }}>
-              {calcMode === 'mass' ? 'кг.' : 'м.'}
+
+        {/* Вес */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <div style={resLabelStyle}>{calcMode === 'mass' ? 'Вес' : 'Длина'}</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+            <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--on-surface, #111827)', fontVariantNumeric: 'tabular-nums', letterSpacing: '-.02em' }}>
+              {displayResult != null ? displayResult.toFixed(3) : '—'}
+            </span>
+            <span style={{ fontSize: 12, color: 'var(--on-surface-variant, #6B7280)' }}>
+              {calcMode === 'mass' ? 'кг' : 'м'}
             </span>
           </div>
+          {/* Мин / Макс по ГОСТ */}
+          {massMin != null && massMax != null && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 1 }}>
+              <span style={rangeTagStyle('#f0fdf4', '#166534')}>{massMin.toFixed(2)}</span>
+              <span style={{ fontSize: 9, color: '#9CA3AF' }}>···</span>
+              <span style={rangeTagStyle('#fef2f2', '#991b1b')}>{massMax.toFixed(2)}</span>
+              <span style={{ fontSize: 10, color: '#9CA3AF' }}>кг</span>
+            </div>
+          )}
         </div>
 
+        {/* Погонный вес */}
         {state.result?.linearMass != null && state.result.linearMass > 0 && (
-          <div style={{ borderLeft: '1px solid var(--outline-variant)', paddingLeft: 24 }}>
-            <div style={{ fontSize: 11, color: 'var(--on-surface-variant)', marginBottom: 2 }}>Погонный вес</div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--on-surface)' }}>
-              {state.result.linearMass.toFixed(4)}
-              <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--on-surface-variant)', marginLeft: 4 }}>кг/м</span>
+          <>
+            <div style={{ width: 1, background: 'var(--outline-variant, #E5E7EB)', alignSelf: 'stretch', margin: '0 14px' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <div style={resLabelStyle}>Погонный вес</div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--on-surface, #111827)', fontVariantNumeric: 'tabular-nums' }}>
+                  {state.result.linearMass.toFixed(4)}
+                </span>
+                <span style={{ fontSize: 11, color: 'var(--on-surface-variant, #6B7280)' }}>кг/м</span>
+              </div>
             </div>
-          </div>
+          </>
         )}
 
+        {/* Допуск ГОСТ */}
         {tolerance && (
-          <div style={{ marginLeft: 'auto', background: 'var(--primary-container)', color: 'var(--on-primary-container)', borderRadius: 'var(--radius-full)', padding: '4px 14px', fontSize: 12, fontWeight: 500 }}>
-            {tolerance.label}
+          <div style={{ marginLeft: 'auto', alignSelf: 'center' }}>
+            <span style={{
+              background: '#EFF4FF',
+              color: '#1E3A8A',
+              border: '1px solid #D1DEFE',
+              borderRadius: 100,
+              padding: '3px 10px',
+              fontSize: 11, fontWeight: 500,
+              whiteSpace: 'nowrap',
+            }}>
+              {tolerance.label}
+            </span>
           </div>
         )}
       </div>
@@ -276,52 +312,77 @@ export default function CalcPanel({ calc, getGrades, onGostResult, onGostClear, 
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+// ── Вспомогательные компоненты ────────────────────────────────────────
+
+function InputWithUnit({
+  value, unit, onChange,
+}: {
+  value: number | string
+  unit: string
+  onChange: (v: number | null) => void
+}) {
   return (
-    <div>
-      <div style={labelStyle}>{label}</div>
-      <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--outline)', borderRadius: 'var(--radius-sm)', overflow: 'hidden', background: 'var(--surface)' }}>
-        {children}
-      </div>
+    <div style={{
+      display: 'flex', alignItems: 'stretch', height: 30,
+      border: '1px solid var(--outline, #D1D5DB)', borderRadius: 6, overflow: 'hidden',
+      background: 'var(--surface, #fff)',
+    }}>
+      <input
+        type="number"
+        value={value}
+        min={0} step={0.1}
+        onChange={e => onChange(e.target.value ? parseFloat(e.target.value) : null)}
+        style={{
+          flex: 1, border: 'none', background: 'transparent',
+          padding: '0 8px', fontSize: 12,
+          color: 'var(--on-surface, #111827)',
+          fontFamily: 'Manrope, sans-serif', outline: 'none', minWidth: 0,
+        }}
+      />
+      <span style={{
+        padding: '0 7px', fontSize: 11, fontWeight: 500,
+        color: 'var(--on-surface-variant, #6B7280)',
+        borderLeft: '1px solid var(--outline-variant, #E5E7EB)',
+        display: 'flex', alignItems: 'center',
+        background: 'var(--surface-container, #F9FAFB)',
+        whiteSpace: 'nowrap',
+      }}>
+        {unit}
+      </span>
     </div>
   )
 }
 
-function Unit({ children }: { children: React.ReactNode }) {
-  return (
-    <span style={{ padding: '0 8px', fontSize: 12, color: 'var(--on-surface-variant)', borderLeft: '1px solid var(--outline-variant)', whiteSpace: 'nowrap', flexShrink: 0 }}>
-      {children}
-    </span>
-  )
+function rangeTagStyle(bg: string, color: string): React.CSSProperties {
+  return {
+    background: bg, color, padding: '1px 5px',
+    borderRadius: 4, fontSize: 10, fontWeight: 500,
+    fontVariantNumeric: 'tabular-nums',
+  }
 }
 
-function QtyBtn({ onClick, children }: { onClick: () => void; children: React.ReactNode }) {
-  return (
-    <button onClick={onClick} style={{
-      width: 36, height: 36, border: 'none', borderRadius: 'var(--radius-sm)',
-      background: '#1565C0', color: '#fff', fontSize: 18, fontWeight: 600,
-      cursor: 'pointer', fontFamily: 'Manrope, sans-serif', flexShrink: 0,
-      transition: 'background .12s',
-    }}
-      onMouseEnter={e => (e.currentTarget.style.background = '#1976D2')}
-      onMouseLeave={e => (e.currentTarget.style.background = '#1565C0')}
-    >
-      {children}
-    </button>
-  )
+const inlineLabelStyle: React.CSSProperties = {
+  fontSize: 11, fontWeight: 600,
+  color: 'var(--on-surface-variant, #6B7280)',
+  whiteSpace: 'nowrap', minWidth: 38,
 }
 
-const labelStyle: React.CSSProperties = {
-  fontSize: 11, fontWeight: 600, color: 'var(--on-surface-variant)', marginBottom: 4,
+const fieldLabelStyle: React.CSSProperties = {
+  fontSize: 10, fontWeight: 600,
+  color: 'var(--on-surface-variant, #6B7280)',
+  textTransform: 'uppercase', letterSpacing: '.06em',
+  marginBottom: 3,
 }
 
-const inputStyle: React.CSSProperties = {
-  flex: 1, border: 'none', background: 'transparent', padding: '8px 10px',
-  fontSize: 13, color: 'var(--on-surface)', fontFamily: 'Manrope, sans-serif', outline: 'none',
+const resLabelStyle: React.CSSProperties = {
+  fontSize: 10, fontWeight: 600,
+  color: 'var(--on-surface-variant, #6B7280)',
+  textTransform: 'uppercase', letterSpacing: '.06em',
 }
 
-const selectStyle: React.CSSProperties = {
-  flex: 1, border: 'none', background: 'transparent', padding: '8px 10px',
-  fontSize: 13, color: 'var(--on-surface)', fontFamily: 'Manrope, sans-serif',
-  outline: 'none', cursor: 'pointer',
+const qtyBtnStyle: React.CSSProperties = {
+  width: 28, border: 'none', background: '#F3F4F6',
+  color: '#374151', fontSize: 16, fontWeight: 600,
+  cursor: 'pointer', fontFamily: 'Manrope, sans-serif',
+  flexShrink: 0, transition: 'background .1s',
 }
