@@ -55,56 +55,160 @@
   --shadow-2-dark:  0 2px 4px rgba(0,0,0,.4),  0 4px 8px rgba(0,0,0,.45);
 }
 
-/* ── Tier 2: Semantic tokens через light-dark() ───────────────────
-   Один источник — переключаются автоматически по color-scheme.
-   Нерегистрированные custom properties — light-dark() не резолвится
-   при наследовании, остаётся живым для потомков с другим color-scheme.
+/* ── Tier 2: Semantic tokens ──────────────────────────────────────
+   Шаг 1: Fallback для браузеров без light-dark() (Chrome < 123, Safari < 17.5).
+   Значения по умолчанию — светлая тема. @media переключает на тёмную.
 ──────────────────────────────────────────────────────────────────── */
 :root {
-  color-scheme: light dark;
+  --primary:              var(--color-blue-800);
+  --primary-dark:         var(--color-blue-900);
+  --primary-light:        var(--color-blue-700);
+  --primary-container:    var(--color-blue-50);
+  --on-primary-container: var(--color-blue-900);
 
-  --primary:              light-dark(var(--color-blue-800),  var(--color-blue-400));
-  --primary-dark:         light-dark(var(--color-blue-900),  var(--color-blue-200));
-  --primary-light:        light-dark(var(--color-blue-700),  var(--color-blue-200));
-  --primary-container:    light-dark(var(--color-blue-50),   var(--color-blue-950));
-  --on-primary-container: light-dark(var(--color-blue-900),  var(--color-blue-200));
+  --surface:              var(--color-neutral-0);
+  --surface-variant:      var(--color-neutral-50);
+  --surface-container:    var(--color-neutral-100);
+  --on-surface:           var(--color-neutral-700);
+  --on-surface-variant:   var(--color-neutral-500);
 
-  --surface:              light-dark(var(--color-neutral-0),    var(--color-neutral-d200));
-  --surface-variant:      light-dark(var(--color-neutral-50),   var(--color-neutral-d300));
-  --surface-container:    light-dark(var(--color-neutral-100),  var(--color-neutral-d100));
-  --on-surface:           light-dark(var(--color-neutral-700),  var(--color-neutral-d700));
-  --on-surface-variant:   light-dark(var(--color-neutral-500),  var(--color-neutral-d600));
+  --outline:              var(--color-neutral-300);
+  --outline-variant:      var(--color-neutral-200);
 
-  --outline:              light-dark(var(--color-neutral-300),  var(--color-neutral-d500));
-  --outline-variant:      light-dark(var(--color-neutral-200),  var(--color-neutral-d400));
+  --error:                #BA1A1A;
+  --error-container:      #FFDAD6;
+  --success:              #166534;
+  --success-container:    #F0FDF4;
+  --success-border:       #BBF7D0;
+  --warning:              #92400E;
+  --warning-container:    #FFFBEB;
+  --warning-border:       #FDE68A;
+  --info:                 #1D4ED8;
+  --info-container:       #EFF6FF;
+  --info-border:          #BFDBFE;
 
-  --error:                light-dark(#BA1A1A, #FCA5A5);
-  --error-container:      light-dark(#FFDAD6, #2A1010);
-
-  --success:              light-dark(#166534, #86EFAC);
-  --success-container:    light-dark(#F0FDF4, #052E16);
-  --success-border:       light-dark(#BBF7D0, #166534);
-
-  --warning:              light-dark(#92400E, #FCD34D);
-  --warning-container:    light-dark(#FFFBEB, #1C1400);
-  --warning-border:       light-dark(#FDE68A, #92400E);
-
-  --info:                 light-dark(#1D4ED8, #93C5FD);
-  --info-container:       light-dark(#EFF6FF, #0A1628);
-  --info-border:          light-dark(#BFDBFE, #1E3A5F);
-
-  --shadow-1: light-dark(var(--shadow-1-light), var(--shadow-1-dark));
-  --shadow-2: light-dark(var(--shadow-2-light), var(--shadow-2-dark));
+  --shadow-1: var(--shadow-1-light);
+  --shadow-2: var(--shadow-2-light);
 }
 
-/* ── Ручное переключение — только color-scheme, токены переключаются сами */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --primary:              var(--color-blue-400);
+    --primary-dark:         var(--color-blue-200);
+    --primary-light:        var(--color-blue-200);
+    --primary-container:    var(--color-blue-950);
+    --on-primary-container: var(--color-blue-200);
+
+    --surface:              var(--color-neutral-d200);
+    --surface-variant:      var(--color-neutral-d300);
+    --surface-container:    var(--color-neutral-d100);
+    --on-surface:           var(--color-neutral-d700);
+    --on-surface-variant:   var(--color-neutral-d600);
+
+    --outline:              var(--color-neutral-d500);
+    --outline-variant:      var(--color-neutral-d400);
+
+    --error:                #FCA5A5;
+    --error-container:      #2A1010;
+    --success:              #86EFAC;
+    --success-container:    #052E16;
+    --success-border:       #166534;
+    --warning:              #FCD34D;
+    --warning-container:    #1C1400;
+    --warning-border:       #92400E;
+    --info:                 #93C5FD;
+    --info-container:       #0A1628;
+    --info-border:          #1E3A5F;
+
+    --shadow-1: var(--shadow-1-dark);
+    --shadow-2: var(--shadow-2-dark);
+  }
+}
+
+/* ── Tier 2: Semantic tokens через light-dark() ───────────────────
+   Шаг 2: Современные браузеры (Chrome 123+, Safari 17.5+, Firefox 120+).
+   Переопределяет fallback выше. Нерегистрированные custom properties —
+   light-dark() не резолвится при наследовании, остаётся живым
+   для потомков с другим color-scheme.
+──────────────────────────────────────────────────────────────────── */
+@supports (color: light-dark(white, black)) {
+  :root {
+    color-scheme: light dark;
+
+    --primary:              light-dark(var(--color-blue-800),  var(--color-blue-400));
+    --primary-dark:         light-dark(var(--color-blue-900),  var(--color-blue-200));
+    --primary-light:        light-dark(var(--color-blue-700),  var(--color-blue-200));
+    --primary-container:    light-dark(var(--color-blue-50),   var(--color-blue-950));
+    --on-primary-container: light-dark(var(--color-blue-900),  var(--color-blue-200));
+
+    --surface:              light-dark(var(--color-neutral-0),    var(--color-neutral-d200));
+    --surface-variant:      light-dark(var(--color-neutral-50),   var(--color-neutral-d300));
+    --surface-container:    light-dark(var(--color-neutral-100),  var(--color-neutral-d100));
+    --on-surface:           light-dark(var(--color-neutral-700),  var(--color-neutral-d700));
+    --on-surface-variant:   light-dark(var(--color-neutral-500),  var(--color-neutral-d600));
+
+    --outline:              light-dark(var(--color-neutral-300),  var(--color-neutral-d500));
+    --outline-variant:      light-dark(var(--color-neutral-200),  var(--color-neutral-d400));
+
+    --error:                light-dark(#BA1A1A, #FCA5A5);
+    --error-container:      light-dark(#FFDAD6, #2A1010);
+    --success:              light-dark(#166534, #86EFAC);
+    --success-container:    light-dark(#F0FDF4, #052E16);
+    --success-border:       light-dark(#BBF7D0, #166534);
+    --warning:              light-dark(#92400E, #FCD34D);
+    --warning-container:    light-dark(#FFFBEB, #1C1400);
+    --warning-border:       light-dark(#FDE68A, #92400E);
+    --info:                 light-dark(#1D4ED8, #93C5FD);
+    --info-container:       light-dark(#EFF6FF, #0A1628);
+    --info-border:          light-dark(#BFDBFE, #1E3A5F);
+
+    --shadow-1: light-dark(var(--shadow-1-light), var(--shadow-1-dark));
+    --shadow-2: light-dark(var(--shadow-2-light), var(--shadow-2-dark));
+  }
+}
+
+/* ── Ручное переключение ──────────────────────────────────────────
+   Явно переопределяем унаследованные color-свойства при смене color-scheme,
+   иначе они унаследуют уже резолвленный цвет из родителя (gotcha из документа).
+──────────────────────────────────────────────────────────────────── */
 .dark {
   color-scheme: only dark;
+  /* Переопределяем унаследованные <color> свойства явно */
+  color:        var(--on-surface);
+  accent-color: var(--primary);
+  /* Токены уже переключились через color-scheme — переопределяем fallback */
+  --primary:              var(--color-blue-400);
+  --primary-dark:         var(--color-blue-200);
+  --primary-light:        var(--color-blue-200);
+  --primary-container:    var(--color-blue-950);
+  --on-primary-container: var(--color-blue-200);
+  --surface:              var(--color-neutral-d200);
+  --surface-variant:      var(--color-neutral-d300);
+  --surface-container:    var(--color-neutral-d100);
+  --on-surface:           var(--color-neutral-d700);
+  --on-surface-variant:   var(--color-neutral-d600);
+  --outline:              var(--color-neutral-d500);
+  --outline-variant:      var(--color-neutral-d400);
+  --error:                #FCA5A5;
+  --error-container:      #2A1010;
+  --success:              #86EFAC;
+  --success-container:    #052E16;
+  --success-border:       #166534;
+  --warning:              #FCD34D;
+  --warning-container:    #1C1400;
+  --warning-border:       #92400E;
+  --info:                 #93C5FD;
+  --info-container:       #0A1628;
+  --info-border:          #1E3A5F;
+  --shadow-1:             var(--shadow-1-dark);
+  --shadow-2:             var(--shadow-2-dark);
 }
 
 @media (prefers-color-scheme: dark) {
   .theme-system {
     color-scheme: only dark;
+    color:        var(--on-surface);
+    accent-color: var(--primary);
   }
 }
 
@@ -131,6 +235,8 @@
 html {
   box-sizing: border-box;
   color-scheme: light dark;
+  background: var(--surface-variant);
+  color: var(--on-surface);
   accent-color: var(--primary);
   scrollbar-color: var(--outline) transparent;
   scrollbar-width: thin;

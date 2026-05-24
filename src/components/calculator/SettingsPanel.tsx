@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { profiles } from '@/data/profiles'
 import { getMetalGroups } from '@/data/materials'
 import { useSettings, GradeSortMode, GradeSort } from '@/data/settings'
