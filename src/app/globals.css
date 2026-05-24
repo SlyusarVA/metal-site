@@ -258,6 +258,19 @@ body {
     color      0.25s var(--motion-standard);
 }
 
+/* ── Typography — text wrapping ───────────────────────────────────
+   text-wrap: balance — Chrome 114+, Firefox 121+, Safari 17.5+
+   text-wrap: pretty  — Chrome 117+, Safari 26+. Firefox — graceful degradation.
+   Не применять глобально (*) — алгоритм дорогой.
+──────────────────────────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  text-wrap: balance;
+}
+
+p, li, blockquote {
+  text-wrap: pretty;
+}
+
 /* ── Focus — видимый для клавиатуры, скрытый для мыши ───────────── */
 :focus-visible {
   outline: 2px solid var(--primary);

@@ -125,7 +125,7 @@ export default function HistoryPage() {
         )}
 
         {/* Список записей */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, containerType: 'inline-size' }}>
           {records.map(r => (
             <div key={r.id} style={{
               background: 'var(--surface)',
