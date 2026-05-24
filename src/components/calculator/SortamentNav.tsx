@@ -86,6 +86,9 @@ export default function SortamentNav({
       background: 'var(--surface)',
       borderRight: '1px solid var(--outline-variant)',
       overflowY: 'auto',
+      scrollbarWidth: 'thin',
+      scrollbarColor: 'var(--outline) transparent',
+      scrollbarGutter: 'stable',
     }}>
       <div style={{
         fontSize: 10, fontWeight: 700, letterSpacing: '.08em',

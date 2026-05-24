@@ -240,6 +240,21 @@ html {
   accent-color: var(--primary);
   scrollbar-color: var(--outline) transparent;
   scrollbar-width: thin;
+  scrollbar-gutter: stable;
+}
+
+/* Webkit fallback для браузеров без scrollbar-color (Chrome < 121) */
+@supports not (scrollbar-color: auto) {
+  html::-webkit-scrollbar           { width: 8px; height: 8px; }
+  html::-webkit-scrollbar-thumb     { background: var(--outline); border-radius: 4px; }
+  html::-webkit-scrollbar-track     { background: transparent; }
+}
+
+/* High Contrast Mode — чёткие системные цвета */
+@media (prefers-contrast: more) {
+  html {
+    scrollbar-color: CanvasText Canvas;
+  }
 }
 
 *,

@@ -18,6 +18,9 @@ export default function MetalNav({ groups, selected, highlighted = [], onSelect,
       borderRight: '1px solid var(--outline-variant)',
       overflowY: 'auto',
       height: '100%',
+      scrollbarWidth: 'thin',
+      scrollbarColor: 'var(--outline) transparent',
+      scrollbarGutter: 'stable',
     }}>
       <div style={{
         fontSize: 10, fontWeight: 700, letterSpacing: '.08em',
