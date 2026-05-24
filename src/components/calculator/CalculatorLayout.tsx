@@ -92,7 +92,7 @@ export default function CalculatorLayout() {
             display: 'flex',
             alignItems: 'center',
             marginBottom: 16,
-            gap: 2,
+            gap: 4,
           }}
         >
           <SiteTab active>Калькулятор</SiteTab>
@@ -110,13 +110,13 @@ export default function CalculatorLayout() {
           </button>
           <button
             onClick={() => setShowSettings(true)}
-            style={{ ...utilBtnStyle, padding: '0 10px' }}
+            style={{ ...utilBtnStyle, ...topbarIconBtnStyle }}
             title="Настройки"
             aria-label="Открыть настройки"
             onMouseEnter={e => (e.currentTarget.style.background = 'var(--outline-variant)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
               <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
               <circle cx="12" cy="12" r="3" />
             </svg>
@@ -301,18 +301,28 @@ function SiteTab({ children, active, onClick }: { children: React.ReactNode; act
 const utilBtnStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
+  justifyContent: 'center',
   gap: 6,
   background: 'transparent',
   border: 'none',
-  borderRadius: 6,
+  borderRadius: 'var(--radius-sm)',
   cursor: 'pointer',
   color: 'var(--on-surface-variant)',
   fontSize: 'var(--text-xs)' as string,
   fontWeight: 500,
   fontFamily: 'Manrope, sans-serif',
-  padding: '5px 10px',
-  transition: 'background .15s',
+  height: 32,
+  minBlockSize: 32,
+  padding: '0 10px',
+  transition: 'background .15s, color .15s',
   whiteSpace: 'nowrap',
+}
+
+const topbarIconBtnStyle: React.CSSProperties = {
+  width: 32,
+  padding: 0,
+  gap: 0,
+  flexShrink: 0,
 }
 
 function mobileNavBtn(active: boolean): React.CSSProperties {
