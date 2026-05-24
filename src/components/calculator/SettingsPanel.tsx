@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import { profiles } from '@/data/profiles'
 import { getMetalGroups } from '@/data/materials'
 import { useSettings, GradeSortMode, GradeSort } from '@/data/settings'
+import { useTheme } from '@/hooks/useTheme'
 import type { ProfileKey } from '@/data/profiles'
 
 interface Props {
@@ -22,21 +23,7 @@ const THEME_OPTIONS: { value: Theme; label: string; icon: string; desc: string }
 export default function SettingsPanel({ onClose }: Props) {
   const [tab, setTab] = useState<Tab>('metals')
   const { settings, setMetalOrder, setProfileOrder, setGradeSort, resetToDefault } = useSettings()
-  const [currentTheme, setCurrentTheme] = useState<Theme>('system')
-
-  useEffect(() => {
-    const saved = (localStorage.getItem('theme') as Theme) || 'system'
-    setCurrentTheme(saved)
-  }, [])
-
-  function applyTheme(t: Theme) {
-    const root = document.documentElement
-    root.classList.remove('dark', 'theme-system')
-    if (t === 'dark') root.classList.add('dark')
-    else if (t === 'system') root.classList.add('theme-system')
-    localStorage.setItem('theme', t)
-    setCurrentTheme(t)
-  }
+  const { theme: currentTheme, setTheme: applyTheme } = useTheme()
 
   return (
     <div style={{
