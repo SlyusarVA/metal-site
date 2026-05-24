@@ -171,6 +171,37 @@
    Явно переопределяем унаследованные color-свойства при смене color-scheme,
    иначе они унаследуют уже резолвленный цвет из родителя (gotcha из документа).
 ──────────────────────────────────────────────────────────────────── */
+.light {
+  color-scheme: only light;
+  color:        var(--on-surface);
+  accent-color: var(--primary);
+  --primary:              var(--color-blue-800);
+  --primary-dark:         var(--color-blue-900);
+  --primary-light:        var(--color-blue-700);
+  --primary-container:    var(--color-blue-50);
+  --on-primary-container: var(--color-blue-900);
+  --surface:              var(--color-neutral-0);
+  --surface-variant:      var(--color-neutral-50);
+  --surface-container:    var(--color-neutral-100);
+  --on-surface:           var(--color-neutral-700);
+  --on-surface-variant:   var(--color-neutral-500);
+  --outline:              var(--color-neutral-300);
+  --outline-variant:      var(--color-neutral-200);
+  --error:                #BA1A1A;
+  --error-container:      #FFDAD6;
+  --success:              #166534;
+  --success-container:    #F0FDF4;
+  --success-border:       #BBF7D0;
+  --warning:              #92400E;
+  --warning-container:    #FFFBEB;
+  --warning-border:       #FDE68A;
+  --info:                 #1D4ED8;
+  --info-container:       #EFF6FF;
+  --info-border:          #BFDBFE;
+  --shadow-1:             var(--shadow-1-light);
+  --shadow-2:             var(--shadow-2-light);
+}
+
 .dark {
   color-scheme: only dark;
   /* Переопределяем унаследованные <color> свойства явно */
@@ -207,6 +238,14 @@
 @media (prefers-color-scheme: dark) {
   .theme-system {
     color-scheme: only dark;
+    color:        var(--on-surface);
+    accent-color: var(--primary);
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .theme-system {
+    color-scheme: only light;
     color:        var(--on-surface);
     accent-color: var(--primary);
   }
@@ -282,70 +321,14 @@ h1, h2, h3, h4, h5, h6 {
   text-wrap: balance;
 }
 
-p, li, blockquote {
+p, li, dd, figcaption {
   text-wrap: pretty;
 }
 
-/* ── Focus — видимый для клавиатуры, скрытый для мыши ───────────── */
-:focus-visible {
-  outline: 2px solid var(--primary);
-  outline-offset: 2px;
-  border-radius: 4px;
+input, select, textarea, button {
+  font: inherit;
 }
 
-:focus:not(:focus-visible) {
-  outline: none;
-}
-
-/* ── Touch targets — min 44px на тач-устройствах ─────────────────── */
-@media (pointer: coarse) {
-  button,
-  [role="button"],
-  a,
-  select,
-  input[type="checkbox"],
-  input[type="radio"] {
-    min-block-size: 44px;
-  }
-}
-
-/* ── Selection ────────────────────────────────────────────────────── */
-::selection {
-  background: var(--primary-container);
-  color: var(--on-primary-container);
-}
-
-/* ── Scroll-driven анимация пунктов навигации ─────────────────────
-   @supports фильтрует Firefox (нет поддержки animation-range: entry).
-   entry-keyframe opacity: 0.4 — в несовместимых браузерах
-   элементы остаются полностью видимыми, JS-fallback не нужен.
-──────────────────────────────────────────────────────────────────── */
-@supports ((animation-timeline: view()) and (animation-range: entry)) {
-  @keyframes nav-item-scroll {
-    entry 0%   { opacity: 0.4; translate: 0 8px; }
-    entry 60%  { opacity: 1;   translate: 0 0;   }
-    exit  40%  { opacity: 1;   translate: 0 0;   }
-    exit  100% { opacity: 0.4; translate: 0 -8px; }
-  }
-
-  .nav-item {
-    /* animation-timeline объявлен ПОСЛЕ shorthand — иначе shorthand сбросит его */
-    animation: nav-item-scroll linear both;
-    animation-timeline: view(block);
-    animation-range: entry 0% entry 100%, exit 0% exit 100%;
-  }
-}
-
-/* ── Reduced motion ───────────────────────────────────────────────── */
-@property --animation-reduced {
-  syntax: "*";
-  inherits: false;
-  initial-value: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation: var(--animation-reduced) !important;
-    transition-duration: 0.01ms !important;
-  }
+button {
+  -webkit-tap-highlight-color: transparent;
 }
