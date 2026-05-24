@@ -72,7 +72,6 @@ export default function CalculatorLayout() {
       // Внешний слой — фон страницы, заполняет весь viewport
       <div style={{
         minHeight: '100vh',
-        background: 'var(--surface-container)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
