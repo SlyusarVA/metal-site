@@ -48,6 +48,7 @@ export default function MetalNav({ groups, selected, highlighted = [], onSelect,
         return (
           <button
             key={group}
+            className="nav-item"
             onClick={() => { onSelect(group); onMobileClose?.() }}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
@@ -105,7 +106,7 @@ export default function MetalNav({ groups, selected, highlighted = [], onSelect,
           else if (isActive) { bg = 'var(--primary-container)'; borderColor = 'var(--primary)'; color = 'var(--primary)'; fontWeight = 600 }
           else if (isHighlighted) { bg = '#FFFDE7'; borderColor = '#F9A825'; color = '#E65100'; fontWeight = 600 }
           return (
-            <button key={group} onClick={() => { onSelect(group); onMobileClose?.() }} style={{
+            <button key={group} className="nav-item" onClick={() => { onSelect(group); onMobileClose?.() }} style={{
               display: 'flex', alignItems: 'center', gap: 6,
               width: '100%', textAlign: 'left',
               background: bg, border: 'none', borderLeft: `3px solid ${borderColor}`,

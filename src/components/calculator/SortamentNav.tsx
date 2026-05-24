@@ -44,6 +44,7 @@ export default function SortamentNav({
       return (
         <button
           key={p.key}
+          className="nav-item"
           onClick={() => { onSelect(p.key); onMobileClose?.() }}
           style={{
             display: 'flex', alignItems: 'center', gap: 10,

@@ -181,6 +181,27 @@ body {
   color: var(--on-primary-container);
 }
 
+/* ── Scroll-driven анимация пунктов навигации ─────────────────────
+   @supports фильтрует Firefox (нет поддержки animation-range: entry).
+   entry-keyframe opacity: 0.4 — в несовместимых браузерах
+   элементы остаются полностью видимыми, JS-fallback не нужен.
+──────────────────────────────────────────────────────────────────── */
+@supports ((animation-timeline: view()) and (animation-range: entry)) {
+  @keyframes nav-item-scroll {
+    entry 0%   { opacity: 0.4; translate: 0 8px; }
+    entry 60%  { opacity: 1;   translate: 0 0;   }
+    exit  40%  { opacity: 1;   translate: 0 0;   }
+    exit  100% { opacity: 0.4; translate: 0 -8px; }
+  }
+
+  .nav-item {
+    /* animation-timeline объявлен ПОСЛЕ shorthand — иначе shorthand сбросит его */
+    animation: nav-item-scroll linear both;
+    animation-timeline: view(block);
+    animation-range: entry 0% entry 100%, exit 0% exit 100%;
+  }
+}
+
 /* ── Reduced motion ───────────────────────────────────────────────── */
 @property --animation-reduced {
   syntax: "*";
