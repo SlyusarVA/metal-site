@@ -49,7 +49,6 @@ export default function ThemeToggle() {
       Math.max(y, window.innerHeight - y)
     )
 
-    // View Transition API — Chrome 111+
     if ('startViewTransition' in document) {
       const style = document.createElement('style')
       style.textContent = `
@@ -60,10 +59,10 @@ export default function ThemeToggle() {
         ::view-transition-new(root) {
           animation: theme-expand .5s cubic-bezier(0.22, 1, 0.36, 1) both;
           mix-blend-mode: normal;
-          clip-path: circle(0px at ${x}px ${y}px);
         }
         @keyframes theme-expand {
-          to { clip-path: circle(${maxR}px at ${x}px ${y}px); }
+          from { clip-path: circle(0px at ${x}px ${y}px); }
+          to   { clip-path: circle(${maxR}px at ${x}px ${y}px); }
         }
       `
       document.head.appendChild(style)
@@ -73,7 +72,9 @@ export default function ThemeToggle() {
         setTheme(next)
         localStorage.setItem('theme', next)
       })
-      transition.finished.then(() => style.remove())
+      transition.finished
+        .then(() => style.remove())
+        .catch(() => style.remove())
       return
     }
 
