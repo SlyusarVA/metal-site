@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { profiles, ProfileKey } from '@/data/profiles'
-import { getMetalGroups, getGradesForGroup } from '@/data/materials'
+import { getGradesForGroup } from '@/data/materials'
 import { useCalculator } from '@/hooks/useCalculator'
 import { useSettings, sortGrades } from '@/data/settings'
 import MetalNav from './MetalNav'
@@ -66,27 +66,35 @@ export default function CalculatorLayout() {
     return sortGrades(raw, sort)
   }
 
-  // ── Desktop: вся страница центрирует карточку калькулятора ──
+  const commonProps = {
+    calc,
+    getGrades: getGradesOrdered,
+    onGostResult: handleGostResult,
+    onGostClear: handleGostClear,
+    needsSortament,
+  }
+
+  // ── Desktop ────────────────────────────────────────────────────────
   if (!isMobile) {
     return (
-      // Внешний слой — фон страницы, заполняет весь viewport
       <div style={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         padding: '24px 16px 40px',
       }}>
-
-        {/* Глобальная навигация сайта — над карточкой, на ширину карточки */}
-        <nav style={{
-          width: '100%',
-          maxWidth: 860,
-          display: 'flex',
-          alignItems: 'center',
-          marginBottom: 16,
-          gap: 2,
-        }}>
+        <nav
+          aria-label="Основная навигация"
+          style={{
+            width: '100%',
+            maxWidth: 860,
+            display: 'flex',
+            alignItems: 'center',
+            marginBottom: 16,
+            gap: 2,
+          }}
+        >
           <SiteTab active>Калькулятор</SiteTab>
           <SiteTab onClick={() => {}}>Марочник</SiteTab>
           <SiteTab onClick={() => setShowGost(true)}>ГОСТы</SiteTab>
@@ -97,17 +105,18 @@ export default function CalculatorLayout() {
             onMouseEnter={e => (e.currentTarget.style.background = 'var(--outline-variant)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--success)', flexShrink: 0 }} />
             История расчётов
           </button>
           <button
             onClick={() => setShowSettings(true)}
             style={{ ...utilBtnStyle, padding: '0 10px' }}
             title="Настройки"
+            aria-label="Открыть настройки"
             onMouseEnter={e => (e.currentTarget.style.background = 'var(--outline-variant)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
               <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
               <circle cx="12" cy="12" r="3" />
             </svg>
@@ -115,12 +124,11 @@ export default function CalculatorLayout() {
           <ThemeToggle />
         </nav>
 
-        {/* Карточка калькулятора — фиксированная ширина */}
         <div style={{
           width: '100%',
           maxWidth: 860,
           background: 'var(--surface)',
-          borderRadius: 12,
+          borderRadius: 'var(--radius-md)',
           border: '1px solid var(--outline-variant)',
           overflow: 'hidden',
           display: 'flex',
@@ -144,25 +152,18 @@ export default function CalculatorLayout() {
               metalGroup={state.metalGroup}
               onSelect={(key) => { selectProfile(key); setNeedsSortament(false) }}
             />
-            <CalcPanel
-              calc={calc}
-              getGrades={getGradesOrdered}
-              onGostResult={handleGostResult}
-              onGostClear={handleGostClear}
-              needsSortament={needsSortament}
-            />
+            <CalcPanel {...commonProps} />
           </div>
         </div>
 
-        {/* Подсказка под карточкой */}
-        <div style={{
+        <p style={{
           marginTop: 10,
-          fontSize: 11,
+          fontSize: 'var(--text-xs)',
           color: 'var(--on-surface-variant)',
           textAlign: 'center',
         }}>
           Данные по плотностям согласно ГОСТ. Результат расчёта — теоретический вес.
-        </div>
+        </p>
 
         {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
         {showGost && <GostPanel onClose={() => setShowGost(false)} />}
@@ -170,39 +171,69 @@ export default function CalculatorLayout() {
     )
   }
 
-  // ── Mobile layout — без изменений ─────────────────────────────────────
+  // ── Mobile ─────────────────────────────────────────────────────────
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', background: 'var(--surface-variant)' }}>
-      <nav style={{
-        background: '#1565C0',
-        display: 'flex',
-        alignItems: 'center',
-        height: 48,
-        flexShrink: 0,
-        boxShadow: '0 2px 8px rgba(21,101,192,.4)',
-        position: 'relative',
-        zIndex: 100,
-      }}>
-        <button onClick={() => { setMobileMetalOpen(o => !o); setMobileSortamentOpen(false) }} style={mobileNavBtn(mobileMetalOpen)}>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100dvh',
+      background: 'var(--surface-variant)',
+    }}>
+      <nav
+        aria-label="Основная навигация"
+        style={{
+          background: 'var(--primary)',
+          display: 'flex',
+          alignItems: 'center',
+          height: 48,
+          flexShrink: 0,
+          boxShadow: 'var(--shadow-2)',
+          position: 'relative',
+          zIndex: 100,
+        }}
+      >
+        <button
+          onClick={() => { setMobileMetalOpen(o => !o); setMobileSortamentOpen(false) }}
+          style={mobileNavBtn(mobileMetalOpen)}
+          aria-expanded={mobileMetalOpen}
+          aria-label="Выбрать металл"
+        >
           ⚙ Металл
         </button>
-        <button onClick={() => { setMobileSortamentOpen(o => !o); setMobileMetalOpen(false) }} style={mobileNavBtn(mobileSortamentOpen)}>
+        <button
+          onClick={() => { setMobileSortamentOpen(o => !o); setMobileMetalOpen(false) }}
+          style={mobileNavBtn(mobileSortamentOpen)}
+          aria-expanded={mobileSortamentOpen}
+          aria-label="Выбрать сортамент"
+        >
           📐 Сортамент
         </button>
         <div style={{ flex: 1 }} />
-        <button onClick={() => router.push('/history')} style={{
-          background: 'none', border: 'none', cursor: 'pointer',
-          color: 'rgba(255,255,255,.85)', fontSize: 11, fontWeight: 500,
-          fontFamily: 'Manrope, sans-serif', padding: '0 10px', height: '100%',
-        }}>
+        <button
+          onClick={() => router.push('/history')}
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: 'rgba(255,255,255,.85)', fontSize: 'var(--text-xs)',
+            fontWeight: 500, fontFamily: 'Manrope, sans-serif',
+            padding: '0 10px', height: '100%',
+            minBlockSize: 44,
+          }}
+        >
           История
         </button>
-        <button onClick={() => setShowSettings(true)} style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'none', border: 'none', borderLeft: '1px solid rgba(255,255,255,.15)',
-          cursor: 'pointer', color: 'rgba(255,255,255,.8)', width: 44, height: '100%',
-        }}>
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+        <button
+          onClick={() => setShowSettings(true)}
+          aria-label="Открыть настройки"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'none', border: 'none',
+            borderInlineStart: '1px solid rgba(255,255,255,.15)',
+            cursor: 'pointer', color: 'rgba(255,255,255,.8)',
+            width: 44, height: '100%',
+            minBlockSize: 44,
+          }}
+        >
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
             <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
             <circle cx="12" cy="12" r="3" />
           </svg>
@@ -230,13 +261,7 @@ export default function CalculatorLayout() {
           mobileOpen={mobileSortamentOpen}
           onMobileClose={() => setMobileSortamentOpen(false)}
         />
-        <CalcPanel
-          calc={calc}
-          getGrades={getGradesOrdered}
-          onGostResult={handleGostResult}
-          onGostClear={handleGostClear}
-          needsSortament={needsSortament}
-        />
+        <CalcPanel {...commonProps} />
       </div>
 
       {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
@@ -245,25 +270,25 @@ export default function CalculatorLayout() {
   )
 }
 
-// ── Вспомогательные компоненты ─────────────────────────────────────────
-
 function SiteTab({ children, active, onClick }: { children: React.ReactNode; active?: boolean; onClick?: () => void }) {
   return (
     <button
       onClick={onClick}
+      aria-current={active ? 'page' : undefined}
       style={{
         background: 'transparent',
         border: 'none',
         borderRadius: 6,
         cursor: active ? 'default' : 'pointer',
         color: active ? 'var(--primary)' : 'var(--on-surface-variant)',
-        fontSize: 12,
+        fontSize: 'var(--text-sm)',
         fontWeight: active ? 600 : 400,
         fontFamily: 'Manrope, sans-serif',
         padding: '5px 12px',
         letterSpacing: '.02em',
         transition: 'background .15s, color .15s',
         whiteSpace: 'nowrap',
+        minBlockSize: 32,
       }}
       onMouseEnter={e => { if (!active) (e.currentTarget.style.background = 'var(--outline-variant)') }}
       onMouseLeave={e => { if (!active) (e.currentTarget.style.background = 'transparent') }}
@@ -282,7 +307,7 @@ const utilBtnStyle: React.CSSProperties = {
   borderRadius: 6,
   cursor: 'pointer',
   color: 'var(--on-surface-variant)',
-  fontSize: 11,
+  fontSize: 'var(--text-xs)' as string,
   fontWeight: 500,
   fontFamily: 'Manrope, sans-serif',
   padding: '5px 10px',
@@ -294,10 +319,10 @@ function mobileNavBtn(active: boolean): React.CSSProperties {
   return {
     background: active ? 'rgba(255,255,255,.2)' : 'none',
     border: 'none',
-    borderRight: '1px solid rgba(255,255,255,.12)',
+    borderInlineEnd: '1px solid rgba(255,255,255,.12)',
     cursor: 'pointer',
     color: '#fff',
-    fontSize: 12,
+    fontSize: 'var(--text-sm)' as string,
     fontWeight: 600,
     fontFamily: 'Manrope, sans-serif',
     padding: '0 14px',
