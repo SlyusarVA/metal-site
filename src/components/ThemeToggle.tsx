@@ -1,14 +1,32 @@
 'use client'
 
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTheme } from '@/hooks/useTheme'
+
+function getSystemTheme(): 'light' | 'dark' {
+  if (typeof window === 'undefined') return 'light'
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+}
 
 export default function ThemeToggle() {
   const { theme, setTheme } = useTheme()
   const btnRef = useRef<HTMLButtonElement>(null)
+  const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>('light')
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-color-scheme: dark)')
+    const update = () => setSystemTheme(media.matches ? 'dark' : 'light')
+
+    update()
+    media.addEventListener('change', update)
+    return () => media.removeEventListener('change', update)
+  }, [])
+
+  const effectiveTheme = theme === 'system' ? systemTheme : theme
+  const isDark = effectiveTheme === 'dark'
 
   function toggle() {
-    const next = theme === 'dark' ? 'light' : 'dark'
+    const next = isDark ? 'light' : 'dark'
 
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (reduced) { setTheme(next); return }
@@ -61,8 +79,6 @@ export default function ThemeToggle() {
     }
     requestAnimationFrame(draw)
   }
-
-  const isDark = theme === 'dark'
 
   return (
     <button
