@@ -5,7 +5,6 @@ interface Props {
   selected: string
   highlighted?: string[]
   onSelect: (group: string) => void
-  /** Мобильный режим: панель открыта */
   mobileOpen?: boolean
   onMobileClose?: () => void
 }
@@ -23,7 +22,7 @@ export default function MetalNav({ groups, selected, highlighted = [], onSelect,
       <div style={{
         fontSize: 10, fontWeight: 700, letterSpacing: '.08em',
         color: 'var(--on-surface-variant)',
-        padding: '12px 14px 6px',
+        padding: '10px 14px 4px',
         textTransform: 'uppercase',
       }}>
         Металл
@@ -55,11 +54,11 @@ export default function MetalNav({ groups, selected, highlighted = [], onSelect,
               width: '100%', textAlign: 'left',
               background: bg, border: 'none',
               borderLeft: `3px solid ${borderColor}`,
-              cursor: 'pointer', padding: '9px 10px 9px 11px',
+              cursor: 'pointer', padding: '7px 10px 7px 11px',
               fontSize: 13, fontWeight, color,
               fontFamily: 'Manrope, sans-serif',
               transition: 'background .12s, color .12s',
-              minHeight: 44,
+              minHeight: 36,
             }}
             onMouseEnter={e => { if (!isActive && !isHighlighted) (e.currentTarget as HTMLElement).style.background = 'var(--surface-container)' }}
             onMouseLeave={e => { if (!isActive && !isHighlighted) (e.currentTarget as HTMLElement).style.background = 'none' }}
@@ -74,17 +73,12 @@ export default function MetalNav({ groups, selected, highlighted = [], onSelect,
     </div>
   )
 
-  // Десктоп — обычная колонка
   if (mobileOpen === undefined) return content
 
-  // Мобильный — оверлей
   return (
     <>
       {mobileOpen && (
-        <div
-          onClick={onMobileClose}
-          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 200 }}
-        />
+        <div onClick={onMobileClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', zIndex: 200 }} />
       )}
       <div style={{
         position: 'fixed', top: 48, left: 0, bottom: 0,

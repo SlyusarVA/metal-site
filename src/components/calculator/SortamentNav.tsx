@@ -19,12 +19,11 @@ export default function SortamentNav({
 }: Props) {
 
   const allowed = getAllowedProfiles(metalGroup)
-  // Фильтруем: если маппинг есть — показываем только допустимые
   const visibleProfiles = allowed
     ? profiles.filter(p => allowed.includes(p.key))
     : profiles
 
-  const renderList = (fontSize = 13, padding = '8px 12px') =>
+  const renderList = (fontSize = 13, padding = '6px 12px') =>
     visibleProfiles.map(p => {
       const isActive = p.key === selected
       const isHighlighted = highlighted.includes(p.key)
@@ -55,7 +54,7 @@ export default function SortamentNav({
             fontSize, fontWeight, color,
             fontFamily: 'Manrope, sans-serif',
             transition: 'background .12s',
-            minHeight: 40,
+            minHeight: 36,
           }}
           onMouseEnter={e => {
             if (!isActive && !isHighlighted)
@@ -69,7 +68,7 @@ export default function SortamentNav({
           <img
             src={`/icons/${p.icon}.svg`}
             alt=""
-            width={26} height={26}
+            width={22} height={22}
             style={{ flexShrink: 0, opacity: isActive || isHighlighted ? 1 : 0.55 }}
           />
           <span style={{ flex: 1 }}>{p.name}</span>
@@ -90,7 +89,7 @@ export default function SortamentNav({
       <div style={{
         fontSize: 10, fontWeight: 700, letterSpacing: '.08em',
         color: 'var(--on-surface-variant)',
-        padding: '12px 14px 6px', textTransform: 'uppercase',
+        padding: '10px 14px 4px', textTransform: 'uppercase',
       }}>
         Сортамент
       </div>
