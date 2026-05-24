@@ -74,14 +74,15 @@ export default function ThemeToggle() {
     }
 
     // Fallback для Safari / Firefox — canvas ripple overlay
-    const canvas = (document as Document).createElement('canvas')
+    const doc = document as Document
+    const canvas = doc.createElement('canvas')
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
     Object.assign(canvas.style, {
       position: 'fixed', inset: '0', zIndex: '9999',
       pointerEvents: 'none',
     })
-    document.body.appendChild(canvas)
+    doc.body.appendChild(canvas)
 
     const ctx = canvas.getContext('2d')!
     const newBg = next === 'dark' ? '#111827' : '#f9fafb'
