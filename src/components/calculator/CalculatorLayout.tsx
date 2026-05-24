@@ -11,6 +11,7 @@ import SortamentNav from './SortamentNav'
 import CalcPanel from './CalcPanel'
 import SettingsPanel from './SettingsPanel'
 import GostPanel from './GostPanel'
+import ThemeToggle from '../ThemeToggle'
 
 export default function CalculatorLayout() {
   const router = useRouter()
@@ -71,7 +72,7 @@ export default function CalculatorLayout() {
       // Внешний слой — фон страницы, заполняет весь viewport
       <div style={{
         minHeight: '100vh',
-        background: '#EAECF0',
+        background: 'var(--surface-container)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -94,7 +95,7 @@ export default function CalculatorLayout() {
           <button
             onClick={() => router.push('/history')}
             style={utilBtnStyle}
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,.7)')}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--outline-variant)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#22c55e', flexShrink: 0 }} />
@@ -104,7 +105,7 @@ export default function CalculatorLayout() {
             onClick={() => setShowSettings(true)}
             style={{ ...utilBtnStyle, padding: '0 10px' }}
             title="Настройки"
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,.7)')}
+            onMouseEnter={e => (e.currentTarget.style.background = 'var(--outline-variant)')}
             onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -112,19 +113,19 @@ export default function CalculatorLayout() {
               <circle cx="12" cy="12" r="3" />
             </svg>
           </button>
+          <ThemeToggle />
         </nav>
 
         {/* Карточка калькулятора — фиксированная ширина */}
         <div style={{
           width: '100%',
           maxWidth: 860,
-          background: 'var(--surface, #fff)',
+          background: 'var(--surface)',
           borderRadius: 12,
-          border: '1px solid #D1D5DB',
+          border: '1px solid var(--outline-variant)',
           overflow: 'hidden',
           display: 'flex',
           flexDirection: 'column',
-          // Фиксированная высота — не тянется на весь экран
           height: 560,
         }}>
           <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
@@ -158,7 +159,7 @@ export default function CalculatorLayout() {
         <div style={{
           marginTop: 10,
           fontSize: 11,
-          color: '#9CA3AF',
+          color: 'var(--on-surface-variant)',
           textAlign: 'center',
         }}>
           Данные по плотностям согласно ГОСТ. Результат расчёта — теоретический вес.
@@ -252,11 +253,11 @@ function SiteTab({ children, active, onClick }: { children: React.ReactNode; act
     <button
       onClick={onClick}
       style={{
-        background: active ? 'rgba(255,255,255,.18)' : 'transparent',
+        background: 'transparent',
         border: 'none',
         borderRadius: 6,
         cursor: active ? 'default' : 'pointer',
-        color: active ? '#1565C0' : '#6B7280',
+        color: active ? 'var(--primary)' : 'var(--on-surface-variant)',
         fontSize: 12,
         fontWeight: active ? 600 : 400,
         fontFamily: 'Manrope, sans-serif',
@@ -265,7 +266,7 @@ function SiteTab({ children, active, onClick }: { children: React.ReactNode; act
         transition: 'background .15s, color .15s',
         whiteSpace: 'nowrap',
       }}
-      onMouseEnter={e => { if (!active) (e.currentTarget.style.background = 'rgba(0,0,0,.04)' )}}
+      onMouseEnter={e => { if (!active) (e.currentTarget.style.background = 'var(--outline-variant)') }}
       onMouseLeave={e => { if (!active) (e.currentTarget.style.background = 'transparent') }}
     >
       {children}
@@ -281,7 +282,7 @@ const utilBtnStyle: React.CSSProperties = {
   border: 'none',
   borderRadius: 6,
   cursor: 'pointer',
-  color: '#6B7280',
+  color: 'var(--on-surface-variant)',
   fontSize: 11,
   fontWeight: 500,
   fontFamily: 'Manrope, sans-serif',

@@ -74,7 +74,7 @@ export default function ThemeToggle() {
     }
 
     // Fallback для Safari / Firefox — canvas ripple overlay
-    const canvas = document.createElement('canvas')
+    const canvas = (document as Document).createElement('canvas')
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
     Object.assign(canvas.style, {
@@ -123,17 +123,17 @@ export default function ThemeToggle() {
         width: 32,
         height: 32,
         borderRadius: '50%',
-        color: 'rgba(255,255,255,.8)',
+        color: 'var(--on-surface-variant)',
         transition: 'background .15s, color .15s',
         flexShrink: 0,
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.background = 'rgba(255,255,255,.15)'
-        e.currentTarget.style.color = '#fff'
+        e.currentTarget.style.background = 'var(--outline-variant)'
+        e.currentTarget.style.color = 'var(--on-surface)'
       }}
       onMouseLeave={e => {
         e.currentTarget.style.background = 'none'
-        e.currentTarget.style.color = 'rgba(255,255,255,.8)'
+        e.currentTarget.style.color = 'var(--on-surface-variant)'
       }}
     >
       {theme === 'light' ? (
