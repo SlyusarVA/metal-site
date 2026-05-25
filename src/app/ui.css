@@ -1,0 +1,66 @@
+@layer components {
+  .ui-dialog {
+    border: 1px solid var(--outline-variant);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    color: var(--on-surface);
+    box-shadow: var(--shadow-2);
+    padding: 0;
+    overflow: hidden;
+    max-inline-size: min(96vw, var(--dialog-max-inline-size, 54rem));
+  }
+
+  .ui-dialog::backdrop {
+    background: rgba(0, 0, 0, .42);
+    backdrop-filter: blur(2px);
+  }
+
+  .ui-button,
+  .ui-input,
+  .ui-select {
+    font: inherit;
+  }
+
+  .ui-button:focus-visible,
+  .ui-input:focus-visible,
+  .ui-select:focus-visible,
+  .ui-dialog:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+
+  .ui-scroll-area {
+    scrollbar-color: var(--outline) transparent;
+    scrollbar-width: thin;
+    scrollbar-gutter: stable;
+  }
+
+  .text-heading {
+    text-wrap: balance;
+  }
+
+  .text-body {
+    text-wrap: pretty;
+  }
+}
+
+@media (pointer: coarse) {
+  .ui-button,
+  .ui-input,
+  .ui-select {
+    min-block-size: 44px;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .ui-scroll-area {
+    scrollbar-color: CanvasText Canvas;
+  }
+
+  .ui-button:focus-visible,
+  .ui-input:focus-visible,
+  .ui-select:focus-visible,
+  .ui-dialog:focus-visible {
+    outline-color: CanvasText;
+  }
+}
