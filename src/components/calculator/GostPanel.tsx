@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { gostReferences, GostReference } from '@/data/gost'
+import AppDialog from '@/components/ui/AppDialog'
 
 interface Props {
   onClose: () => void
@@ -17,21 +18,15 @@ export default function GostPanel({ onClose }: Props) {
   )
 
   return (
-    <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 100,
-        background: 'rgba(0,0,0,.32)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+    <AppDialog
+      titleId="gost-dialog-title"
+      width={820}
+      height="80vh"
+      maxHeight="80vh"
+      onClose={onClose}
     >
       <div style={{
-        background: 'var(--surface)',
-        borderRadius: 'var(--radius-lg)',
-        boxShadow: '0 8px 32px rgba(0,0,0,.18)',
-        width: 820,
-        maxWidth: '96vw',
-        height: '80vh',
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -44,9 +39,9 @@ export default function GostPanel({ onClose }: Props) {
           borderBottom: '1px solid var(--outline-variant)',
           flexShrink: 0,
         }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Справочник ГОСТ</h2>
-          <button onClick={onClose} style={iconBtnStyle}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <h2 id="gost-dialog-title" className="text-heading" style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Справочник ГОСТ</h2>
+          <button onClick={onClose} className="ui-button" style={iconBtnStyle} aria-label="Закрыть справочник ГОСТ">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <path d="M18 6 6 18M6 6l12 12"/>
             </svg>
           </button>
@@ -70,6 +65,7 @@ export default function GostPanel({ onClose }: Props) {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Поиск по коду или названию..."
+                className="ui-input"
                 style={{
                   width: '100%',
                   boxSizing: 'border-box',
@@ -80,17 +76,17 @@ export default function GostPanel({ onClose }: Props) {
                   fontFamily: 'Manrope, sans-serif',
                   background: 'var(--surface-variant)',
                   color: 'var(--on-surface)',
-                  outline: 'none',
                 }}
               />
             </div>
 
             {/* Список ГОСТов */}
-            <div style={{ flex: 1, overflowY: 'auto' }}>
+            <div className="ui-scroll-area" style={{ flex: 1, overflowY: 'auto' }}>
               {filtered.map(g => (
                 <button
                   key={g.code}
                   onClick={() => setSelected(g)}
+                  className="ui-button"
                   style={{
                     width: '100%',
                     textAlign: 'left',
@@ -133,26 +129,26 @@ export default function GostPanel({ onClose }: Props) {
           </div>
 
           {/* Правая колонка — детали */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+          <div className="ui-scroll-area" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
             <div style={{ fontSize: 11, color: 'var(--primary)', fontWeight: 700, letterSpacing: '.06em', marginBottom: 4 }}>
               {selected.code}
             </div>
-            <h3 style={{ fontSize: 15, fontWeight: 700, margin: '0 0 12px', lineHeight: 1.4 }}>
+            <h3 className="text-heading" style={{ fontSize: 15, fontWeight: 700, margin: '0 0 12px', lineHeight: 1.4 }}>
               {selected.title}
             </h3>
 
             <Section title="Область применения">
-              <p style={textStyle}>{selected.scope}</p>
+              <p className="text-body" style={textStyle}>{selected.scope}</p>
             </Section>
 
             <Section title="Ключевые параметры">
-              <ul style={ulStyle}>
+              <ul className="text-body" style={ulStyle}>
                 {selected.keyParams.map((p, i) => <li key={i} style={liStyle}>{p}</li>)}
               </ul>
             </Section>
 
             <Section title="Допуски">
-              <ul style={ulStyle}>
+              <ul className="text-body" style={ulStyle}>
                 {selected.tolerances.map((t, i) => <li key={i} style={liStyle}>{t}</li>)}
               </ul>
             </Section>
@@ -168,7 +164,7 @@ export default function GostPanel({ onClose }: Props) {
                   gap: 6,
                 }}>
                   {selected.critical.map((c, i) => (
-                    <div key={i} style={{ fontSize: 12, color: 'var(--on-surface)', display: 'flex', gap: 8 }}>
+                    <div key={i} className="text-body" style={{ fontSize: 12, color: 'var(--on-surface)', display: 'flex', gap: 8 }}>
                       <span style={{ color: 'var(--primary)', fontWeight: 700, flexShrink: 0 }}>!</span>
                       {c}
                     </div>
@@ -178,7 +174,7 @@ export default function GostPanel({ onClose }: Props) {
             )}
 
             <Section title="Маркировка">
-              <p style={textStyle}>{selected.marking}</p>
+              <p className="text-body" style={textStyle}>{selected.marking}</p>
             </Section>
 
             <a
@@ -201,7 +197,7 @@ export default function GostPanel({ onClose }: Props) {
           </div>
         </div>
       </div>
-    </div>
+    </AppDialog>
   )
 }
 
