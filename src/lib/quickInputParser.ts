@@ -103,8 +103,6 @@ function findGrade(input: string, group: string): string | null {
 
 function findProfile(input: string): ProfileKey | null {
   const entries = Object.entries(PROFILE_ALIASES) as [ProfileKey, string[]][]
-
-  // Сначала более специфичные названия, чтобы "труба проф" не стала обычной трубой.
   entries.sort(([, a], [, b]) => Math.max(...b.map(x => x.length)) - Math.max(...a.map(x => x.length)))
 
   for (const [profileKey, aliases] of entries) {
@@ -115,20 +113,25 @@ function findProfile(input: string): ProfileKey | null {
 }
 
 function findMass(input: string): number | null {
-  const explicit = input.match(/(?:масса|вес)\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(?:кг|kg)?\b/)
+  const explicit = input.match(/(?:масса|вес)\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(?:кг|kg|к)?\b/)
   if (explicit) return Number(explicit[1])
 
-  const withUnit = input.match(/(\d+(?:\.\d+)?)\s*(?:кг|kg)\b/)
-  return withUnit ? Number(withUnit[1]) : null
+  const withUnit = input.match(/(\d+(?:\.\d+)?)\s*(?:кг|kg|к)\b/)
+  if (withUnit) return Number(withUnit[1])
+
+  const numbers = input.match(/\d+(?:\.\d+)?/g)?.map(Number) ?? []
+  // Fallback for warehouse-style shorthand: "круг 16 сталь 45 120".
+  // The last number is treated as mass only when no explicit kg marker exists.
+  return numbers.length >= 3 ? numbers[numbers.length - 1] : null
 }
 
 function removeMass(input: string): string {
   return input
-    .replace(/(?:масса|вес)\s*[:=]?\s*\d+(?:\.\d+)?\s*(?:кг|kg)?\b/g, ' ')
-    .replace(/\d+(?:\.\d+)?\s*(?:кг|kg)\b/g, ' ')
+    .replace(/(?:масса|вес)\s*[:=]?\s*\d+(?:\.\d+)?\s*(?:кг|kg|к)?\b/g, ' ')
+    .replace(/\d+(?:\.\d+)?\s*(?:кг|kg|к)\b/g, ' ')
 }
 
-function extractDimensionSource(input: string, group: string, grade: string, profileKey: ProfileKey): string {
+function extractDimensionSource(input: string, group: string, grade: string, profileKey: ProfileKey, mass: number): string {
   let source = input
   for (const aliases of Object.values(GROUP_ALIASES)) {
     for (const alias of aliases) source = removeWord(source, alias)
@@ -136,6 +139,8 @@ function extractDimensionSource(input: string, group: string, grade: string, pro
   source = removeWord(source, grade)
   for (const alias of PROFILE_ALIASES[profileKey] ?? []) source = removeWord(source, alias)
   source = removeMass(source)
+  // Remove one remaining mass token for shorthand without unit: "круг 16 сталь 45 120".
+  source = source.replace(new RegExp(`(^|\\s)${escapeRegExp(String(mass))}(?=\\s|$)`), ' ')
   return source.replace(/\s+/g, ' ').trim()
 }
 
@@ -216,7 +221,7 @@ export function parseQuickInput(input: string, fallbackGroup: string): QuickInpu
     return { ok: false, message: 'Не удалось распознать массу. Укажите значение в кг, например: «масса 120 кг».' }
   }
 
-  const dimensionSource = extractDimensionSource(normalized, metalGroup, grade, profileKey)
+  const dimensionSource = extractDimensionSource(normalized, metalGroup, grade, profileKey, mass)
   const params = parseParams(profileKey, dimensionSource)
   if (!params) {
     return { ok: false, message: 'Не удалось распознать размеры. Примеры: «круг 16», «труба 57х3», «полоса 40х4».' }
