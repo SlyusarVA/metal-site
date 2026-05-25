@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import './preview-palette.css'
+import './theme-green.css'
 import './ui-system.css'
 
 export const metadata: Metadata = {
