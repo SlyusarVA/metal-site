@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import './preview-palette.css'
+import './ui.css'
 
 export const metadata: Metadata = {
   title: 'Калькулятор металла',
