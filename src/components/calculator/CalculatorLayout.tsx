@@ -20,8 +20,6 @@ export default function CalculatorLayout() {
   const { settings } = useSettings()
   const [showSettings, setShowSettings] = useState(false)
   const [showGost, setShowGost] = useState(false)
-  const [mobileMetalOpen, setMobileMetalOpen] = useState(false)
-  const [mobileSortamentOpen, setMobileSortamentOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
   const [highlightedMetals, setHighlightedMetals] = useState<string[]>([])
@@ -74,27 +72,16 @@ export default function CalculatorLayout() {
     needsSortament,
   }
 
-  // ── Desktop ────────────────────────────────────────────────────────
   if (!isMobile) {
     return (
       <div style={{
-        minHeight: '100dvh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        padding: '24px 16px 40px',
+        minHeight: '100dvh', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', padding: '24px 16px 40px',
       }}>
-        <nav
-          aria-label="Основная навигация"
-          style={{
-            width: '100%',
-            maxWidth: 860,
-            display: 'flex',
-            alignItems: 'center',
-            marginBottom: 16,
-            gap: 4,
-          }}
-        >
+        <nav aria-label="Основная навигация" style={{
+          width: '100%', maxWidth: 860, display: 'flex', alignItems: 'center',
+          marginBottom: 16, gap: 4,
+        }}>
           <SiteTab active>Калькулятор</SiteTab>
           <SiteTab onClick={() => {}}>Марочник</SiteTab>
           <SiteTab onClick={() => setShowGost(true)}>ГОСТы</SiteTab>
@@ -116,24 +103,15 @@ export default function CalculatorLayout() {
             onMouseEnter={e => { e.currentTarget.style.background = 'var(--outline-variant)'; e.currentTarget.style.color = 'var(--on-surface)' }}
             onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--on-surface-variant)' }}
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
+            <SettingsIcon />
           </button>
           <ThemeToggle />
         </nav>
 
         <div style={{
-          width: '100%',
-          maxWidth: 860,
-          background: 'var(--surface)',
-          borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--outline-variant)',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          height: 560,
+          width: '100%', maxWidth: 860, background: 'var(--surface)',
+          borderRadius: 'var(--radius-md)', border: '1px solid var(--outline-variant)',
+          overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 560,
         }}>
           <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
             <MetalNav
@@ -157,10 +135,8 @@ export default function CalculatorLayout() {
         </div>
 
         <p style={{
-          marginTop: 10,
-          fontSize: 'var(--text-xs)',
-          color: 'var(--on-surface-variant)',
-          textAlign: 'center',
+          marginTop: 10, fontSize: 'var(--text-xs)',
+          color: 'var(--on-surface-variant)', textAlign: 'center',
         }}>
           Данные по плотностям согласно ГОСТ. Результат расчёта — теоретический вес.
         </p>
@@ -171,102 +147,58 @@ export default function CalculatorLayout() {
     )
   }
 
-  // ── Mobile ─────────────────────────────────────────────────────────
   return (
     <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100dvh',
-      background: 'var(--surface-variant)',
+      display: 'flex', flexDirection: 'column', height: '100dvh',
+      minHeight: 0, background: 'var(--surface-variant)', overflow: 'hidden',
     }}>
-      <nav
-        aria-label="Основная навигация"
-        style={{
-          background: 'var(--primary)',
-          display: 'flex',
-          alignItems: 'center',
-          height: 48,
-          flexShrink: 0,
-          boxShadow: 'var(--shadow-2)',
-          position: 'relative',
-          zIndex: 100,
-        }}
-      >
-        <button
-          onClick={() => { setMobileMetalOpen(o => !o); setMobileSortamentOpen(false) }}
-          style={mobileNavBtn(mobileMetalOpen)}
-          aria-expanded={mobileMetalOpen}
-          aria-label="Выбрать металл"
-        >
-          ⚙ Металл
-        </button>
-        <button
-          onClick={() => { setMobileSortamentOpen(o => !o); setMobileMetalOpen(false) }}
-          style={mobileNavBtn(mobileSortamentOpen)}
-          aria-expanded={mobileSortamentOpen}
-          aria-label="Выбрать сортамент"
-        >
-          📐 Сортамент
-        </button>
-        <div style={{ flex: 1 }} />
-        <button
-          onClick={() => router.push('/history')}
-          style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            color: 'rgba(255,255,255,.85)', fontSize: 'var(--text-xs)',
-            fontWeight: 500, fontFamily: 'Manrope, sans-serif',
-            padding: '0 10px', height: '100%',
-            minBlockSize: 44,
-          }}
-        >
-          История
-        </button>
-        <button
-          onClick={() => setShowSettings(true)}
-          aria-label="Открыть настройки"
-          style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'none', border: 'none',
-            borderInlineStart: '1px solid rgba(255,255,255,.15)',
-            cursor: 'pointer', color: 'rgba(255,255,255,.8)',
-            width: 44, height: '100%',
-            minBlockSize: 44,
-          }}
-        >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
-            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-            <circle cx="12" cy="12" r="3" />
-          </svg>
+      <nav aria-label="Основная навигация" style={{
+        background: 'var(--surface)',
+        borderBottom: '1px solid var(--outline-variant)',
+        display: 'flex', alignItems: 'center', gap: 8,
+        minHeight: 48, padding: '0 12px', flexShrink: 0,
+      }}>
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{
+            fontSize: 'var(--text-sm)', fontWeight: 700,
+            color: 'var(--on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>
+            Калькулятор металла
+          </div>
+          <div style={{
+            fontSize: 'var(--text-xs)', color: 'var(--on-surface-variant)',
+            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+          }}>
+            {state.metalGroup} · {state.profile.name}
+          </div>
+        </div>
+        <button onClick={() => router.push('/history')} style={mobileTopBtnStyle}>История</button>
+        <button onClick={() => setShowSettings(true)} aria-label="Открыть настройки" style={mobileIconBtnStyle}>
+          <SettingsIcon />
         </button>
       </nav>
 
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        <MetalNav
-          groups={orderedMetals}
-          selected={state.metalGroup}
-          highlighted={highlightedMetals}
-          onSelect={(group) => {
-            const grades = getGradesOrdered(group)
-            if (grades.length > 0) selectMetal(group, grades[0].grade)
-          }}
-          mobileOpen={mobileMetalOpen}
-          onMobileClose={() => setMobileMetalOpen(false)}
+      <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
+        <CalcPanel
+          {...commonProps}
+          isMobile
+          metalGroups={orderedMetals}
+          profiles={orderedProfiles.map(p => ({ key: p.key, name: p.name }))}
         />
-        <SortamentNav
-          profiles={orderedProfiles}
-          selected={state.profileKey}
-          highlighted={highlightedProfiles}
-          metalGroup={state.metalGroup}
-          onSelect={(key) => { selectProfile(key); setNeedsSortament(false) }}
-          mobileOpen={mobileSortamentOpen}
-          onMobileClose={() => setMobileSortamentOpen(false)}
-        />
-        <CalcPanel {...commonProps} />
       </div>
 
       {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
       {showGost && <GostPanel onClose={() => setShowGost(false)} />}
     </div>
+  )
+}
+
+function SettingsIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
   )
 }
 
@@ -276,19 +208,13 @@ function SiteTab({ children, active, onClick }: { children: React.ReactNode; act
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
       style={{
-        background: 'transparent',
-        border: 'none',
-        borderRadius: 6,
+        background: 'transparent', border: 'none', borderRadius: 6,
         cursor: active ? 'default' : 'pointer',
         color: active ? 'var(--primary)' : 'var(--on-surface-variant)',
-        fontSize: 'var(--text-sm)',
-        fontWeight: active ? 600 : 400,
-        fontFamily: 'Manrope, sans-serif',
-        padding: '5px 12px',
-        letterSpacing: '.02em',
-        transition: 'background .15s, color .15s',
-        whiteSpace: 'nowrap',
-        minBlockSize: 32,
+        fontSize: 'var(--text-sm)', fontWeight: active ? 600 : 400,
+        fontFamily: 'Manrope, sans-serif', padding: '5px 12px',
+        letterSpacing: '.02em', transition: 'background .15s, color .15s',
+        whiteSpace: 'nowrap', minBlockSize: 32,
       }}
       onMouseEnter={e => { if (!active) (e.currentTarget.style.background = 'var(--outline-variant)') }}
       onMouseLeave={e => { if (!active) (e.currentTarget.style.background = 'transparent') }}
@@ -299,44 +225,26 @@ function SiteTab({ children, active, onClick }: { children: React.ReactNode; act
 }
 
 const utilBtnStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: 6,
-  background: 'transparent',
-  border: 'none',
-  borderRadius: 'var(--radius-sm)',
-  cursor: 'pointer',
-  color: 'var(--on-surface-variant)',
-  fontSize: 'var(--text-xs)' as string,
-  fontWeight: 500,
-  fontFamily: 'Manrope, sans-serif',
-  height: 32,
-  minBlockSize: 32,
-  padding: '0 10px',
-  transition: 'background .15s, color .15s',
-  whiteSpace: 'nowrap',
+  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+  background: 'transparent', border: 'none', borderRadius: 'var(--radius-sm)',
+  cursor: 'pointer', color: 'var(--on-surface-variant)',
+  fontSize: 'var(--text-xs)', fontWeight: 500, fontFamily: 'Manrope, sans-serif',
+  height: 32, minBlockSize: 32, padding: '0 10px',
+  transition: 'background .15s, color .15s', whiteSpace: 'nowrap',
 }
 
-const topbarIconBtnStyle: React.CSSProperties = {
-  width: 32,
-  padding: 0,
-  gap: 0,
-  flexShrink: 0,
+const topbarIconBtnStyle: React.CSSProperties = { width: 32, padding: 0, gap: 0, flexShrink: 0 }
+
+const mobileTopBtnStyle: React.CSSProperties = {
+  border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-sm)',
+  background: 'var(--surface-container)', color: 'var(--on-surface)',
+  fontSize: 'var(--text-xs)', fontWeight: 600, fontFamily: 'Manrope, sans-serif',
+  minHeight: 38, padding: '0 12px', cursor: 'pointer', flexShrink: 0,
 }
 
-function mobileNavBtn(active: boolean): React.CSSProperties {
-  return {
-    background: active ? 'rgba(255,255,255,.2)' : 'none',
-    border: 'none',
-    borderInlineEnd: '1px solid rgba(255,255,255,.12)',
-    cursor: 'pointer',
-    color: '#fff',
-    fontSize: 'var(--text-sm)' as string,
-    fontWeight: 600,
-    fontFamily: 'Manrope, sans-serif',
-    padding: '0 14px',
-    height: '100%',
-    whiteSpace: 'nowrap',
-  }
+const mobileIconBtnStyle: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  width: 38, height: 38, border: '1px solid var(--outline-variant)',
+  borderRadius: 'var(--radius-sm)', background: 'var(--surface-container)',
+  color: 'var(--on-surface-variant)', cursor: 'pointer', flexShrink: 0,
 }
