@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { gostReferences, GostReference } from '@/data/gost'
+import AppDialog from '@/components/ui/AppDialog'
 
 interface Props {
   onClose: () => void
@@ -17,26 +18,8 @@ export default function GostPanel({ onClose }: Props) {
   )
 
   return (
-    <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 100,
-        background: 'rgba(0,0,0,.32)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
-    >
-      <div style={{
-        background: 'var(--surface)',
-        borderRadius: 'var(--radius-lg)',
-        boxShadow: '0 8px 32px rgba(0,0,0,.18)',
-        width: 820,
-        maxWidth: '96vw',
-        height: '80vh',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-      }}>
-
+    <AppDialog title="Справочник ГОСТ" onClose={onClose} width={820} height="80dvh">
+      <div className="ui-dialog-shell" style={{ height: '80dvh' }}>
         {/* Шапка */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -45,8 +28,8 @@ export default function GostPanel({ onClose }: Props) {
           flexShrink: 0,
         }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Справочник ГОСТ</h2>
-          <button onClick={onClose} style={iconBtnStyle}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <button onClick={onClose} className="ui-icon-button" aria-label="Закрыть справочник ГОСТ">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <path d="M18 6 6 18M6 6l12 12"/>
             </svg>
           </button>
@@ -80,13 +63,12 @@ export default function GostPanel({ onClose }: Props) {
                   fontFamily: 'Manrope, sans-serif',
                   background: 'var(--surface-variant)',
                   color: 'var(--on-surface)',
-                  outline: 'none',
                 }}
               />
             </div>
 
             {/* Список ГОСТов */}
-            <div style={{ flex: 1, overflowY: 'auto' }}>
+            <div className="ui-scroll-area" style={{ flex: 1, overflowY: 'auto' }}>
               {filtered.map(g => (
                 <button
                   key={g.code}
@@ -133,7 +115,7 @@ export default function GostPanel({ onClose }: Props) {
           </div>
 
           {/* Правая колонка — детали */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+          <div className="ui-scroll-area" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
             <div style={{ fontSize: 11, color: 'var(--primary)', fontWeight: 700, letterSpacing: '.06em', marginBottom: 4 }}>
               {selected.code}
             </div>
@@ -201,7 +183,7 @@ export default function GostPanel({ onClose }: Props) {
           </div>
         </div>
       </div>
-    </div>
+    </AppDialog>
   )
 }
 
@@ -229,11 +211,4 @@ const ulStyle: React.CSSProperties = {
 
 const liStyle: React.CSSProperties = {
   fontSize: 13, color: 'var(--on-surface)', lineHeight: 1.5,
-}
-
-const iconBtnStyle: React.CSSProperties = {
-  background: 'none', border: 'none', cursor: 'pointer',
-  color: 'var(--on-surface-variant)', padding: 4,
-  borderRadius: 'var(--radius-sm)', display: 'flex',
-  alignItems: 'center', justifyContent: 'center',
 }
