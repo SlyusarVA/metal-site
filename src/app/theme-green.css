@@ -1,14 +1,15 @@
 /* Green palette layer for the calculator preview.
-   Overrides literal tokens only; semantic tokens still resolve in globals.css. */
+   Overrides literal tokens only; semantic tokens still resolve in globals.css.
+   Palette direction: muted industrial / forest green, avoiding neon contrast. */
 
 :root {
-  --color-blue-50:  #DCFCE7;
-  --color-blue-200: #BBF7D0;
-  --color-blue-400: #4ADE80;
-  --color-blue-700: #22C55E;
-  --color-blue-800: #16A34A;
-  --color-blue-900: #15803D;
-  --color-blue-950: #052E16;
+  --color-blue-50:  #E6F4EA;
+  --color-blue-200: #BFE5CC;
+  --color-blue-400: #5FAF7A;
+  --color-blue-700: #287D4F;
+  --color-blue-800: #22543D;
+  --color-blue-900: #1B4332;
+  --color-blue-950: #102A1F;
 
   --color-neutral-0:    #FFFFFF;
   --color-neutral-50:   #F7FAF8;
@@ -32,7 +33,7 @@
 
 body {
   background:
-    radial-gradient(circle at 20% 0%, rgba(34,197,94,.10), transparent 34rem),
-    radial-gradient(circle at 85% 8%, rgba(74,222,128,.08), transparent 30rem),
+    radial-gradient(circle at 20% 0%, rgba(40,125,79,.10), transparent 34rem),
+    radial-gradient(circle at 85% 8%, rgba(95,175,122,.07), transparent 30rem),
     var(--surface-variant);
 }
