@@ -64,7 +64,6 @@ export default function AppDialog({
   return (
     <dialog
       ref={dialogRef}
-      // @ts-expect-error closedby is supported in Chromium/Firefox and safely ignored by React types for now.
       closedby="any"
       aria-labelledby={labelledBy ?? titleId}
       className="ui-dialog"
