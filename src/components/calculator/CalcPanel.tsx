@@ -3,9 +3,11 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getWeightTolerance } from '@/data/gost'
-import { ProfileKey } from '@/data/profiles'
+import { profiles, ProfileKey } from '@/data/profiles'
 import GostTags from './GostTags'
 import GostSearchBar from './GostSearchBar'
+
+type CalcMode = 'mass' | 'length' | 'quick'
 
 interface Props {
   calc: ReturnType<typeof import('@/hooks/useCalculator').useCalculator>
@@ -15,10 +17,41 @@ interface Props {
   onGostClear: () => void
 }
 
+const MODE_META: Record<CalcMode, { label: string; icon: string; hint: string }> = {
+  mass: {
+    label: 'Расчёт массы',
+    icon: '⚖',
+    hint: 'Введите размеры и длину — масса рассчитается автоматически.',
+  },
+  length: {
+    label: 'Расчёт длины',
+    icon: '▱',
+    hint: 'Введите размеры и массу — длина рассчитается автоматически.',
+  },
+  quick: {
+    label: 'Быстрый ввод',
+    icon: '⚡',
+    hint: 'Введите металл, марку, сортамент, размеры и массу одной строкой.',
+  },
+}
+
 export default function CalcPanel({ calc, getGrades, onGostResult, onGostClear, needsSortament }: Props) {
   const router = useRouter()
-  const { state, selectMetal, setParam, setLength, setMass, incrementQty, decrementQty, calculate } = calc
-  const [calcMode, setCalcMode] = useState<'mass' | 'length'>('mass')
+  const {
+    state,
+    selectMetal,
+    selectProfile,
+    setParam,
+    setLength,
+    setMass,
+    incrementQty,
+    decrementQty,
+    calculate,
+  } = calc
+
+  const [calcMode, setCalcMode] = useState<CalcMode>('mass')
+  const [quickInput, setQuickInput] = useState('Сталь 20 круг 16 масса 120 кг')
+  const [quickStatus, setQuickStatus] = useState<string | null>(null)
 
   const grades = getGrades(state.metalGroup)
   const tolerance = getWeightTolerance(state.profileKey, Object.fromEntries(
@@ -27,19 +60,58 @@ export default function CalcPanel({ calc, getGrades, onGostResult, onGostClear, 
 
   const resultMass = state.result?.target === 'mass' ? state.result.value : (state.mass ?? null)
   const resultLength = state.result?.target === 'length' ? state.result.value : (state.length ?? null)
-  const displayResult = calcMode === 'mass' ? resultMass : resultLength
+  const displayResult = calcMode === 'mass' ? resultMass : calcMode === 'length' ? resultLength : state.result?.value ?? null
 
-  const massMin = resultMass != null && tolerance != null ? resultMass * (1 - tolerance.minus) : null
-  const massMax = resultMass != null && tolerance != null ? resultMass * (1 + tolerance.plus) : null
+  const massMin = calcMode === 'mass' && resultMass != null && tolerance != null ? resultMass * (1 - tolerance.minus) : null
+  const massMax = calcMode === 'mass' && resultMass != null && tolerance != null ? resultMass * (1 + tolerance.plus) : null
 
-  // Адаптивная сетка: на узких экранах — 1 колонка
-  const gridFieldCount =
-    state.profile.params.length +
-    (state.profile.isVolume ? 0 : 1) +
-    1
-  const gridCols = gridFieldCount <= 2
-    ? '1fr'
-    : 'repeat(auto-fill, minmax(140px, 1fr))'
+  const gridFieldCount = state.profile.params.length + (state.profile.isVolume ? 0 : 2) + 1
+  const gridCols = gridFieldCount <= 2 ? '1fr' : 'repeat(auto-fill, minmax(140px, 1fr))'
+
+  function handleModeChange(mode: CalcMode) {
+    setCalcMode(mode)
+    if (mode === 'mass') setMass(null)
+    if (mode === 'length') setLength(null)
+  }
+
+  function handleSourceValueChange(value: number | null) {
+    if (calcMode === 'mass') {
+      setMass(null)
+      setLength(value)
+      return
+    }
+
+    if (calcMode === 'length') {
+      setLength(null)
+      setMass(value)
+    }
+  }
+
+  function applyQuickInput() {
+    const normalized = quickInput.toLowerCase().replace(',', '.')
+    const massMatch = normalized.match(/(?:масса|вес)?\s*(\d+(?:\.\d+)?)\s*(?:кг|kg)\b/)
+    const numbers = normalized.match(/\d+(?:\.\d+)?/g) ?? []
+    const profile = profiles.find(p => normalized.includes(p.name.toLowerCase().replace('.', ''))) ??
+      (normalized.includes('круг') ? profiles.find(p => p.key === 'round') : undefined)
+
+    const gradeCandidate = grades.find(g => normalized.includes(g.grade.toLowerCase()))
+    const diameterCandidate = numbers
+      .map(Number)
+      .find(n => n > 0 && n < 1000 && (!massMatch || Math.abs(n - Number(massMatch[1])) > 0.0001))
+
+    if (profile) selectProfile(profile.key)
+    if (gradeCandidate) selectMetal(state.metalGroup, gradeCandidate.grade)
+    if (profile?.params.length === 1 && diameterCandidate != null) setParam(profile.params[0].key, diameterCandidate)
+    if (massMatch) {
+      setCalcMode('length')
+      setLength(null)
+      setMass(Number(massMatch[1]))
+      setQuickStatus('Данные перенесены в режим «Расчёт длины». Нажмите «Рассчитать».')
+      return
+    }
+
+    setQuickStatus('Не удалось распознать массу. Пример: «Сталь 20 круг 16 масса 120 кг».')
+  }
 
   return (
     <div style={{
@@ -49,7 +121,6 @@ export default function CalcPanel({ calc, getGrades, onGostResult, onGostClear, 
       minWidth: 0,
     }}>
 
-      {/* Шапка */}
       <div style={{
         background: 'var(--surface)',
         borderBottom: '1px solid var(--outline-variant)',
@@ -71,7 +142,6 @@ export default function CalcPanel({ calc, getGrades, onGostResult, onGostClear, 
         />
       </div>
 
-      {/* Поиск ГОСТ */}
       <div style={{
         background: 'var(--surface)',
         borderBottom: '1px solid var(--outline-variant)',
@@ -80,7 +150,6 @@ export default function CalcPanel({ calc, getGrades, onGostResult, onGostClear, 
         <GostSearchBar onResult={onGostResult} onClear={onGostClear} />
       </div>
 
-      {/* Подсказка выбрать сортамент */}
       {needsSortament && (
         <div style={{
           background: 'var(--warning-container)',
@@ -98,46 +167,160 @@ export default function CalcPanel({ calc, getGrades, onGostResult, onGostClear, 
         </div>
       )}
 
-      {/* Форма */}
       <div style={{
         flex: 1, padding: '12px 14px',
         overflowY: 'auto',
         display: 'flex', flexDirection: 'column', gap: 10,
       }}>
 
-        {/* Переключатель режима */}
         <div style={{
-          display: 'flex',
-          background: 'var(--surface-container)',
-          borderRadius: 20, padding: 2,
+          background: 'var(--surface)',
           border: '1px solid var(--outline-variant)',
-          width: 'fit-content',
+          borderRadius: 'var(--radius-md)',
+          padding: 10,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+          boxShadow: 'var(--shadow-1)',
         }}>
-          {(['mass', 'length'] as const).map(mode => (
-            <button
-              key={mode}
-              onClick={() => setCalcMode(mode)}
-              aria-pressed={calcMode === mode}
-              style={{
-                border: 'none', cursor: 'pointer',
-                borderRadius: 18,
-                padding: '5px 14px',
-                fontSize: 'var(--text-xs)' as string,
-                fontWeight: 500,
-                fontFamily: 'Manrope, sans-serif',
-                background: calcMode === mode ? 'var(--surface)' : 'transparent',
-                color: calcMode === mode ? 'var(--primary)' : 'var(--on-surface-variant)',
-                boxShadow: calcMode === mode ? 'var(--shadow-1)' : 'none',
-                transition: 'all .15s',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {mode === 'mass' ? 'Расчёт веса' : 'Расчёт длины'}
-            </button>
-          ))}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            color: 'var(--on-surface)',
+            fontSize: 'var(--text-base)' as string,
+            fontWeight: 700,
+          }}>
+            <span style={{ color: 'var(--primary)' }}>⚡</span>
+            Калькулятор металла
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+            gap: 4,
+            background: 'var(--surface-container)',
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid var(--outline-variant)',
+            padding: 3,
+          }}>
+            {(['mass', 'length', 'quick'] as const).map(mode => {
+              const active = calcMode === mode
+              return (
+                <button
+                  key={mode}
+                  onClick={() => handleModeChange(mode)}
+                  aria-pressed={active}
+                  style={{
+                    border: 'none',
+                    cursor: 'pointer',
+                    borderRadius: 7,
+                    padding: '7px 10px',
+                    fontSize: 'var(--text-xs)' as string,
+                    fontWeight: active ? 700 : 500,
+                    fontFamily: 'Manrope, sans-serif',
+                    background: active ? 'var(--primary)' : 'transparent',
+                    color: active ? '#fff' : 'var(--on-surface-variant)',
+                    transition: 'background .15s, color .15s',
+                    whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 6,
+                  }}
+                >
+                  <span aria-hidden="true">{MODE_META[mode].icon}</span>
+                  {MODE_META[mode].label}
+                </button>
+              )
+            })}
+          </div>
+
+          <div style={{
+            fontSize: 'var(--text-xs)' as string,
+            color: 'var(--on-surface-variant)',
+            lineHeight: 1.45,
+          }}>
+            {MODE_META[calcMode].hint}
+          </div>
         </div>
 
-        {/* Марка */}
+        {calcMode === 'quick' && (
+          <div style={{
+            background: 'var(--surface)',
+            border: '1px solid var(--outline-variant)',
+            borderRadius: 'var(--radius-md)',
+            padding: 10,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+          }}>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                value={quickInput}
+                onChange={e => setQuickInput(e.target.value)}
+                placeholder="Сталь 20 круг 16 масса 120 кг"
+                style={{
+                  flex: 1,
+                  height: 34,
+                  border: '1px solid var(--outline)',
+                  borderRadius: 7,
+                  background: 'var(--surface-container)',
+                  padding: '0 10px',
+                  color: 'var(--on-surface)',
+                  fontSize: 'var(--text-sm)' as string,
+                  fontFamily: 'Manrope, sans-serif',
+                  outline: 'none',
+                }}
+              />
+              <button
+                onClick={applyQuickInput}
+                style={{
+                  border: 'none',
+                  borderRadius: 7,
+                  background: 'var(--primary)',
+                  color: '#fff',
+                  fontSize: 'var(--text-sm)' as string,
+                  fontWeight: 700,
+                  fontFamily: 'Manrope, sans-serif',
+                  padding: '0 14px',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Применить
+              </button>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              flexWrap: 'wrap',
+              fontSize: 'var(--text-xs)' as string,
+              color: 'var(--on-surface-variant)',
+            }}>
+              <span>Пример:</span>
+              {['Сталь', '20', 'Круг Ø16', '120 кг'].map(item => (
+                <span key={item} style={quickChipStyle}>{item}</span>
+              ))}
+            </div>
+
+            {quickStatus && (
+              <div style={{
+                background: quickStatus.startsWith('Не удалось') ? 'var(--error-container)' : 'var(--success-container)',
+                color: quickStatus.startsWith('Не удалось') ? 'var(--error)' : 'var(--success)',
+                borderRadius: 7,
+                padding: '7px 9px',
+                fontSize: 'var(--text-xs)' as string,
+                lineHeight: 1.4,
+              }}>
+                {quickStatus}
+              </div>
+            )}
+          </div>
+        )}
+
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={inlineLabelStyle}>Марка</span>
           <select
@@ -159,7 +342,6 @@ export default function CalcPanel({ calc, getGrades, onGostResult, onGostClear, 
           </select>
         </div>
 
-        {/* Размерные поля */}
         <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 8 }}>
           {state.profile.params.map(p => (
             <div key={p.key}>
@@ -173,17 +355,26 @@ export default function CalcPanel({ calc, getGrades, onGostResult, onGostClear, 
           ))}
 
           {!state.profile.isVolume && (
-            <div>
-              <div style={fieldLabelStyle}>{calcMode === 'mass' ? 'Длина L' : 'Масса'}</div>
-              <InputWithUnit
-                value={calcMode === 'mass' ? (state.length ?? '') : (state.mass ?? '')}
-                unit={calcMode === 'mass' ? 'м.' : 'кг.'}
-                onChange={v => calcMode === 'mass' ? setLength(v) : setMass(v)}
-              />
-            </div>
+            <>
+              <div>
+                <div style={fieldLabelStyle}>{calcMode === 'length' ? 'Масса' : 'Длина L'}</div>
+                <InputWithUnit
+                  value={calcMode === 'length' ? (state.mass ?? '') : (state.length ?? '')}
+                  unit={calcMode === 'length' ? 'кг.' : 'м.'}
+                  onChange={handleSourceValueChange}
+                />
+              </div>
+
+              <div>
+                <div style={fieldLabelStyle}>{calcMode === 'length' ? 'Длина' : 'Масса'}</div>
+                <ReadonlyValueWithUnit
+                  value={calcMode === 'length' ? resultLength : resultMass}
+                  unit={calcMode === 'length' ? 'м' : 'кг'}
+                />
+              </div>
+            </>
           )}
 
-          {/* Количество */}
           <div>
             <div style={fieldLabelStyle}>Количество</div>
             <div style={{
@@ -207,7 +398,6 @@ export default function CalcPanel({ calc, getGrades, onGostResult, onGostClear, 
           </div>
         </div>
 
-        {/* Кнопка расчёта */}
         <button
           onClick={calculate}
           style={{
@@ -248,7 +438,6 @@ export default function CalcPanel({ calc, getGrades, onGostResult, onGostClear, 
         )}
       </div>
 
-      {/* Результат */}
       <div style={{
         background: 'var(--surface)',
         borderTop: '1px solid var(--outline-variant)',
@@ -257,7 +446,7 @@ export default function CalcPanel({ calc, getGrades, onGostResult, onGostClear, 
         flexShrink: 0,
       }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-          <div style={resLabelStyle}>{calcMode === 'mass' ? 'Вес' : 'Длина'}</div>
+          <div style={resLabelStyle}>{calcMode === 'length' ? 'Длина' : 'Вес'}</div>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
             <span style={{
               fontSize: 'var(--text-xl)' as string, fontWeight: 700,
@@ -267,7 +456,7 @@ export default function CalcPanel({ calc, getGrades, onGostResult, onGostClear, 
               {displayResult != null ? displayResult.toFixed(3) : '—'}
             </span>
             <span style={{ fontSize: 'var(--text-sm)' as string, color: 'var(--on-surface-variant)' }}>
-              {calcMode === 'mass' ? 'кг' : 'м'}
+              {calcMode === 'length' ? 'м' : 'кг'}
             </span>
           </div>
           {massMin != null && massMax != null && (
@@ -315,7 +504,7 @@ export default function CalcPanel({ calc, getGrades, onGostResult, onGostClear, 
           </>
         )}
 
-        {tolerance && (
+        {tolerance && calcMode === 'mass' && (
           <div style={{ marginInlineStart: 'auto', alignSelf: 'center' }}>
             <span style={{
               background: 'var(--primary-container)',
@@ -375,6 +564,50 @@ function InputWithUnit({ value, unit, onChange }: {
   )
 }
 
+function ReadonlyValueWithUnit({ value, unit }: {
+  value: number | null
+  unit: string
+}) {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'stretch',
+      height: 30,
+      border: '1px solid var(--outline-variant)',
+      borderRadius: 6,
+      overflow: 'hidden',
+      background: 'var(--surface-container)',
+      opacity: value == null ? 0.75 : 1,
+    }}>
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 8px',
+        fontSize: 'var(--text-sm)' as string,
+        color: 'var(--on-surface)',
+        fontVariantNumeric: 'tabular-nums',
+        minWidth: 0,
+      }}>
+        {value != null ? value.toFixed(3) : '—'}
+      </div>
+      <span style={{
+        padding: '0 7px',
+        fontSize: 'var(--text-xs)' as string,
+        fontWeight: 500,
+        color: 'var(--on-surface-variant)',
+        borderInlineStart: '1px solid var(--outline-variant)',
+        display: 'flex',
+        alignItems: 'center',
+        background: 'var(--surface)',
+        whiteSpace: 'nowrap',
+      }}>
+        {unit}
+      </span>
+    </div>
+  )
+}
+
 const inlineLabelStyle: React.CSSProperties = {
   fontSize: 'var(--text-xs)' as string,
   fontWeight: 600,
@@ -404,4 +637,14 @@ const qtyBtnStyle: React.CSSProperties = {
   fontSize: 16, fontWeight: 600,
   cursor: 'pointer', fontFamily: 'Manrope, sans-serif',
   flexShrink: 0, transition: 'background .1s',
+}
+
+const quickChipStyle: React.CSSProperties = {
+  border: '1px solid var(--outline-variant)',
+  background: 'var(--surface-container)',
+  color: 'var(--on-surface)',
+  borderRadius: 999,
+  padding: '2px 8px',
+  fontSize: 'var(--text-xs)' as string,
+  fontWeight: 600,
 }
