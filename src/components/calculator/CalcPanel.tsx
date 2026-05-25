@@ -3,11 +3,17 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getWeightTolerance } from '@/data/gost'
-import { profiles, ProfileKey } from '@/data/profiles'
+import { ProfileKey } from '@/data/profiles'
+import { parseQuickInput } from '@/lib/quickInputParser'
 import GostTags from './GostTags'
 import GostSearchBar from './GostSearchBar'
 
 type CalcMode = 'mass' | 'length' | 'quick'
+
+type QuickStatus = {
+  kind: 'success' | 'warning' | 'error'
+  message: string
+}
 
 interface Props {
   calc: ReturnType<typeof import('@/hooks/useCalculator').useCalculator>
@@ -51,7 +57,8 @@ export default function CalcPanel({ calc, getGrades, onGostResult, onGostClear, 
 
   const [calcMode, setCalcMode] = useState<CalcMode>('mass')
   const [quickInput, setQuickInput] = useState('Сталь 20 круг 16 масса 120 кг')
-  const [quickStatus, setQuickStatus] = useState<string | null>(null)
+  const [quickStatus, setQuickStatus] = useState<QuickStatus | null>(null)
+  const [quickChips, setQuickChips] = useState<string[]>(['Сталь', '20', 'Круг', 'Ø16', '120 кг'])
 
   const grades = getGrades(state.metalGroup)
   const tolerance = getWeightTolerance(state.profileKey, Object.fromEntries(
@@ -70,6 +77,7 @@ export default function CalcPanel({ calc, getGrades, onGostResult, onGostClear, 
 
   function handleModeChange(mode: CalcMode) {
     setCalcMode(mode)
+    setQuickStatus(null)
     if (mode === 'mass') setMass(null)
     if (mode === 'length') setLength(null)
   }
@@ -88,29 +96,30 @@ export default function CalcPanel({ calc, getGrades, onGostResult, onGostClear, 
   }
 
   function applyQuickInput() {
-    const normalized = quickInput.toLowerCase().replace(',', '.')
-    const massMatch = normalized.match(/(?:масса|вес)?\s*(\d+(?:\.\d+)?)\s*(?:кг|kg)\b/)
-    const numbers = normalized.match(/\d+(?:\.\d+)?/g) ?? []
-    const profile = profiles.find(p => normalized.includes(p.name.toLowerCase().replace('.', ''))) ??
-      (normalized.includes('круг') ? profiles.find(p => p.key === 'round') : undefined)
+    const parsed = parseQuickInput(quickInput, state.metalGroup)
 
-    const gradeCandidate = grades.find(g => normalized.includes(g.grade.toLowerCase()))
-    const diameterCandidate = numbers
-      .map(Number)
-      .find(n => n > 0 && n < 1000 && (!massMatch || Math.abs(n - Number(massMatch[1])) > 0.0001))
-
-    if (profile) selectProfile(profile.key)
-    if (gradeCandidate) selectMetal(state.metalGroup, gradeCandidate.grade)
-    if (profile?.params.length === 1 && diameterCandidate != null) setParam(profile.params[0].key, diameterCandidate)
-    if (massMatch) {
-      setCalcMode('length')
-      setLength(null)
-      setMass(Number(massMatch[1]))
-      setQuickStatus('Данные перенесены в режим «Расчёт длины». Нажмите «Рассчитать».')
+    if (!parsed.ok) {
+      setQuickStatus({ kind: 'error', message: parsed.message })
       return
     }
 
-    setQuickStatus('Не удалось распознать массу. Пример: «Сталь 20 круг 16 масса 120 кг».')
+    selectMetal(parsed.metalGroup, parsed.grade)
+    selectProfile(parsed.profileKey)
+    Object.entries(parsed.params).forEach(([key, value]) => setParam(key, value))
+    setLength(null)
+    setMass(parsed.mass)
+    setCalcMode('length')
+    setQuickChips(parsed.chips)
+
+    if (parsed.unsupportedReason) {
+      setQuickStatus({ kind: 'warning', message: parsed.unsupportedReason })
+      return
+    }
+
+    setQuickStatus({
+      kind: 'success',
+      message: 'Данные перенесены в режим «Расчёт длины». Нажмите «Рассчитать».',
+    })
   }
 
   return (
@@ -300,22 +309,28 @@ export default function CalcPanel({ calc, getGrades, onGostResult, onGostClear, 
               fontSize: 'var(--text-xs)' as string,
               color: 'var(--on-surface-variant)',
             }}>
-              <span>Пример:</span>
-              {['Сталь', '20', 'Круг Ø16', '120 кг'].map(item => (
+              <span>Распознано:</span>
+              {quickChips.map(item => (
                 <span key={item} style={quickChipStyle}>{item}</span>
               ))}
             </div>
 
             {quickStatus && (
               <div style={{
-                background: quickStatus.startsWith('Не удалось') ? 'var(--error-container)' : 'var(--success-container)',
-                color: quickStatus.startsWith('Не удалось') ? 'var(--error)' : 'var(--success)',
+                background:
+                  quickStatus.kind === 'error' ? 'var(--error-container)' :
+                  quickStatus.kind === 'warning' ? 'var(--warning-container)' :
+                  'var(--success-container)',
+                color:
+                  quickStatus.kind === 'error' ? 'var(--error)' :
+                  quickStatus.kind === 'warning' ? 'var(--warning)' :
+                  'var(--success)',
                 borderRadius: 7,
                 padding: '7px 9px',
                 fontSize: 'var(--text-xs)' as string,
                 lineHeight: 1.4,
               }}>
-                {quickStatus}
+                {quickStatus.message}
               </div>
             )}
           </div>
