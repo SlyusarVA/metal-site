@@ -2,9 +2,9 @@
 
 import { useState, useRef } from 'react'
 import { profiles } from '@/data/profiles'
-import { getMetalGroups } from '@/data/materials'
 import { useSettings, GradeSortMode, GradeSort } from '@/data/settings'
 import { useTheme } from '@/hooks/useTheme'
+import AppDialog from '@/components/ui/AppDialog'
 import type { ProfileKey } from '@/data/profiles'
 
 interface Props {
@@ -26,32 +26,26 @@ export default function SettingsPanel({ onClose }: Props) {
   const { theme: currentTheme, setTheme: applyTheme } = useTheme()
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 100,
-      background: 'rgba(0,0,0,.32)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-    }}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
+    <AppDialog
+      titleId="settings-dialog-title"
+      width={540}
+      maxHeight="80vh"
+      onClose={onClose}
     >
       <div style={{
-        background: 'var(--surface)',
-        borderRadius: 'var(--radius-lg)',
-        boxShadow: '0 8px 32px rgba(0,0,0,.18)',
-        width: 540,
-        maxHeight: '80vh',
         display: 'flex',
         flexDirection: 'column',
+        maxHeight: '80vh',
         overflow: 'hidden',
       }}>
-
         {/* Шапка */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '18px 20px 0', flexShrink: 0,
         }}>
-          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Настройки</h2>
-          <button onClick={onClose} style={iconBtnStyle}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <h2 id="settings-dialog-title" className="text-heading" style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Настройки</h2>
+          <button onClick={onClose} className="ui-button" style={iconBtnStyle} aria-label="Закрыть настройки">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <path d="M18 6 6 18M6 6l12 12"/>
             </svg>
           </button>
@@ -68,7 +62,7 @@ export default function SettingsPanel({ onClose }: Props) {
             ['grades',   'Марки'],
             ['theme',    'Тема'],
           ] as [Tab, string][]).map(([id, label]) => (
-            <button key={id} onClick={() => setTab(id)} style={{
+            <button key={id} onClick={() => setTab(id)} className="ui-button" style={{
               background: 'none', border: 'none',
               borderBottom: `2px solid ${tab === id ? 'var(--primary)' : 'transparent'}`,
               padding: '8px 16px', marginBottom: -1,
@@ -83,7 +77,7 @@ export default function SettingsPanel({ onClose }: Props) {
         </div>
 
         {/* Контент */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
+        <div className="ui-scroll-area" style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
           {tab === 'metals' && (
             <DragList
               items={settings.metalOrder}
@@ -109,7 +103,7 @@ export default function SettingsPanel({ onClose }: Props) {
           )}
           {tab === 'theme' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <p style={{ fontSize: 12, color: 'var(--on-surface-variant)', margin: '0 0 8px' }}>
+              <p className="text-body" style={{ fontSize: 12, color: 'var(--on-surface-variant)', margin: '0 0 8px' }}>
                 Выберите цветовую схему интерфейса
               </p>
               {THEME_OPTIONS.map(opt => {
@@ -118,6 +112,7 @@ export default function SettingsPanel({ onClose }: Props) {
                   <button
                     key={opt.value}
                     onClick={() => applyTheme(opt.value)}
+                    className="ui-button"
                     style={{
                       display: 'flex', alignItems: 'center', gap: 14,
                       background: isActive ? 'var(--primary-container)' : 'var(--surface)',
@@ -130,7 +125,7 @@ export default function SettingsPanel({ onClose }: Props) {
                       transition: 'all .15s',
                     }}
                   >
-                    <span style={{ fontSize: 22, flexShrink: 0 }}>{opt.icon}</span>
+                    <span style={{ fontSize: 22, flexShrink: 0 }} aria-hidden="true">{opt.icon}</span>
                     <div style={{ flex: 1 }}>
                       <div style={{
                         fontSize: 13, fontWeight: isActive ? 600 : 500,
@@ -144,7 +139,7 @@ export default function SettingsPanel({ onClose }: Props) {
                       </div>
                     </div>
                     {/* Radio */}
-                    <div style={{
+                    <div aria-hidden="true" style={{
                       width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
                       border: `2px solid ${isActive ? 'var(--primary)' : 'var(--outline)'}`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -166,7 +161,7 @@ export default function SettingsPanel({ onClose }: Props) {
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           flexShrink: 0,
         }}>
-          <button onClick={resetToDefault} style={{
+          <button onClick={resetToDefault} className="ui-button" style={{
             background: 'none', border: '1px solid var(--outline)',
             borderRadius: 'var(--radius-full)', padding: '7px 16px',
             fontSize: 12, color: 'var(--on-surface-variant)', cursor: 'pointer',
@@ -174,7 +169,7 @@ export default function SettingsPanel({ onClose }: Props) {
           }}>
             Сбросить к умолчанию
           </button>
-          <button onClick={onClose} style={{
+          <button onClick={onClose} className="ui-button" style={{
             background: 'var(--primary)', border: 'none',
             borderRadius: 'var(--radius-full)', padding: '7px 20px',
             fontSize: 12, fontWeight: 600, color: '#fff', cursor: 'pointer',
@@ -184,7 +179,7 @@ export default function SettingsPanel({ onClose }: Props) {
           </button>
         </div>
       </div>
-    </div>
+    </AppDialog>
   )
 }
 
@@ -218,9 +213,18 @@ function DragList<T extends string>({
     setDragging(null); setOver(null)
   }
 
+  function moveItem(from: number, to: number) {
+    if (to < 0 || to >= list.length) return
+    const next = [...list]
+    const [moved] = next.splice(from, 1)
+    next.splice(to, 0, moved)
+    setList(next)
+    onReorder(next)
+  }
+
   return (
     <div>
-      <p style={{ fontSize: 12, color: 'var(--on-surface-variant)', margin: '0 0 12px' }}>{hint}</p>
+      <p className="text-body" style={{ fontSize: 12, color: 'var(--on-surface-variant)', margin: '0 0 12px' }}>{hint}</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
         {list.map((item, i) => {
           const isDragging = dragging === i
@@ -245,7 +249,7 @@ function DragList<T extends string>({
                 userSelect: 'none',
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, color: 'var(--on-surface-variant)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, color: 'var(--on-surface-variant)' }} aria-hidden="true">
                 <circle cx="9" cy="6" r="1.5" fill="currentColor"/>
                 <circle cx="15" cy="6" r="1.5" fill="currentColor"/>
                 <circle cx="9" cy="12" r="1.5" fill="currentColor"/>
@@ -254,6 +258,8 @@ function DragList<T extends string>({
                 <circle cx="15" cy="18" r="1.5" fill="currentColor"/>
               </svg>
               <span style={{ fontSize: 13, fontWeight: 500, flex: 1 }}>{renderLabel(item)}</span>
+              <button type="button" className="ui-button" onClick={() => moveItem(i, i - 1)} aria-label={`Поднять ${renderLabel(item)}`} style={miniMoveBtnStyle}>↑</button>
+              <button type="button" className="ui-button" onClick={() => moveItem(i, i + 1)} aria-label={`Опустить ${renderLabel(item)}`} style={miniMoveBtnStyle}>↓</button>
               <span style={{
                 fontSize: 11, color: 'var(--on-surface-variant)',
                 background: 'var(--surface-container)',
@@ -288,7 +294,7 @@ function GradesSettings({ groups, gradeSorts, onUpdate }: {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-      <p style={{ fontSize: 12, color: 'var(--on-surface-variant)', margin: '0 0 8px' }}>
+      <p className="text-body" style={{ fontSize: 12, color: 'var(--on-surface-variant)', margin: '0 0 8px' }}>
         Включите кастомную сортировку для конкретной группы металла
       </p>
       {groups.map(group => {
@@ -299,15 +305,19 @@ function GradesSettings({ groups, gradeSorts, onUpdate }: {
             border: `1px solid ${sort.enabled ? 'var(--primary)' : 'var(--outline-variant)'}`,
             borderRadius: 'var(--radius-sm)', overflow: 'hidden', transition: 'border-color .15s',
           }}>
-            <div style={{
+            <button type="button" className="ui-button" style={{
+              width: '100%',
+              border: 'none',
               display: 'flex', alignItems: 'center', gap: 10,
               padding: '10px 14px',
               background: sort.enabled ? 'var(--primary-container)' : 'var(--surface)',
-              cursor: 'pointer',
+              cursor: sort.enabled ? 'pointer' : 'default',
+              fontFamily: 'Manrope, sans-serif',
+              textAlign: 'left',
             }}
               onClick={() => sort.enabled && setExpanded(isExpanded ? null : group)}
             >
-              <div
+              <span
                 onClick={e => {
                   e.stopPropagation()
                   const next: GradeSort = { enabled: !sort.enabled, mode: sort.mode }
@@ -324,11 +334,11 @@ function GradesSettings({ groups, gradeSorts, onUpdate }: {
                 }}
               >
                 {sort.enabled && (
-                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
                     <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 )}
-              </div>
+              </span>
               <span style={{
                 fontSize: 13, fontWeight: sort.enabled ? 600 : 400, flex: 1,
                 color: sort.enabled ? 'var(--primary)' : 'var(--on-surface)',
@@ -337,7 +347,7 @@ function GradesSettings({ groups, gradeSorts, onUpdate }: {
               </span>
               {sort.enabled && (
                 <span style={{
-                  fontSize: 11, color: 'var(--primary)', background: '#fff',
+                  fontSize: 11, color: 'var(--primary)', background: 'var(--surface)',
                   border: '1px solid var(--primary)', borderRadius: 'var(--radius-full)', padding: '2px 10px',
                 }}>
                   {SORT_OPTIONS.find(o => o.mode === sort.mode)?.label ?? 'По умолчанию'}
@@ -345,11 +355,11 @@ function GradesSettings({ groups, gradeSorts, onUpdate }: {
               )}
               {sort.enabled && (
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2"
-                  style={{ transition: 'transform .2s', transform: isExpanded ? 'rotate(180deg)' : 'none', flexShrink: 0 }}>
+                  style={{ transition: 'transform .2s', transform: isExpanded ? 'rotate(180deg)' : 'none', flexShrink: 0 }} aria-hidden="true">
                   <path d="m6 9 6 6 6-6"/>
                 </svg>
               )}
-            </div>
+            </button>
             {sort.enabled && isExpanded && (
               <div style={{
                 borderTop: '1px solid var(--outline-variant)',
@@ -357,7 +367,7 @@ function GradesSettings({ groups, gradeSorts, onUpdate }: {
                 display: 'flex', flexDirection: 'column', gap: 4,
               }}>
                 {SORT_OPTIONS.map(opt => (
-                  <button key={opt.mode} onClick={() => onUpdate(group, { enabled: true, mode: opt.mode })} style={{
+                  <button key={opt.mode} className="ui-button" onClick={() => onUpdate(group, { enabled: true, mode: opt.mode })} style={{
                     display: 'flex', alignItems: 'center', gap: 10,
                     background: sort.mode === opt.mode ? 'var(--primary-container)' : 'transparent',
                     border: 'none', borderRadius: 'var(--radius-sm)',
@@ -395,4 +405,15 @@ const iconBtnStyle: React.CSSProperties = {
   color: 'var(--on-surface-variant)', padding: 4,
   borderRadius: 'var(--radius-sm)', display: 'flex',
   alignItems: 'center', justifyContent: 'center',
+}
+
+const miniMoveBtnStyle: React.CSSProperties = {
+  border: '1px solid var(--outline-variant)',
+  background: 'var(--surface-container)',
+  color: 'var(--on-surface-variant)',
+  borderRadius: 'var(--radius-sm)',
+  cursor: 'pointer',
+  padding: '1px 6px',
+  fontSize: 12,
+  lineHeight: 1.2,
 }
