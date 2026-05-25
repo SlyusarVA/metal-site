@@ -98,7 +98,7 @@ export default function CalcPanel({ calc, getGrades, onGostResult, onGostClear, 
   function applyQuickInput() {
     const parsed = parseQuickInput(quickInput, state.metalGroup)
 
-    if (!parsed.ok) {
+    if (parsed.ok === false) {
       setQuickStatus({ kind: 'error', message: parsed.message })
       return
     }
