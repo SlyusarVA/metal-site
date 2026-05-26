@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { profiles, ProfileKey } from '@/data/profiles'
 import { getGradesForGroup } from '@/data/materials'
@@ -21,8 +21,8 @@ export default function CalculatorLayout() {
   const { settings } = useSettings()
   const [showSettings, setShowSettings] = useState(false)
   const [showGost, setShowGost] = useState(false)
+  const [selectedGostCode, setSelectedGostCode] = useState<string | null>(null)
   const [isMobile, setIsMobile] = useState(false)
-
   const [highlightedMetals, setHighlightedMetals] = useState<string[]>([])
   const [highlightedProfiles, setHighlightedProfiles] = useState<ProfileKey[]>([])
   const [needsSortament, setNeedsSortament] = useState(false)
@@ -34,7 +34,23 @@ export default function CalculatorLayout() {
     return () => window.removeEventListener('resize', check)
   }, [])
 
-  const handleGostResult = (metalGroups: string[], profileKeys: ProfileKey[], grade?: string) => {
+  const orderedMetals = settings.metalOrder
+  const orderedProfiles = settings.profileOrder
+    .map(key => profiles.find(p => p.key === key))
+    .filter(Boolean) as typeof profiles
+
+  const getGradesOrdered = (group: string) => {
+    const raw = getGradesForGroup(group)
+    const sort = settings.gradeSorts[group]
+    return sortGrades(raw, sort)
+  }
+
+  function openGost(code?: string | null) {
+    setSelectedGostCode(code ?? null)
+    setShowGost(true)
+  }
+
+  function handleGostResult(metalGroups: string[], profileKeys: ProfileKey[], grade?: string) {
     setHighlightedMetals(metalGroups)
     setHighlightedProfiles(profileKeys)
     if (metalGroups.length === 1) {
@@ -50,19 +66,8 @@ export default function CalculatorLayout() {
     }
   }
 
-  const handleGostClear = () => {
+  function handleGostClear() {
     setHighlightedMetals([]); setHighlightedProfiles([]); setNeedsSortament(false)
-  }
-
-  const orderedMetals = settings.metalOrder
-  const orderedProfiles = settings.profileOrder
-    .map(key => profiles.find(p => p.key === key))
-    .filter(Boolean) as typeof profiles
-
-  const getGradesOrdered = (group: string) => {
-    const raw = getGradesForGroup(group)
-    const sort = settings.gradeSorts[group]
-    return sortGrades(raw, sort)
   }
 
   const commonProps = {
@@ -70,53 +75,25 @@ export default function CalculatorLayout() {
     getGrades: getGradesOrdered,
     onGostResult: handleGostResult,
     onGostClear: handleGostClear,
+    onGostOpen: openGost,
     needsSortament,
   }
 
   if (!isMobile) {
     return (
-      <div style={{
-        height: '100dvh', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', padding: '18px 16px 16px', overflow: 'hidden',
-      }}>
-        <nav aria-label="Основная навигация" style={{
-          width: '100%', maxWidth: 'clamp(980px, 92vw, 1180px)', display: 'flex', alignItems: 'center',
-          marginBottom: 12, gap: 4, flexShrink: 0,
-        }}>
+      <div style={desktopPageStyle}>
+        <nav aria-label="Основная навигация" style={desktopNavStyle}>
           <SiteTab active>Калькулятор</SiteTab>
           <SiteTab onClick={() => {}}>Марочник</SiteTab>
-          <SiteTab onClick={() => setShowGost(true)}>ГОСТы</SiteTab>
+          <SiteTab onClick={() => openGost(null)}>ГОСТы</SiteTab>
           <div style={{ flex: 1 }} />
-          <button
-            onClick={() => router.push('/history')}
-            style={utilBtnStyle}
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--outline-variant)'; e.currentTarget.style.color = 'var(--on-surface)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--on-surface-variant)' }}
-          >
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--success)', flexShrink: 0 }} />
-            История расчётов
-          </button>
-          <button
-            onClick={() => setShowSettings(true)}
-            style={{ ...utilBtnStyle, ...topbarIconBtnStyle }}
-            title="Настройки"
-            aria-label="Открыть настройки"
-            onMouseEnter={e => { e.currentTarget.style.background = 'var(--outline-variant)'; e.currentTarget.style.color = 'var(--on-surface)' }}
-            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--on-surface-variant)' }}
-          >
-            <SettingsIcon />
-          </button>
+          <button onClick={() => router.push('/history')} style={utilBtnStyle}>● История расчётов</button>
+          <button onClick={() => setShowSettings(true)} style={{ ...utilBtnStyle, ...topbarIconBtnStyle }} title="Настройки" aria-label="Открыть настройки"><SettingsIcon /></button>
           <AccentSchemeToggle />
           <ThemeToggle />
         </nav>
 
-        <div style={{
-          width: '100%', maxWidth: 'clamp(980px, 92vw, 1180px)', background: 'var(--surface)',
-          borderRadius: 'var(--radius-md)', border: '1px solid var(--outline-variant)',
-          overflow: 'hidden', display: 'flex', flexDirection: 'column',
-          height: 'min(646px, calc(100dvh - 80px))',
-          minHeight: 0,
-        }}>
+        <div style={desktopShellStyle}>
           <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
             <MetalNav
               groups={orderedMetals}
@@ -138,62 +115,29 @@ export default function CalculatorLayout() {
           </div>
         </div>
 
-        <p style={{
-          marginTop: 8, marginBottom: 0, fontSize: 'var(--text-xs)',
-          color: 'var(--on-surface-variant)', textAlign: 'center', flexShrink: 0,
-        }}>
-          Данные по плотностям согласно ГОСТ. Результат расчёта — теоретический вес.
-        </p>
-
+        <p style={footerNoteStyle}>Данные по плотностям согласно ГОСТ. Результат расчёта — теоретический вес.</p>
         {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
-        {showGost && <GostPanel onClose={() => setShowGost(false)} />}
+        {showGost && <GostPanel initialCode={selectedGostCode} onClose={() => setShowGost(false)} />}
       </div>
     )
   }
 
   return (
-    <div style={{
-      display: 'flex', flexDirection: 'column', height: '100dvh',
-      minHeight: 0, background: 'var(--surface-variant)', overflow: 'hidden',
-    }}>
-      <nav aria-label="Основная навигация" style={{
-        background: 'var(--surface)',
-        borderBottom: '1px solid var(--outline-variant)',
-        display: 'flex', alignItems: 'center', gap: 8,
-        minHeight: 48, padding: '0 12px', flexShrink: 0,
-      }}>
+    <div style={mobilePageStyle}>
+      <nav aria-label="Основная навигация" style={mobileNavStyle}>
         <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{
-            fontSize: 'var(--text-sm)', fontWeight: 700,
-            color: 'var(--on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-          }}>
-            Калькулятор металла
-          </div>
-          <div style={{
-            fontSize: 'var(--text-xs)', color: 'var(--on-surface-variant)',
-            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-          }}>
-            {state.metalGroup} · {state.profile.name}
-          </div>
+          <div style={{ fontSize: 'var(--text-sm)', fontWeight: 700, color: 'var(--on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Калькулятор металла</div>
+          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--on-surface-variant)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{state.metalGroup} · {state.profile.name}</div>
         </div>
         <button onClick={() => router.push('/history')} style={mobileTopBtnStyle}>История</button>
         <AccentSchemeToggle />
-        <button onClick={() => setShowSettings(true)} aria-label="Открыть настройки" style={mobileIconBtnStyle}>
-          <SettingsIcon />
-        </button>
+        <button onClick={() => setShowSettings(true)} aria-label="Открыть настройки" style={mobileIconBtnStyle}><SettingsIcon /></button>
       </nav>
-
       <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-        <CalcPanel
-          {...commonProps}
-          isMobile
-          metalGroups={orderedMetals}
-          profiles={orderedProfiles.map(p => ({ key: p.key, name: p.name }))}
-        />
+        <CalcPanel {...commonProps} isMobile metalGroups={orderedMetals} profiles={orderedProfiles.map(p => ({ key: p.key, name: p.name }))} />
       </div>
-
       {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
-      {showGost && <GostPanel onClose={() => setShowGost(false)} />}
+      {showGost && <GostPanel initialCode={selectedGostCode} onClose={() => setShowGost(false)} />}
     </div>
   )
 }
@@ -208,48 +152,17 @@ function SettingsIcon() {
 }
 
 function SiteTab({ children, active, onClick }: { children: React.ReactNode; active?: boolean; onClick?: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      aria-current={active ? 'page' : undefined}
-      style={{
-        background: 'transparent', border: 'none', borderRadius: 6,
-        cursor: active ? 'default' : 'pointer',
-        color: active ? 'var(--primary)' : 'var(--on-surface-variant)',
-        fontSize: 'var(--text-sm)', fontWeight: active ? 600 : 400,
-        fontFamily: 'Manrope, sans-serif', padding: '5px 12px',
-        letterSpacing: '.02em', transition: 'background .15s, color .15s',
-        whiteSpace: 'nowrap', minBlockSize: 32,
-      }}
-      onMouseEnter={e => { if (!active) (e.currentTarget.style.background = 'var(--outline-variant)') }}
-      onMouseLeave={e => { if (!active) (e.currentTarget.style.background = 'transparent') }}
-    >
-      {children}
-    </button>
-  )
+  return <button onClick={onClick} aria-current={active ? 'page' : undefined} style={siteTabStyle(active)}>{children}</button>
 }
 
-const utilBtnStyle: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-  background: 'transparent', border: 'none', borderRadius: 'var(--radius-sm)',
-  cursor: 'pointer', color: 'var(--on-surface-variant)',
-  fontSize: 'var(--text-xs)', fontWeight: 500, fontFamily: 'Manrope, sans-serif',
-  height: 32, minBlockSize: 32, padding: '0 10px',
-  transition: 'background .15s, color .15s', whiteSpace: 'nowrap',
-}
-
+const desktopPageStyle: React.CSSProperties = { height: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '18px 16px 16px', overflow: 'hidden' }
+const desktopNavStyle: React.CSSProperties = { width: '100%', maxWidth: 'clamp(980px, 92vw, 1180px)', display: 'flex', alignItems: 'center', marginBottom: 12, gap: 4, flexShrink: 0 }
+const desktopShellStyle: React.CSSProperties = { width: '100%', maxWidth: 'clamp(980px, 92vw, 1180px)', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--outline-variant)', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 'min(646px, calc(100dvh - 80px))', minHeight: 0 }
+const footerNoteStyle: React.CSSProperties = { marginTop: 8, marginBottom: 0, fontSize: 'var(--text-xs)', color: 'var(--on-surface-variant)', textAlign: 'center', flexShrink: 0 }
+const mobilePageStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', height: '100dvh', minHeight: 0, background: 'var(--surface-variant)', overflow: 'hidden' }
+const mobileNavStyle: React.CSSProperties = { background: 'var(--surface)', borderBottom: '1px solid var(--outline-variant)', display: 'flex', alignItems: 'center', gap: 8, minHeight: 48, padding: '0 12px', flexShrink: 0 }
+const utilBtnStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'transparent', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--on-surface-variant)', fontSize: 'var(--text-xs)', fontWeight: 500, fontFamily: 'Manrope, sans-serif', height: 32, minBlockSize: 32, padding: '0 10px', whiteSpace: 'nowrap' }
 const topbarIconBtnStyle: React.CSSProperties = { width: 32, padding: 0, gap: 0, flexShrink: 0 }
-
-const mobileTopBtnStyle: React.CSSProperties = {
-  border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-sm)',
-  background: 'var(--surface-container)', color: 'var(--on-surface)',
-  fontSize: 'var(--text-xs)', fontWeight: 600, fontFamily: 'Manrope, sans-serif',
-  minHeight: 38, padding: '0 12px', cursor: 'pointer', flexShrink: 0,
-}
-
-const mobileIconBtnStyle: React.CSSProperties = {
-  display: 'flex', alignItems: 'center', justifyContent: 'center',
-  width: 38, height: 38, border: '1px solid var(--outline-variant)',
-  borderRadius: 'var(--radius-sm)', background: 'var(--surface-container)',
-  color: 'var(--on-surface-variant)', cursor: 'pointer', flexShrink: 0,
-}
+const mobileTopBtnStyle: React.CSSProperties = { border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-sm)', background: 'var(--surface-container)', color: 'var(--on-surface)', fontSize: 'var(--text-xs)', fontWeight: 600, fontFamily: 'Manrope, sans-serif', minHeight: 38, padding: '0 12px', cursor: 'pointer', flexShrink: 0 }
+const mobileIconBtnStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 38, height: 38, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-sm)', background: 'var(--surface-container)', color: 'var(--on-surface-variant)', cursor: 'pointer', flexShrink: 0 }
+function siteTabStyle(active?: boolean): React.CSSProperties { return { background: 'transparent', border: 'none', borderRadius: 6, cursor: active ? 'default' : 'pointer', color: active ? 'var(--primary)' : 'var(--on-surface-variant)', fontSize: 'var(--text-sm)', fontWeight: active ? 600 : 400, fontFamily: 'Manrope, sans-serif', padding: '5px 12px', letterSpacing: '.02em', whiteSpace: 'nowrap', minBlockSize: 32 } }
