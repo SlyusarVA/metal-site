@@ -228,6 +228,17 @@ export function useCalculator() {
   }, [])
 
   // ── Количество ─────────────────────────────────────────────────────────────
+  const setQuantity = useCallback((value: number) => {
+    const normalized = Number.isFinite(value) ? Math.max(1, Math.floor(value)) : 1
+    setState(s => ({
+      ...s,
+      quantity: normalized,
+      result: null,
+      error: null,
+      unchanged: false,
+    }))
+  }, [])
+
   const incrementQty = useCallback(() => {
     setState(s => ({
       ...s,
@@ -367,7 +378,6 @@ export function useCalculator() {
         resultValue = res.mass
         massResult = res
 
-        // Записываем результат в поле массы
         return buildFinalState(cleared, target, resultValue, res, params)
 
       } else if (hasMass && !hasLength) {
@@ -464,6 +474,7 @@ export function useCalculator() {
     setParam,
     setLength,
     setMass,
+    setQuantity,
     incrementQty,
     decrementQty,
     resetQty,
@@ -504,7 +515,7 @@ function buildFinalState(
     unchanged: same,
   }
 
-  // Вписываем результат в соответствующее поле
+  // Вписываем результат в соответствующее поле для совместимости с историей и восстановлением.
   if (target === 'mass') newState.mass = value
   if (target === 'length') newState.length = value
 
