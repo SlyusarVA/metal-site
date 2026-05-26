@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { getWeightTolerance } from '@/data/gost'
 import { ProfileKey } from '@/data/profiles'
 import { parseQuickInput } from '@/lib/quickInputParser'
@@ -18,6 +17,7 @@ interface Props {
   onGostResult: (metalGroups: string[], profileKeys: ProfileKey[], grade?: string) => void
   needsSortament?: boolean
   onGostClear: () => void
+  onGostOpen: (code: string) => void
   isMobile?: boolean
   metalGroups?: string[]
   profiles?: ProfileOption[]
@@ -29,8 +29,7 @@ const modes: Record<CalcMode, { label: string; hint: string }> = {
   quick: { label: 'Быстрый ввод', hint: 'Введите металл, марку, сортамент, размеры и массу одной строкой.' },
 }
 
-export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostClear, needsSortament, isMobile = false, metalGroups = [], profiles = [] }: Props) {
-  const router = useRouter()
+export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostClear, onGostOpen, needsSortament, isMobile = false, metalGroups = [], profiles = [] }: Props) {
   const { state, selectMetal, selectProfile, setParam, setLength, setMass, setQuantity, incrementQty, decrementQty, calculate } = calc
   const [mode, setMode] = useState<CalcMode>('mass')
   const [quickInput, setQuickInput] = useState('Сталь 20 круг 16 масса 120 кг')
@@ -87,7 +86,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
     <div style={st.panel}>
       <div style={st.head}>
         <span style={st.headTitle}>{state.metalGroup} · {state.profile.name}</span>
-        <GostTags profile={state.profile} density={state.density} onGostClick={(code) => router.push(`/gost/${encodeURIComponent(code)}`)} />
+        <GostTags profile={state.profile} density={state.density} onGostClick={onGostOpen} />
       </div>
       <div style={st.search}><GostSearchBar onResult={onGostResult} onClear={onGostClear} /></div>
       {needsSortament && <div style={st.warn}>Выберите сортамент</div>}
