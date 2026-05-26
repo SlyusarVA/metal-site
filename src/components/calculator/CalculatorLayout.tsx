@@ -12,6 +12,7 @@ import CalcPanel from './CalcPanelLean'
 import SettingsPanel from './SettingsPanel'
 import GostPanel from './GostPanel'
 import ThemeToggle from '../ThemeToggle'
+import AccentSchemeToggle from '../AccentSchemeToggle'
 
 export default function CalculatorLayout() {
   const router = useRouter()
@@ -105,6 +106,7 @@ export default function CalculatorLayout() {
           >
             <SettingsIcon />
           </button>
+          <AccentSchemeToggle />
           <ThemeToggle />
         </nav>
 
@@ -175,6 +177,7 @@ export default function CalculatorLayout() {
           </div>
         </div>
         <button onClick={() => router.push('/history')} style={mobileTopBtnStyle}>История</button>
+        <AccentSchemeToggle />
         <button onClick={() => setShowSettings(true)} aria-label="Открыть настройки" style={mobileIconBtnStyle}>
           <SettingsIcon />
         </button>
