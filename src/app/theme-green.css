@@ -55,6 +55,59 @@
   --accent-glow-2: rgba(196,135,69,.08);
 }
 
+/* Light theme uses softer accent steps while keeping the active button readable. */
+:root.light[data-accent='green'] {
+  --color-blue-50:  #EEF8F1;
+  --color-blue-200: #D2EBD9;
+  --color-blue-400: #6FAF82;
+  --color-blue-700: #4F9A68;
+  --color-blue-800: #2F7D4F;
+  --color-blue-900: #215C3A;
+  --color-blue-950: #123822;
+
+  --accent-glow-1: rgba(79,154,104,.09);
+  --accent-glow-2: rgba(111,175,130,.07);
+}
+
+:root.light[data-accent='blue'] {
+  --color-blue-50:  #EEF6FC;
+  --color-blue-200: #D4E6F6;
+  --color-blue-400: #7AAED7;
+  --color-blue-700: #4E8FC2;
+  --color-blue-800: #2E6F9F;
+  --color-blue-900: #205579;
+  --color-blue-950: #12324A;
+
+  --accent-glow-1: rgba(78,143,194,.10);
+  --accent-glow-2: rgba(122,174,215,.07);
+}
+
+:root.light[data-accent='graphite'] {
+  --color-blue-50:  #F3F5F6;
+  --color-blue-200: #DEE3E7;
+  --color-blue-400: #98A3AD;
+  --color-blue-700: #6F7B86;
+  --color-blue-800: #505A64;
+  --color-blue-900: #36404A;
+  --color-blue-950: #1E252C;
+
+  --accent-glow-1: rgba(111,123,134,.10);
+  --accent-glow-2: rgba(152,163,173,.07);
+}
+
+:root.light[data-accent='copper'] {
+  --color-blue-50:  #FAF1E8;
+  --color-blue-200: #EFD5B7;
+  --color-blue-400: #D59A5C;
+  --color-blue-700: #B9783A;
+  --color-blue-800: #8C5524;
+  --color-blue-900: #623B19;
+  --color-blue-950: #33200D;
+
+  --accent-glow-1: rgba(185,120,58,.11);
+  --accent-glow-2: rgba(213,154,92,.08);
+}
+
 :root {
   --color-neutral-0:    #FFFFFF;
   --color-neutral-50:   #F7FAF8;
