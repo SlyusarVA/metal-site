@@ -3,11 +3,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useTheme } from '@/hooks/useTheme'
 
-function getSystemTheme(): 'light' | 'dark' {
-  if (typeof window === 'undefined') return 'light'
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-}
-
 export default function ThemeToggle() {
   const { theme, setTheme } = useTheme()
   const btnRef = useRef<HTMLButtonElement>(null)
@@ -86,14 +81,23 @@ export default function ThemeToggle() {
       onClick={toggle}
       title={isDark ? 'Светлая тема' : 'Тёмная тема'}
       style={{
-        background: 'none', border: 'none', cursor: 'pointer',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        width: 32, height: 32, borderRadius: '50%',
+        background: 'transparent',
+        border: 'none',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 32,
+        height: 32,
+        minBlockSize: 32,
+        borderRadius: 'var(--radius-sm)',
         color: 'var(--on-surface-variant)',
-        transition: 'background .15s, color .15s', flexShrink: 0,
+        transition: 'background .15s, color .15s',
+        flexShrink: 0,
+        padding: 0,
       }}
       onMouseEnter={e => { e.currentTarget.style.background = 'var(--outline-variant)'; e.currentTarget.style.color = 'var(--on-surface)' }}
-      onMouseLeave={e => { e.currentTarget.style.background = 'none'; e.currentTarget.style.color = 'var(--on-surface-variant)' }}
+      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--on-surface-variant)' }}
     >
       {isDark ? (
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">

@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useRef, useState } from 'react'
 import { profiles } from '@/data/profiles'
-import { getMetalGroups } from '@/data/materials'
-import { useSettings, GradeSortMode, GradeSort } from '@/data/settings'
+import { useSettings, GradeSort, GradeSortMode } from '@/data/settings'
 import { useTheme } from '@/hooks/useTheme'
+import AppDialog from '@/components/ui/AppDialog'
 import type { ProfileKey } from '@/data/profiles'
 
 interface Props {
@@ -20,54 +20,38 @@ const THEME_OPTIONS: { value: Theme; label: string; icon: string; desc: string }
   { value: 'system', label: 'Системная', icon: '💻', desc: 'Следует настройкам устройства' },
 ]
 
+const TABS: [Tab, string][] = [
+  ['metals', 'Металл'],
+  ['sortament', 'Сортамент'],
+  ['grades', 'Марки'],
+  ['theme', 'Тема'],
+]
+
 export default function SettingsPanel({ onClose }: Props) {
   const [tab, setTab] = useState<Tab>('metals')
   const { settings, setMetalOrder, setProfileOrder, setGradeSort, resetToDefault } = useSettings()
   const { theme: currentTheme, setTheme: applyTheme } = useTheme()
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0, zIndex: 100,
-      background: 'rgba(0,0,0,.32)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-    }}
-      onClick={e => { if (e.target === e.currentTarget) onClose() }}
-    >
-      <div style={{
-        background: 'var(--surface)',
-        borderRadius: 'var(--radius-lg)',
-        boxShadow: '0 8px 32px rgba(0,0,0,.18)',
-        width: 540,
-        maxHeight: '80vh',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-      }}>
-
-        {/* Шапка */}
+    <AppDialog title="Настройки" onClose={onClose} width={540}>
+      <div className="ui-dialog-shell">
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '18px 20px 0', flexShrink: 0,
         }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Настройки</h2>
-          <button onClick={onClose} style={iconBtnStyle}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <button onClick={onClose} className="ui-icon-button" aria-label="Закрыть настройки">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <path d="M18 6 6 18M6 6l12 12"/>
             </svg>
           </button>
         </div>
 
-        {/* Табы */}
         <div style={{
           display: 'flex', gap: 0, padding: '12px 20px 0',
           borderBottom: '1px solid var(--outline-variant)', flexShrink: 0,
         }}>
-          {([
-            ['metals',   'Металл'],
-            ['sortament','Сортамент'],
-            ['grades',   'Марки'],
-            ['theme',    'Тема'],
-          ] as [Tab, string][]).map(([id, label]) => (
+          {TABS.map(([id, label]) => (
             <button key={id} onClick={() => setTab(id)} style={{
               background: 'none', border: 'none',
               borderBottom: `2px solid ${tab === id ? 'var(--primary)' : 'transparent'}`,
@@ -82,8 +66,7 @@ export default function SettingsPanel({ onClose }: Props) {
           ))}
         </div>
 
-        {/* Контент */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
+        <div className="ui-scroll-area" style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
           {tab === 'metals' && (
             <DragList
               items={settings.metalOrder}
@@ -127,7 +110,7 @@ export default function SettingsPanel({ onClose }: Props) {
                       cursor: 'pointer',
                       fontFamily: 'Manrope, sans-serif',
                       textAlign: 'left',
-                      transition: 'all .15s',
+                      transition: 'background .15s, border-color .15s, color .15s',
                     }}
                   >
                     <span style={{ fontSize: 22, flexShrink: 0 }}>{opt.icon}</span>
@@ -143,15 +126,12 @@ export default function SettingsPanel({ onClose }: Props) {
                         {opt.desc}
                       </div>
                     </div>
-                    {/* Radio */}
                     <div style={{
                       width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
                       border: `2px solid ${isActive ? 'var(--primary)' : 'var(--outline)'}`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
-                      {isActive && (
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--primary)' }} />
-                      )}
+                      {isActive && <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--primary)' }} />}
                     </div>
                   </button>
                 )
@@ -160,7 +140,6 @@ export default function SettingsPanel({ onClose }: Props) {
           )}
         </div>
 
-        {/* Футер */}
         <div style={{
           padding: '12px 20px', borderTop: '1px solid var(--outline-variant)',
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -184,11 +163,9 @@ export default function SettingsPanel({ onClose }: Props) {
           </button>
         </div>
       </div>
-    </div>
+    </AppDialog>
   )
 }
-
-// ── Drag & Drop список ────────────────────────────────────────────────────────
 
 function DragList<T extends string>({
   items, renderLabel, onReorder, hint,
@@ -245,7 +222,7 @@ function DragList<T extends string>({
                 userSelect: 'none',
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, color: 'var(--on-surface-variant)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, color: 'var(--on-surface-variant)' }} aria-hidden="true">
                 <circle cx="9" cy="6" r="1.5" fill="currentColor"/>
                 <circle cx="15" cy="6" r="1.5" fill="currentColor"/>
                 <circle cx="9" cy="12" r="1.5" fill="currentColor"/>
@@ -269,8 +246,6 @@ function DragList<T extends string>({
     </div>
   )
 }
-
-// ── Настройки марок ───────────────────────────────────────────────────────────
 
 const SORT_OPTIONS: { mode: GradeSortMode; label: string; desc: string }[] = [
   { mode: 'default', label: 'По умолчанию', desc: 'Порядок из базы данных' },
@@ -307,7 +282,9 @@ function GradesSettings({ groups, gradeSorts, onUpdate }: {
             }}
               onClick={() => sort.enabled && setExpanded(isExpanded ? null : group)}
             >
-              <div
+              <button
+                type="button"
+                aria-label={`${sort.enabled ? 'Отключить' : 'Включить'} сортировку марок для ${group}`}
                 onClick={e => {
                   e.stopPropagation()
                   const next: GradeSort = { enabled: !sort.enabled, mode: sort.mode }
@@ -320,15 +297,15 @@ function GradesSettings({ groups, gradeSorts, onUpdate }: {
                   border: `2px solid ${sort.enabled ? 'var(--primary)' : 'var(--outline)'}`,
                   background: sort.enabled ? 'var(--primary)' : 'transparent',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'all .15s',
+                  transition: 'all .15s', padding: 0,
                 }}
               >
                 {sort.enabled && (
-                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
+                  <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden="true">
                     <path d="M2 6l3 3 5-5" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 )}
-              </div>
+              </button>
               <span style={{
                 fontSize: 13, fontWeight: sort.enabled ? 600 : 400, flex: 1,
                 color: sort.enabled ? 'var(--primary)' : 'var(--on-surface)',
@@ -337,17 +314,11 @@ function GradesSettings({ groups, gradeSorts, onUpdate }: {
               </span>
               {sort.enabled && (
                 <span style={{
-                  fontSize: 11, color: 'var(--primary)', background: '#fff',
+                  fontSize: 11, color: 'var(--primary)', background: 'var(--surface)',
                   border: '1px solid var(--primary)', borderRadius: 'var(--radius-full)', padding: '2px 10px',
                 }}>
                   {SORT_OPTIONS.find(o => o.mode === sort.mode)?.label ?? 'По умолчанию'}
                 </span>
-              )}
-              {sort.enabled && (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2"
-                  style={{ transition: 'transform .2s', transform: isExpanded ? 'rotate(180deg)' : 'none', flexShrink: 0 }}>
-                  <path d="m6 9 6 6 6-6"/>
-                </svg>
               )}
             </div>
             {sort.enabled && isExpanded && (
@@ -369,9 +340,7 @@ function GradesSettings({ groups, gradeSorts, onUpdate }: {
                       border: `2px solid ${sort.mode === opt.mode ? 'var(--primary)' : 'var(--outline)'}`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>
-                      {sort.mode === opt.mode && (
-                        <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--primary)' }} />
-                      )}
+                      {sort.mode === opt.mode && <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--primary)' }} />}
                     </div>
                     <div>
                       <div style={{ fontSize: 13, fontWeight: sort.mode === opt.mode ? 600 : 400, color: 'var(--on-surface)' }}>
@@ -388,11 +357,4 @@ function GradesSettings({ groups, gradeSorts, onUpdate }: {
       })}
     </div>
   )
-}
-
-const iconBtnStyle: React.CSSProperties = {
-  background: 'none', border: 'none', cursor: 'pointer',
-  color: 'var(--on-surface-variant)', padding: 4,
-  borderRadius: 'var(--radius-sm)', display: 'flex',
-  alignItems: 'center', justifyContent: 'center',
 }

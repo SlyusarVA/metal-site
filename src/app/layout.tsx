@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import './theme-green.css'
+import './ui-system.css'
 
 export const metadata: Metadata = {
   title: 'Калькулятор металла',
@@ -15,7 +17,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             try {
               var theme = localStorage.getItem('theme') || 'system';
               var root = document.documentElement;
-              if (theme === 'dark') {
+              if (theme === 'light') {
+                root.classList.add('light');
+              } else if (theme === 'dark') {
                 root.classList.add('dark');
               } else if (theme === 'system') {
                 root.classList.add('theme-system');
