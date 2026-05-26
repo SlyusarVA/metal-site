@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { getMetalGroups, MetalMaterial } from './materials'
 import { profiles, ProfileKey } from './profiles'
 
@@ -20,7 +20,7 @@ export interface Settings {
 const STORAGE_KEY = 'metal_calc_settings'
 const SETTINGS_CHANGED_EVENT = 'metal-calc-settings-changed'
 
-function defaultSettings(): Settings {
+export function defaultSettings(): Settings {
   return {
     metalOrder: getMetalGroups(),
     profileOrder: profiles.map(p => p.key),
@@ -110,7 +110,30 @@ export function useSettings() {
     setSettings(def)
   }, [])
 
-  return { settings, setMetalOrder, setProfileOrder, setGradeSort, resetToDefault }
+  const resetMetalOrder = useCallback(() => {
+    const def = defaultSettings()
+    update({ metalOrder: def.metalOrder })
+  }, [update])
+
+  const resetProfileOrder = useCallback(() => {
+    const def = defaultSettings()
+    update({ profileOrder: def.profileOrder })
+  }, [update])
+
+  const resetGradeSorts = useCallback(() => {
+    update({ gradeSorts: {} })
+  }, [update])
+
+  return {
+    settings,
+    setMetalOrder,
+    setProfileOrder,
+    setGradeSort,
+    resetToDefault,
+    resetMetalOrder,
+    resetProfileOrder,
+    resetGradeSorts,
+  }
 }
 
 export function sortGrades(grades: MetalMaterial[], sort: GradeSort | undefined): MetalMaterial[] {
