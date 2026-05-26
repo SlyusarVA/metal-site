@@ -1,9 +1,10 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { profiles } from '@/data/profiles'
 import { useSettings, GradeSort, GradeSortMode } from '@/data/settings'
 import { useTheme } from '@/hooks/useTheme'
+import { useAccentScheme } from '@/hooks/useAccentScheme'
 import AppDialog from '@/components/ui/AppDialog'
 import type { ProfileKey } from '@/data/profiles'
 
@@ -31,6 +32,13 @@ export default function SettingsPanel({ onClose }: Props) {
   const [tab, setTab] = useState<Tab>('metals')
   const { settings, setMetalOrder, setProfileOrder, setGradeSort, resetToDefault } = useSettings()
   const { theme: currentTheme, setTheme: applyTheme } = useTheme()
+  const { setAccentScheme } = useAccentScheme()
+
+  function handleResetToDefault() {
+    resetToDefault()
+    applyTheme('system')
+    setAccentScheme('green')
+  }
 
   return (
     <AppDialog title="Настройки" onClose={onClose} width={540}>
@@ -145,7 +153,7 @@ export default function SettingsPanel({ onClose }: Props) {
           display: 'flex', justifyContent: 'space-between', alignItems: 'center',
           flexShrink: 0,
         }}>
-          <button onClick={resetToDefault} style={{
+          <button onClick={handleResetToDefault} style={{
             background: 'none', border: '1px solid var(--outline)',
             borderRadius: 'var(--radius-full)', padding: '7px 16px',
             fontSize: 12, color: 'var(--on-surface-variant)', cursor: 'pointer',
@@ -179,6 +187,10 @@ function DragList<T extends string>({
   const [dragging, setDragging] = useState<number | null>(null)
   const [over, setOver] = useState<number | null>(null)
   const dragItem = useRef<number | null>(null)
+
+  useEffect(() => {
+    setList(items)
+  }, [items])
 
   const handleDragStart = (i: number) => { dragItem.current = i; setDragging(i) }
   const handleDragEnter = (i: number) => { setOver(i) }
