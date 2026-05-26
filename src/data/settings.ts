@@ -1,10 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { getMetalGroups } from './materials'
+import { getMetalGroups, MetalMaterial } from './materials'
 import { profiles, ProfileKey } from './profiles'
-
-// ── Типы ─────────────────────────────────────────────────────────────────────
 
 export type GradeSortMode = 'default' | 'alpha' | 'density' | 'numeric'
 
@@ -14,15 +12,13 @@ export interface GradeSort {
 }
 
 export interface Settings {
-  /** Порядок групп металлов */
   metalOrder: string[]
-  /** Порядок сортаментов */
   profileOrder: ProfileKey[]
-  /** Сортировка марок — отдельно для каждой группы */
   gradeSorts: Record<string, GradeSort>
 }
 
 const STORAGE_KEY = 'metal_calc_settings'
+const SETTINGS_CHANGED_EVENT = 'metal-calc-settings-changed'
 
 function defaultSettings(): Settings {
   return {
@@ -39,7 +35,6 @@ function loadSettings(): Settings {
     if (!raw) return defaultSettings()
     const saved = JSON.parse(raw) as Partial<Settings>
     const def = defaultSettings()
-    // Добавить новые металлы/сортаменты если появились
     const metalOrder = [
       ...(saved.metalOrder ?? []).filter(g => def.metalOrder.includes(g)),
       ...def.metalOrder.filter(g => !(saved.metalOrder ?? []).includes(g)),
@@ -56,15 +51,30 @@ function loadSettings(): Settings {
 
 function saveSettings(s: Settings) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(s))
+  window.dispatchEvent(new CustomEvent(SETTINGS_CHANGED_EVENT, { detail: s }))
 }
-
-// ── Хук ──────────────────────────────────────────────────────────────────────
 
 export function useSettings() {
   const [settings, setSettings] = useState<Settings>(defaultSettings)
 
   useEffect(() => {
     setSettings(loadSettings())
+
+    function onSettingsChanged(event: Event) {
+      const detail = (event as CustomEvent<Settings>).detail
+      setSettings(detail ?? loadSettings())
+    }
+
+    function onStorage(event: StorageEvent) {
+      if (event.key === STORAGE_KEY) setSettings(loadSettings())
+    }
+
+    window.addEventListener(SETTINGS_CHANGED_EVENT, onSettingsChanged)
+    window.addEventListener('storage', onStorage)
+    return () => {
+      window.removeEventListener(SETTINGS_CHANGED_EVENT, onSettingsChanged)
+      window.removeEventListener('storage', onStorage)
+    }
   }, [])
 
   const update = useCallback((patch: Partial<Settings>) => {
@@ -103,10 +113,6 @@ export function useSettings() {
   return { settings, setMetalOrder, setProfileOrder, setGradeSort, resetToDefault }
 }
 
-// ── Применение сортировки марок ───────────────────────────────────────────────
-
-import { MetalMaterial } from './materials'
-
 export function sortGrades(grades: MetalMaterial[], sort: GradeSort | undefined): MetalMaterial[] {
   if (!sort?.enabled || sort.mode === 'default') return grades
   const copy = [...grades]
@@ -116,7 +122,6 @@ export function sortGrades(grades: MetalMaterial[], sort: GradeSort | undefined)
     case 'density':
       return copy.sort((a, b) => b.density - a.density)
     case 'numeric': {
-      // Сортировка по первому числу в названии марки
       const num = (s: string) => parseFloat(s.match(/\d+(\.\d+)?/)?.[0] ?? '9999')
       return copy.sort((a, b) => num(a.grade) - num(b.grade))
     }
