@@ -6,10 +6,17 @@ import AppDialog from '@/components/ui/AppDialog'
 
 interface Props {
   onClose: () => void
+  initialCode?: string | null
 }
 
-export default function GostPanel({ onClose }: Props) {
-  const [selected, setSelected] = useState<GostReference>(gostReferences[0])
+function findGost(code?: string | null): GostReference {
+  if (!code) return gostReferences[0]
+  const normalized = code.trim().toLowerCase()
+  return gostReferences.find(g => g.code.trim().toLowerCase() === normalized) ?? gostReferences[0]
+}
+
+export default function GostPanel({ onClose, initialCode }: Props) {
+  const [selected, setSelected] = useState<GostReference>(() => findGost(initialCode))
   const [search, setSearch] = useState('')
 
   const filtered = gostReferences.filter(g =>
@@ -20,7 +27,6 @@ export default function GostPanel({ onClose }: Props) {
   return (
     <AppDialog title="Справочник ГОСТ" onClose={onClose} width={820} height="80dvh">
       <div className="ui-dialog-shell" style={{ height: '80dvh' }}>
-        {/* Шапка */}
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '16px 20px',
@@ -35,10 +41,7 @@ export default function GostPanel({ onClose }: Props) {
           </button>
         </div>
 
-        {/* Тело: список + детали */}
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-
-          {/* Левая колонка — список */}
           <div style={{
             width: 260,
             flexShrink: 0,
@@ -47,7 +50,6 @@ export default function GostPanel({ onClose }: Props) {
             flexDirection: 'column',
             overflow: 'hidden',
           }}>
-            {/* Поиск */}
             <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--outline-variant)', flexShrink: 0 }}>
               <input
                 value={search}
@@ -67,7 +69,6 @@ export default function GostPanel({ onClose }: Props) {
               />
             </div>
 
-            {/* Список ГОСТов */}
             <div className="ui-scroll-area" style={{ flex: 1, overflowY: 'auto' }}>
               {filtered.map(g => (
                 <button
@@ -114,7 +115,6 @@ export default function GostPanel({ onClose }: Props) {
             </div>
           </div>
 
-          {/* Правая колонка — детали */}
           <div className="ui-scroll-area" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
             <div style={{ fontSize: 11, color: 'var(--primary)', fontWeight: 700, letterSpacing: '.06em', marginBottom: 4 }}>
               {selected.code}
@@ -123,21 +123,9 @@ export default function GostPanel({ onClose }: Props) {
               {selected.title}
             </h3>
 
-            <Section title="Область применения">
-              <p style={textStyle}>{selected.scope}</p>
-            </Section>
-
-            <Section title="Ключевые параметры">
-              <ul style={ulStyle}>
-                {selected.keyParams.map((p, i) => <li key={i} style={liStyle}>{p}</li>)}
-              </ul>
-            </Section>
-
-            <Section title="Допуски">
-              <ul style={ulStyle}>
-                {selected.tolerances.map((t, i) => <li key={i} style={liStyle}>{t}</li>)}
-              </ul>
-            </Section>
+            <Section title="Область применения"><p style={textStyle}>{selected.scope}</p></Section>
+            <Section title="Ключевые параметры"><ul style={ulStyle}>{selected.keyParams.map((p, i) => <li key={i} style={liStyle}>{p}</li>)}</ul></Section>
+            <Section title="Допуски"><ul style={ulStyle}>{selected.tolerances.map((t, i) => <li key={i} style={liStyle}>{t}</li>)}</ul></Section>
 
             {selected.critical.length > 0 && (
               <Section title="Важно учитывать">
@@ -159,9 +147,7 @@ export default function GostPanel({ onClose }: Props) {
               </Section>
             )}
 
-            <Section title="Маркировка">
-              <p style={textStyle}>{selected.marking}</p>
-            </Section>
+            <Section title="Маркировка"><p style={textStyle}>{selected.marking}</p></Section>
 
             <a
               href={selected.fullTextUrl}
@@ -201,14 +187,6 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   )
 }
 
-const textStyle: React.CSSProperties = {
-  fontSize: 13, color: 'var(--on-surface)', margin: 0, lineHeight: 1.6,
-}
-
-const ulStyle: React.CSSProperties = {
-  margin: 0, paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 4,
-}
-
-const liStyle: React.CSSProperties = {
-  fontSize: 13, color: 'var(--on-surface)', lineHeight: 1.5,
-}
+const textStyle: React.CSSProperties = { fontSize: 13, color: 'var(--on-surface)', margin: 0, lineHeight: 1.6 }
+const ulStyle: React.CSSProperties = { margin: 0, paddingLeft: 16, display: 'flex', flexDirection: 'column', gap: 4 }
+const liStyle: React.CSSProperties = { fontSize: 13, color: 'var(--on-surface)', lineHeight: 1.5 }
