@@ -76,12 +76,12 @@ export default function CalculatorLayout() {
   if (!isMobile) {
     return (
       <div style={{
-        minHeight: '100dvh', display: 'flex', flexDirection: 'column',
-        alignItems: 'center', padding: '24px 16px 24px', overflow: 'hidden',
+        height: '100dvh', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', padding: '18px 16px 16px', overflow: 'hidden',
       }}>
         <nav aria-label="Основная навигация" style={{
-          width: '100%', maxWidth: 'clamp(860px, 92vw, 1180px)', display: 'flex', alignItems: 'center',
-          marginBottom: 16, gap: 4, flexShrink: 0,
+          width: '100%', maxWidth: 'clamp(980px, 92vw, 1180px)', display: 'flex', alignItems: 'center',
+          marginBottom: 12, gap: 4, flexShrink: 0,
         }}>
           <SiteTab active>Калькулятор</SiteTab>
           <SiteTab onClick={() => {}}>Марочник</SiteTab>
@@ -111,10 +111,10 @@ export default function CalculatorLayout() {
         </nav>
 
         <div style={{
-          width: '100%', maxWidth: 'clamp(860px, 92vw, 1180px)', background: 'var(--surface)',
+          width: '100%', maxWidth: 'clamp(980px, 92vw, 1180px)', background: 'var(--surface)',
           borderRadius: 'var(--radius-md)', border: '1px solid var(--outline-variant)',
           overflow: 'hidden', display: 'flex', flexDirection: 'column',
-          height: 'clamp(560px, calc(100dvh - 112px), 820px)',
+          height: 'min(646px, calc(100dvh - 80px))',
           minHeight: 0,
         }}>
           <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
@@ -139,7 +139,7 @@ export default function CalculatorLayout() {
         </div>
 
         <p style={{
-          marginTop: 10, marginBottom: 0, fontSize: 'var(--text-xs)',
+          marginTop: 8, marginBottom: 0, fontSize: 'var(--text-xs)',
           color: 'var(--on-surface-variant)', textAlign: 'center', flexShrink: 0,
         }}>
           Данные по плотностям согласно ГОСТ. Результат расчёта — теоретический вес.
