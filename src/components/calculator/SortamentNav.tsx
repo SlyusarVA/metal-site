@@ -23,7 +23,7 @@ export default function SortamentNav({
     ? profiles.filter(p => allowed.includes(p.key))
     : profiles
 
-  const renderList = (fontSize = 13, padding = '6px 12px') =>
+  const renderList = (fontSize = 15, padding = '7px 14px', iconSize = 24, minHeight = 40) =>
     visibleProfiles.map(p => {
       const isActive = p.key === selected
       const isHighlighted = highlighted.includes(p.key)
@@ -31,14 +31,14 @@ export default function SortamentNav({
       let bg = 'none'
       let borderColor = 'transparent'
       let color = 'var(--on-surface)'
-      let fontWeight: number = 400
+      let fontWeight: number = 500
 
       if (isActive && isHighlighted) {
-        bg = 'var(--primary-container)'; borderColor = 'var(--primary)'; color = 'var(--primary)'; fontWeight = 700
+        bg = 'var(--primary-container)'; borderColor = 'var(--primary)'; color = 'var(--primary)'; fontWeight = 800
       } else if (isActive) {
-        bg = 'var(--primary-container)'; borderColor = 'var(--primary)'; color = 'var(--primary)'; fontWeight = 600
+        bg = 'var(--primary-container)'; borderColor = 'var(--primary)'; color = 'var(--primary)'; fontWeight = 700
       } else if (isHighlighted) {
-        bg = '#FFFDE7'; borderColor = '#F9A825'; color = '#E65100'; fontWeight = 600
+        bg = '#FFFDE7'; borderColor = '#F9A825'; color = '#E65100'; fontWeight = 700
       }
 
       return (
@@ -47,15 +47,16 @@ export default function SortamentNav({
           className="nav-item"
           onClick={() => { onSelect(p.key); onMobileClose?.() }}
           style={{
-            display: 'flex', alignItems: 'center', gap: 10,
+            display: 'flex', alignItems: 'center', gap: 12,
             width: '100%', textAlign: 'left',
             background: bg, border: 'none',
-            borderLeft: `3px solid ${borderColor}`,
+            borderLeft: `4px solid ${borderColor}`,
             cursor: 'pointer', padding,
             fontSize, fontWeight, color,
             fontFamily: 'Manrope, sans-serif',
             transition: 'background .12s',
-            minHeight: 36,
+            minHeight,
+            lineHeight: 1.16,
           }}
           onMouseEnter={e => {
             if (!isActive && !isHighlighted)
@@ -69,12 +70,12 @@ export default function SortamentNav({
           <img
             src={`/icons/${p.icon}.svg`}
             alt=""
-            width={22} height={22}
-            style={{ flexShrink: 0, opacity: isActive || isHighlighted ? 1 : 0.55 }}
+            width={iconSize} height={iconSize}
+            style={{ flexShrink: 0, opacity: isActive || isHighlighted ? 1 : 0.62 }}
           />
-          <span style={{ flex: 1 }}>{p.name}</span>
+          <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
           {isHighlighted && !isActive && (
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#F9A825', flexShrink: 0 }} />
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#F9A825', flexShrink: 0 }} />
           )}
         </button>
       )
@@ -82,18 +83,16 @@ export default function SortamentNav({
 
   if (mobileOpen === undefined) return (
     <div style={{
-      width: 168, flexShrink: 0,
+      width: 208, flexShrink: 0,
       background: 'var(--surface)',
       borderRight: '1px solid var(--outline-variant)',
-      overflowY: 'auto',
-      scrollbarWidth: 'thin',
-      scrollbarColor: 'var(--outline) transparent',
-      scrollbarGutter: 'stable',
+      overflow: 'hidden',
+      height: '100%',
     }}>
       <div style={{
-        fontSize: 10, fontWeight: 700, letterSpacing: '.08em',
+        fontSize: 11, fontWeight: 800, letterSpacing: '.08em',
         color: 'var(--on-surface-variant)',
-        padding: '10px 14px 4px', textTransform: 'uppercase',
+        padding: '12px 16px 6px', textTransform: 'uppercase',
       }}>
         Сортамент
       </div>
@@ -108,7 +107,7 @@ export default function SortamentNav({
       )}
       <div style={{
         position: 'fixed', top: 48, right: 0, bottom: 0,
-        width: 220, zIndex: 201,
+        width: 240, zIndex: 201,
         transform: mobileOpen ? 'translateX(0)' : 'translateX(100%)',
         transition: 'transform .25s cubic-bezier(0.2,0,0,1)',
         overflowY: 'auto',
@@ -116,13 +115,13 @@ export default function SortamentNav({
         borderLeft: '1px solid var(--outline-variant)',
       }}>
         <div style={{
-          fontSize: 10, fontWeight: 700, letterSpacing: '.08em',
+          fontSize: 11, fontWeight: 800, letterSpacing: '.08em',
           color: 'var(--on-surface-variant)',
           padding: '12px 14px 6px', textTransform: 'uppercase',
         }}>
           Сортамент
         </div>
-        {renderList(14, '12px 14px')}
+        {renderList(15, '12px 14px', 24, 44)}
       </div>
     </>
   )
