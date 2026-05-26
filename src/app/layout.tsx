@@ -16,6 +16,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           (function() {
             try {
               var theme = localStorage.getItem('theme') || 'system';
+              var accentScheme = localStorage.getItem('accentScheme') || 'green';
+              var allowedAccents = ['green', 'blue', 'graphite', 'copper'];
               var root = document.documentElement;
               if (theme === 'light') {
                 root.classList.add('light');
@@ -24,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               } else if (theme === 'system') {
                 root.classList.add('theme-system');
               }
+              root.dataset.accent = allowedAccents.indexOf(accentScheme) >= 0 ? accentScheme : 'green';
             } catch(e) {}
           })();
         `}} />
