@@ -85,7 +85,11 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
   return (
     <div style={st.panel}>
       <div style={st.head}>
-        <span style={st.headTitle}><AnimatedText text={`${state.metalGroup} · ${state.profile.name}`} /></span>
+        <span style={st.headTitle}>
+          <AnimatedText text={state.metalGroup} />
+          <span style={st.headSeparator}> · </span>
+          <AnimatedText text={state.profile.name} />
+        </span>
         <GostTags profile={state.profile} density={state.density} onGostClick={onGostOpen} />
       </div>
       <div style={st.search}><GostSearchBar onResult={onGostResult} onClear={onGostClear} /></div>
@@ -205,7 +209,8 @@ function ErrorMessage({ message }: { message: string }) {
 const st: Record<string, React.CSSProperties> = {
   panel: { flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--surface-variant)' },
   head: { flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '10px 14px', background: 'var(--surface)', borderBottom: '1px solid var(--outline-variant)' },
-  headTitle: { fontSize: 'var(--text-base)', fontWeight: 600, color: 'var(--on-surface)' },
+  headTitle: { fontSize: 'var(--text-base)', fontWeight: 600, color: 'var(--on-surface)', display: 'inline-flex', alignItems: 'baseline', whiteSpace: 'nowrap' },
+  headSeparator: { color: 'var(--on-surface-variant)' },
   search: { flexShrink: 0, padding: '7px 14px', background: 'var(--surface)', borderBottom: '1px solid var(--outline-variant)' },
   warn: { flexShrink: 0, padding: '7px 14px', color: 'var(--warning)', background: 'var(--warning-container)' },
   work: { flex: '0 1 auto', minHeight: 0, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 },
