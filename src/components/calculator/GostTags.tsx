@@ -13,7 +13,7 @@ export default function GostTags({ profile, density, onGostClick }: Props) {
   const gostCodes = profile.gost ? [profile.gost] : []
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+    <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 6, alignItems: 'center', flexShrink: 0 }}>
       {gostCodes.map((code, index) => (
         <button
           key={`gost-${index}`}
@@ -29,6 +29,11 @@ export default function GostTags({ profile, density, onGostClick }: Props) {
             cursor: 'pointer',
             fontFamily: 'Manrope, sans-serif',
             transition: 'background .12s',
+            width: 118,
+            textAlign: 'center',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            flexShrink: 0,
           }}
           onMouseEnter={e => (e.currentTarget.style.background = 'var(--primary-container)')}
           onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface-container)')}
@@ -43,6 +48,11 @@ export default function GostTags({ profile, density, onGostClick }: Props) {
         padding: '3px 12px',
         fontSize: 11,
         color: 'var(--on-surface-variant)',
+        width: 116,
+        textAlign: 'center',
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        flexShrink: 0,
       }}>
         <AnimatedText text={`ρ = ${density} кг/м³`} />
       </span>
