@@ -28,53 +28,42 @@
   --color-neutral-d600: #A0A0AE;
   --color-neutral-d700: #E8E8EC;
 
-  /* Типографические токены */
-  --text-xs:   0.6875rem; /* 11px */
-  --text-sm:   0.75rem;   /* 12px */
-  --text-base: 0.8125rem; /* 13px */
-  --text-md:   0.875rem;  /* 14px */
-  --text-lg:   1rem;      /* 16px */
-  --text-xl:   1.125rem;  /* 18px */
+  --text-xs:   0.6875rem;
+  --text-sm:   0.75rem;
+  --text-base: 0.8125rem;
+  --text-md:   0.875rem;
+  --text-lg:   1rem;
+  --text-xl:   1.125rem;
 
-  /* Радиусы */
   --radius-sm:   8px;
   --radius-md:   12px;
   --radius-lg:   16px;
   --radius-xl:   28px;
   --radius-full: 9999px;
 
-  /* Анимации */
   --motion-standard:   cubic-bezier(0.2, 0, 0, 1);
   --motion-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
   --motion-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
 
-  /* Тени — литеральные */
   --shadow-1-light: 0 1px 2px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.1);
   --shadow-2-light: 0 2px 4px rgba(0,0,0,.06), 0 4px 8px rgba(0,0,0,.08);
   --shadow-1-dark:  0 1px 2px rgba(0,0,0,.4),  0 1px 3px rgba(0,0,0,.5);
   --shadow-2-dark:  0 2px 4px rgba(0,0,0,.4),  0 4px 8px rgba(0,0,0,.45);
 }
 
-/* ── Tier 2: Semantic tokens ──────────────────────────────────────
-   Шаг 1: Fallback для браузеров без light-dark() (Chrome < 123, Safari < 17.5).
-   Значения по умолчанию — светлая тема. @media переключает на тёмную.
-──────────────────────────────────────────────────────────────────── */
 :root {
   --primary:              var(--color-blue-800);
   --primary-dark:         var(--color-blue-900);
   --primary-light:        var(--color-blue-700);
   --primary-container:    var(--color-blue-50);
   --on-primary-container: var(--color-blue-900);
-
   --surface:              var(--color-neutral-0);
   --surface-variant:      var(--color-neutral-50);
   --surface-container:    var(--color-neutral-100);
   --on-surface:           var(--color-neutral-700);
   --on-surface-variant:   var(--color-neutral-500);
-
   --outline:              var(--color-neutral-300);
   --outline-variant:      var(--color-neutral-200);
-
   --error:                #BA1A1A;
   --error-container:      #FFDAD6;
   --success:              #166534;
@@ -86,7 +75,6 @@
   --info:                 #1D4ED8;
   --info-container:       #EFF6FF;
   --info-border:          #BFDBFE;
-
   --shadow-1: var(--shadow-1-light);
   --shadow-2: var(--shadow-2-light);
 }
@@ -98,16 +86,13 @@
     --primary-light:        var(--color-blue-200);
     --primary-container:    var(--color-blue-950);
     --on-primary-container: var(--color-blue-200);
-
     --surface:              var(--color-neutral-d200);
     --surface-variant:      var(--color-neutral-d300);
     --surface-container:    var(--color-neutral-d100);
     --on-surface:           var(--color-neutral-d700);
     --on-surface-variant:   var(--color-neutral-d600);
-
     --outline:              var(--color-neutral-d500);
     --outline-variant:      var(--color-neutral-d400);
-
     --error:                #FCA5A5;
     --error-container:      #2A1010;
     --success:              #86EFAC;
@@ -119,37 +104,26 @@
     --info:                 #93C5FD;
     --info-container:       #0A1628;
     --info-border:          #1E3A5F;
-
     --shadow-1: var(--shadow-1-dark);
     --shadow-2: var(--shadow-2-dark);
   }
 }
 
-/* ── Tier 2: Semantic tokens через light-dark() ───────────────────
-   Шаг 2: Современные браузеры (Chrome 123+, Safari 17.5+, Firefox 120+).
-   Переопределяет fallback выше. Нерегистрированные custom properties —
-   light-dark() не резолвится при наследовании, остаётся живым
-   для потомков с другим color-scheme.
-──────────────────────────────────────────────────────────────────── */
 @supports (color: light-dark(white, black)) {
   :root {
     color-scheme: light dark;
-
     --primary:              light-dark(var(--color-blue-800),  var(--color-blue-400));
     --primary-dark:         light-dark(var(--color-blue-900),  var(--color-blue-200));
     --primary-light:        light-dark(var(--color-blue-700),  var(--color-blue-200));
     --primary-container:    light-dark(var(--color-blue-50),   var(--color-blue-950));
     --on-primary-container: light-dark(var(--color-blue-900),  var(--color-blue-200));
-
     --surface:              light-dark(var(--color-neutral-0),    var(--color-neutral-d200));
     --surface-variant:      light-dark(var(--color-neutral-50),   var(--color-neutral-d300));
     --surface-container:    light-dark(var(--color-neutral-100),  var(--color-neutral-d100));
     --on-surface:           light-dark(var(--color-neutral-700),  var(--color-neutral-d700));
     --on-surface-variant:   light-dark(var(--color-neutral-500),  var(--color-neutral-d600));
-
     --outline:              light-dark(var(--color-neutral-300),  var(--color-neutral-d500));
     --outline-variant:      light-dark(var(--color-neutral-200),  var(--color-neutral-d400));
-
     --error:                light-dark(#BA1A1A, #FCA5A5);
     --error-container:      light-dark(#FFDAD6, #2A1010);
     --success:              light-dark(#166534, #86EFAC);
@@ -161,16 +135,11 @@
     --info:                 light-dark(#1D4ED8, #93C5FD);
     --info-container:       light-dark(#EFF6FF, #0A1628);
     --info-border:          light-dark(#BFDBFE, #1E3A5F);
-
     --shadow-1: light-dark(var(--shadow-1-light), var(--shadow-1-dark));
     --shadow-2: light-dark(var(--shadow-2-light), var(--shadow-2-dark));
   }
 }
 
-/* ── Ручное переключение ──────────────────────────────────────────
-   Явно переопределяем унаследованные color-свойства при смене color-scheme,
-   иначе они унаследуют уже резолвленный цвет из родителя (gotcha из документа).
-──────────────────────────────────────────────────────────────────── */
 .light {
   color-scheme: only light;
   color:        var(--on-surface);
@@ -204,10 +173,8 @@
 
 .dark {
   color-scheme: only dark;
-  /* Переопределяем унаследованные <color> свойства явно */
   color:        var(--on-surface);
   accent-color: var(--primary);
-  /* Токены уже переключились через color-scheme — переопределяем fallback */
   --primary:              var(--color-blue-400);
   --primary-dark:         var(--color-blue-200);
   --primary-light:        var(--color-blue-200);
@@ -236,41 +203,29 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  .theme-system {
-    color-scheme: only dark;
-    color:        var(--on-surface);
-    accent-color: var(--primary);
-  }
+  .theme-system { color-scheme: only dark; color: var(--on-surface); accent-color: var(--primary); }
 }
 
 @media (prefers-color-scheme: light) {
-  .theme-system {
-    color-scheme: only light;
-    color:        var(--on-surface);
-    accent-color: var(--primary);
-  }
+  .theme-system { color-scheme: only light; color: var(--on-surface); accent-color: var(--primary); }
 }
 
-/* ── Forced Colors Mode (High Contrast на Windows) ───────────────── */
 @media (forced-colors: active) {
-  :root {
-    --primary:            ButtonText;
-    --primary-container:  Highlight;
+  :root, .light, .dark, .theme-system {
+    --primary: Highlight;
+    --primary-container: Highlight;
     --on-primary-container: HighlightText;
-    --surface:            Canvas;
-    --surface-variant:    Canvas;
-    --surface-container:  Canvas;
-    --on-surface:         CanvasText;
+    --surface: Canvas;
+    --surface-variant: Canvas;
+    --surface-container: Canvas;
+    --on-surface: CanvasText;
     --on-surface-variant: GrayText;
-    --outline:            ButtonBorder;
-    --outline-variant:    ButtonBorder;
-    --error:              LinkText;
+    --outline: ButtonBorder;
+    --outline-variant: ButtonBorder;
+    --error: LinkText;
   }
 }
 
-/* ── Base ─────────────────────────────────────────────────────────── */
-
-/* box-sizing через inherit — не ломает веб-компоненты */
 html {
   box-sizing: border-box;
   color-scheme: light dark;
@@ -280,55 +235,32 @@ html {
   scrollbar-color: var(--outline) transparent;
   scrollbar-width: thin;
   scrollbar-gutter: stable;
+  min-height: 100%;
 }
 
-/* Webkit fallback для браузеров без scrollbar-color (Chrome < 121) */
 @supports not (scrollbar-color: auto) {
-  html::-webkit-scrollbar           { width: 8px; height: 8px; }
-  html::-webkit-scrollbar-thumb     { background: var(--outline); border-radius: 4px; }
-  html::-webkit-scrollbar-track     { background: transparent; }
+  html::-webkit-scrollbar { width: 8px; height: 8px; }
+  html::-webkit-scrollbar-thumb { background: var(--outline); border-radius: 4px; }
+  html::-webkit-scrollbar-track { background: transparent; }
 }
 
-/* High Contrast Mode — чёткие системные цвета */
 @media (prefers-contrast: more) {
-  html {
-    scrollbar-color: CanvasText Canvas;
-  }
+  html { scrollbar-color: CanvasText Canvas; }
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: inherit;
-}
+*, *::before, *::after { box-sizing: inherit; }
 
 body {
+  margin: 0;
+  min-height: 100%;
   font-family: 'Manrope', sans-serif;
   background: var(--surface-variant);
   color: var(--on-surface);
   -webkit-font-smoothing: antialiased;
-  transition:
-    background 0.25s var(--motion-standard),
-    color      0.25s var(--motion-standard);
+  transition: background 0.25s var(--motion-standard), color 0.25s var(--motion-standard);
 }
 
-/* ── Typography — text wrapping ───────────────────────────────────
-   text-wrap: balance — Chrome 114+, Firefox 121+, Safari 17.5+
-   text-wrap: pretty  — Chrome 117+, Safari 26+. Firefox — graceful degradation.
-   Не применять глобально (*) — алгоритм дорогой.
-──────────────────────────────────────────────────────────────────── */
-h1, h2, h3, h4, h5, h6 {
-  text-wrap: balance;
-}
-
-p, li, dd, figcaption {
-  text-wrap: pretty;
-}
-
-input, select, textarea, button {
-  font: inherit;
-}
-
-button {
-  -webkit-tap-highlight-color: transparent;
-}
+h1, h2, h3, h4, h5, h6 { text-wrap: balance; }
+p, li, dd, figcaption { text-wrap: pretty; }
+input, select, textarea, button { font: inherit; }
+button { -webkit-tap-highlight-color: transparent; }
