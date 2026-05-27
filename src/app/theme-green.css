@@ -1,3 +1,5 @@
+@import './transitions.css';
+
 /* Accent palette layer.
    The selected palette changes only the accent tokens.
    Light/dark mode remains controlled separately by the theme switcher. */
