@@ -50,7 +50,6 @@ export default function AppDialog({
 
     dialog.addEventListener('close', handleClose)
 
-    // Safari fallback for light-dismiss until closedby is broadly supported.
     if (!('closedBy' in HTMLDialogElement.prototype)) {
       dialog.addEventListener('click', handleClick)
     }
@@ -65,7 +64,7 @@ export default function AppDialog({
   return (
     <dialog
       ref={dialogRef}
-      className="ui-dialog"
+      className="ui-dialog t-modal is-open"
       aria-labelledby={titleId}
       {...({ closedby: 'any' } as Record<string, string>)}
       style={{
