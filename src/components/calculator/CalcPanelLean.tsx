@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { getWeightTolerance } from '@/data/gost'
 import { ProfileKey } from '@/data/profiles'
 import { parseQuickInput } from '@/lib/quickInputParser'
@@ -85,7 +85,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
   return (
     <div style={st.panel}>
       <div style={st.head}>
-        <span style={st.headTitle}>{state.metalGroup} · {state.profile.name}</span>
+        <span style={st.headTitle}><AnimatedText text={`${state.metalGroup} · ${state.profile.name}`} /></span>
         <GostTags profile={state.profile} density={state.density} onGostClick={onGostOpen} />
       </div>
       <div style={st.search}><GostSearchBar onResult={onGostResult} onClear={onGostClear} /></div>
@@ -94,7 +94,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
         <section style={st.card}>
           <div style={st.cardTitle}>Калькулятор металла</div>
           <div style={st.tabs}>{(['mass', 'length', 'quick'] as const).map(x => <button key={x} onClick={() => switchMode(x)} style={tab(mode === x)}>{modes[x].label}</button>)}</div>
-          <div style={st.hint}>{modes[mode].hint}</div>
+          <div style={st.hint}><AnimatedText text={modes[mode].hint} /></div>
         </section>
         {mode === 'quick' && <section style={st.card}>
           <div style={st.quick}><input value={quickInput} onChange={e => setQuickInput(e.target.value)} style={st.textInput} /><button onClick={applyQuick} style={st.actionSmall}>Применить</button></div>
@@ -112,7 +112,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
           <div><Label>Количество</Label><div style={st.qty}><button onClick={decrementQty} style={st.qtyBtn}>−</button><input type="number" min={1} step={1} value={state.quantity} onChange={e => setQuantity(e.target.value ? Number(e.target.value) : 1)} style={st.qtyInput} /><button onClick={incrementQty} style={st.qtyBtn}>+</button></div></div>
         </div>
         <button onClick={calculate} style={st.action}>Рассчитать</button>
-        {state.error && <div style={st.error}>{state.error.message}</div>}
+        {state.error && <ErrorMessage message={state.error.message} />}
         {state.snackbar && <div style={st.note}>{state.snackbar.message}</div>}
       </div>
       <div style={st.result}>
@@ -134,6 +134,35 @@ function FieldSelect({ label, value, onChange, options }: { label: string; value
 function tab(active: boolean): React.CSSProperties { return { border: 'none', borderRadius: 7, padding: '7px 8px', background: active ? 'var(--primary)' : 'transparent', color: active ? '#fff' : 'var(--on-surface-variant)', fontWeight: active ? 700 : 500, fontFamily: 'Manrope, sans-serif', cursor: 'pointer' } }
 function status(kind: QuickStatus['kind']): React.CSSProperties { return { padding: '7px 9px', borderRadius: 7, fontSize: 'var(--text-xs)', background: kind === 'error' ? 'var(--error-container)' : kind === 'warning' ? 'var(--warning-container)' : 'var(--success-container)', color: kind === 'error' ? 'var(--error)' : kind === 'warning' ? 'var(--warning)' : 'var(--success)' } }
 
+function AnimatedText({ text }: { text: string }) {
+  const [shown, setShown] = useState(text)
+  const [phase, setPhase] = useState('')
+  const ref = useRef<HTMLSpanElement>(null)
+
+  useEffect(() => {
+    if (text === shown) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setShown(text)
+      return
+    }
+
+    const dur = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--text-swap-dur')) || 150
+    setPhase('is-exit')
+    const timer = window.setTimeout(() => {
+      setShown(text)
+      setPhase('is-enter-start')
+      requestAnimationFrame(() => {
+        void ref.current?.offsetHeight
+        setPhase('')
+      })
+    }, dur)
+
+    return () => window.clearTimeout(timer)
+  }, [text, shown])
+
+  return <span ref={ref} className={`t-text-swap ${phase}`}>{shown}</span>
+}
+
 function AnimatedNumber({ value, digits }: { value: number | null; digits: number }) {
   if (value == null) return <>—</>
 
@@ -151,6 +180,16 @@ function AnimatedNumber({ value, digits }: { value: number | null; digits: numbe
         </span>
       ))}
     </span>
+  )
+}
+
+function ErrorMessage({ message }: { message: string }) {
+  return (
+    <div key={message} className="t-input-wrap is-error" style={st.errorWrap}>
+      <div className="t-input is-error is-shaking" style={st.error}>
+        <p className="t-error-msg" style={st.errorMsg}>{message}</p>
+      </div>
+    </div>
   )
 }
 
@@ -183,7 +222,9 @@ const st: Record<string, React.CSSProperties> = {
   qtyBtn: { width: 36, border: 'none', background: 'var(--surface-container)', color: 'var(--on-surface-variant)', fontSize: 18 },
   qtyInput: { flex: 1, minWidth: 48, border: 'none', outline: 'none', textAlign: 'center', background: 'var(--surface)', color: 'var(--on-surface)', fontWeight: 700 },
   action: { alignSelf: 'flex-start', border: 'none', borderRadius: 7, padding: '10px 22px', background: 'var(--primary)', color: '#fff', fontWeight: 700 },
-  error: { padding: '7px 10px', borderRadius: 6, background: 'var(--error-container)', color: 'var(--error)', fontSize: 'var(--text-xs)' },
+  errorWrap: { width: '100%' },
+  error: { padding: '7px 10px', borderRadius: 6, border: '1px solid var(--error)', background: 'var(--error-container)', color: 'var(--error)', fontSize: 'var(--text-xs)' },
+  errorMsg: { margin: 0 },
   note: { padding: '7px 10px', borderRadius: 6, background: 'var(--surface-container)', color: 'var(--on-surface)', fontSize: 'var(--text-xs)' },
   result: { flexShrink: 0, display: 'flex', alignItems: 'flex-start', padding: '10px 14px', borderTop: '1px solid var(--outline-variant)', background: 'var(--surface)' },
   resultLabel: { fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '.06em' },
