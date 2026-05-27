@@ -56,8 +56,8 @@ export default function SettingsPanel({ onClose }: Props) {
   const tabDirection = TAB_INDEX[tab] >= TAB_INDEX[previousTab] ? 1 : -1
 
   return (
-    <AppDialog title="Настройки" onClose={onClose} width={540}>
-      <div className="ui-dialog-shell">
+    <AppDialog title="Настройки" onClose={onClose} width={540} height={520}>
+      <div className="ui-dialog-shell" style={{ height: '100%' }}>
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '18px 20px 0', flexShrink: 0,
