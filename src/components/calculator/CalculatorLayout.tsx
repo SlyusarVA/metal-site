@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { profiles, ProfileKey } from '@/data/profiles'
-import { getGradesForGroup } from '@/data/materials'
+import { getAllowedProfiles, getGradesForGroup } from '@/data/materials'
 import { useCalculator } from '@/hooks/useCalculator'
 import { useSettings, sortGrades } from '@/data/settings'
 import MetalNav from './MetalNav'
@@ -13,6 +13,11 @@ import SettingsPanel from './SettingsPanel'
 import GostPanel from './GostPanel'
 import ThemeToggle from '../ThemeToggle'
 import AccentSchemeToggle from '../AccentSchemeToggle'
+
+const SORTAMENT_HEADER_HEIGHT = 31
+const SORTAMENT_ROW_HEIGHT = 40
+const SORTAMENT_SAFE_GAP = 16
+const DESKTOP_OUTER_RESERVED_HEIGHT = 70
 
 export default function CalculatorLayout() {
   const router = useRouter()
@@ -38,6 +43,21 @@ export default function CalculatorLayout() {
   const orderedProfiles = settings.profileOrder
     .map(key => profiles.find(p => p.key === key))
     .filter(Boolean) as typeof profiles
+
+  const maxSortamentRows = Math.max(
+    1,
+    ...orderedMetals.map(group => {
+      const allowed = getAllowedProfiles(group)
+      return allowed ? allowed.length : orderedProfiles.length
+    })
+  )
+
+  const desktopCalculatorHeight =
+    SORTAMENT_HEADER_HEIGHT +
+    maxSortamentRows * SORTAMENT_ROW_HEIGHT +
+    SORTAMENT_SAFE_GAP
+
+  const desktopShellStyle = getDesktopShellStyle(desktopCalculatorHeight)
 
   const getGradesOrdered = (group: string) => {
     const raw = getGradesForGroup(group)
@@ -155,9 +175,24 @@ function SiteTab({ children, active, onClick }: { children: React.ReactNode; act
   return <button onClick={onClick} aria-current={active ? 'page' : undefined} style={siteTabStyle(active)}>{children}</button>
 }
 
+function getDesktopShellStyle(targetHeight: number): React.CSSProperties {
+  return {
+    width: '100%',
+    maxWidth: 'clamp(980px, 92vw, 1180px)',
+    background: 'var(--surface)',
+    borderRadius: 'var(--radius-md)',
+    border: '1px solid var(--outline-variant)',
+    overflow: 'hidden',
+    display: 'flex',
+    flexDirection: 'column',
+    height: `min(${targetHeight}px, calc(100dvh - ${DESKTOP_OUTER_RESERVED_HEIGHT}px))`,
+    minHeight: 0,
+    flexShrink: 0,
+  }
+}
+
 const desktopPageStyle: React.CSSProperties = { height: '100dvh', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 16px 10px', overflow: 'hidden' }
 const desktopNavStyle: React.CSSProperties = { width: '100%', maxWidth: 'clamp(980px, 92vw, 1180px)', display: 'flex', alignItems: 'center', marginBottom: 8, gap: 4, flexShrink: 0 }
-const desktopShellStyle: React.CSSProperties = { width: '100%', maxWidth: 'clamp(980px, 92vw, 1180px)', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--outline-variant)', overflow: 'hidden', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }
 const footerNoteStyle: React.CSSProperties = { marginTop: 6, marginBottom: 0, fontSize: 'var(--text-xs)', color: 'var(--on-surface-variant)', textAlign: 'center', flexShrink: 0 }
 const mobilePageStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', height: '100dvh', minHeight: 0, background: 'var(--surface-variant)', overflow: 'hidden' }
 const mobileNavStyle: React.CSSProperties = { background: 'var(--surface)', borderBottom: '1px solid var(--outline-variant)', display: 'flex', alignItems: 'center', gap: 8, minHeight: 48, padding: '0 12px', flexShrink: 0 }
