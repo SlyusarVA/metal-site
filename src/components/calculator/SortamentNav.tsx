@@ -88,15 +88,21 @@ export default function SortamentNav({
       borderRight: '1px solid var(--outline-variant)',
       overflow: 'hidden',
       height: '100%',
+      minHeight: 0,
+      display: 'flex',
+      flexDirection: 'column',
     }}>
       <div style={{
         fontSize: 11, fontWeight: 800, letterSpacing: '.08em',
         color: 'var(--on-surface-variant)',
         padding: '12px 16px 6px', textTransform: 'uppercase',
+        flexShrink: 0,
       }}>
         Сортамент
       </div>
-      {renderList()}
+      <div className="ui-scroll-area" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
+        {renderList()}
+      </div>
     </div>
   )
 
