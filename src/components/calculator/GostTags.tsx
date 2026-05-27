@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import { MetalProfile } from '@/data/profiles'
 
 interface Props {
@@ -32,7 +33,7 @@ export default function GostTags({ profile, density, onGostClick }: Props) {
           onMouseEnter={e => (e.currentTarget.style.background = 'var(--primary-container)')}
           onMouseLeave={e => (e.currentTarget.style.background = 'var(--surface-container)')}
         >
-          {code}
+          <AnimatedText text={code} />
         </button>
       ))}
       <span style={{
@@ -43,8 +44,37 @@ export default function GostTags({ profile, density, onGostClick }: Props) {
         fontSize: 11,
         color: 'var(--on-surface-variant)',
       }}>
-        ρ = {density} кг/м³
+        <AnimatedText text={`ρ = ${density} кг/м³`} />
       </span>
     </div>
   )
+}
+
+function AnimatedText({ text }: { text: string }) {
+  const [shown, setShown] = useState(text)
+  const [phase, setPhase] = useState('')
+  const ref = useRef<HTMLSpanElement>(null)
+
+  useEffect(() => {
+    if (text === shown) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setShown(text)
+      return
+    }
+
+    const dur = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--text-swap-dur')) || 150
+    setPhase('is-exit')
+    const timer = window.setTimeout(() => {
+      setShown(text)
+      setPhase('is-enter-start')
+      requestAnimationFrame(() => {
+        void ref.current?.offsetHeight
+        setPhase('')
+      })
+    }, dur)
+
+    return () => window.clearTimeout(timer)
+  }, [text, shown])
+
+  return <span ref={ref} className={`t-text-swap ${phase}`}>{shown}</span>
 }
