@@ -14,9 +14,9 @@ export default function GostTags({ profile, density, onGostClick }: Props) {
 
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-      {gostCodes.map(code => (
+      {gostCodes.map((code, index) => (
         <button
-          key={code}
+          key={`gost-${index}`}
           onClick={() => onGostClick(code)}
           style={{
             background: 'var(--surface-container)',
