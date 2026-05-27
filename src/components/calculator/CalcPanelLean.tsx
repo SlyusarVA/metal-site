@@ -116,8 +116,12 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
         {state.snackbar && <div style={st.note}>{state.snackbar.message}</div>}
       </div>
       <div style={st.result}>
-        <div><div style={st.resultLabel}>{mode === 'length' ? 'Длина' : 'Вес'}</div><span style={st.resultValue}>{displayResult != null ? displayResult.toFixed(3) : '—'}</span> <span style={st.unitText}>{mode === 'length' ? 'м' : 'кг'}</span>{massMin != null && massMax != null && <div style={st.tol}>{massMin.toFixed(2)} ··· {massMax.toFixed(2)} кг</div>}</div>
-        {state.result?.linearMass != null && state.result.linearMass > 0 && <div style={{ marginInlineStart: 18 }}><div style={st.resultLabel}>Погонный вес</div><b>{state.result.linearMass.toFixed(4)}</b> <span style={st.unitText}>кг/м</span></div>}
+        <div>
+          <div style={st.resultLabel}>{mode === 'length' ? 'Длина' : 'Вес'}</div>
+          <span style={st.resultValue}><AnimatedNumber value={displayResult} digits={3} /></span> <span style={st.unitText}>{mode === 'length' ? 'м' : 'кг'}</span>
+          {massMin != null && massMax != null && <div style={st.tol}><AnimatedNumber value={massMin} digits={2} /> ··· <AnimatedNumber value={massMax} digits={2} /> кг</div>}
+        </div>
+        {state.result?.linearMass != null && state.result.linearMass > 0 && <div style={{ marginInlineStart: 18 }}><div style={st.resultLabel}>Погонный вес</div><b><AnimatedNumber value={state.result.linearMass} digits={4} /></b> <span style={st.unitText}>кг/м</span></div>}
         {tolerance && mode === 'mass' && <span style={st.pill}>{tolerance.label}</span>}
       </div>
     </div>
@@ -129,6 +133,26 @@ function UnitInput({ value, unit, onChange }: { value: number | string; unit: st
 function FieldSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) { return <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><Label>{label}</Label><select value={value} onChange={e => onChange(e.target.value)} style={st.mobileSelect}>{options.map(x => <option key={x.value} value={x.value}>{x.label}</option>)}</select></label> }
 function tab(active: boolean): React.CSSProperties { return { border: 'none', borderRadius: 7, padding: '7px 8px', background: active ? 'var(--primary)' : 'transparent', color: active ? '#fff' : 'var(--on-surface-variant)', fontWeight: active ? 700 : 500, fontFamily: 'Manrope, sans-serif', cursor: 'pointer' } }
 function status(kind: QuickStatus['kind']): React.CSSProperties { return { padding: '7px 9px', borderRadius: 7, fontSize: 'var(--text-xs)', background: kind === 'error' ? 'var(--error-container)' : kind === 'warning' ? 'var(--warning-container)' : 'var(--success-container)', color: kind === 'error' ? 'var(--error)' : kind === 'warning' ? 'var(--warning)' : 'var(--success)' } }
+
+function AnimatedNumber({ value, digits }: { value: number | null; digits: number }) {
+  if (value == null) return <>—</>
+
+  const text = value.toFixed(digits)
+  const chars = text.split('')
+  return (
+    <span key={text} className="t-digit-group is-animating">
+      {chars.map((char, index) => (
+        <span
+          key={`${char}-${index}`}
+          className="t-digit"
+          data-stagger={index === chars.length - 2 ? '1' : index === chars.length - 1 ? '2' : undefined}
+        >
+          {char}
+        </span>
+      ))}
+    </span>
+  )
+}
 
 const st: Record<string, React.CSSProperties> = {
   panel: { flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--surface-variant)' },
