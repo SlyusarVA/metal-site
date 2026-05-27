@@ -28,17 +28,32 @@ const TABS: [Tab, string][] = [
   ['theme', 'Тема'],
 ]
 
+const TAB_INDEX: Record<Tab, number> = {
+  metals: 0,
+  sortament: 1,
+  grades: 2,
+  theme: 3,
+}
+
 export default function SettingsPanel({ onClose }: Props) {
   const [tab, setTab] = useState<Tab>('metals')
+  const [previousTab, setPreviousTab] = useState<Tab>('metals')
   const { settings, setMetalOrder, setProfileOrder, setGradeSort, resetToDefault } = useSettings()
   const { theme: currentTheme, setTheme: applyTheme } = useTheme()
   const { setAccentScheme } = useAccentScheme()
+
+  function selectTab(next: Tab) {
+    setPreviousTab(tab)
+    setTab(next)
+  }
 
   function handleResetToDefault() {
     resetToDefault()
     applyTheme('system')
     setAccentScheme('green')
   }
+
+  const tabDirection = TAB_INDEX[tab] >= TAB_INDEX[previousTab] ? 1 : -1
 
   return (
     <AppDialog title="Настройки" onClose={onClose} width={540}>
@@ -60,92 +75,59 @@ export default function SettingsPanel({ onClose }: Props) {
           borderBottom: '1px solid var(--outline-variant)', flexShrink: 0,
         }}>
           {TABS.map(([id, label]) => (
-            <button key={id} onClick={() => setTab(id)} style={{
+            <button key={id} onClick={() => selectTab(id)} style={{
               background: 'none', border: 'none',
               borderBottom: `2px solid ${tab === id ? 'var(--primary)' : 'transparent'}`,
               padding: '8px 16px', marginBottom: -1,
               fontSize: 13, fontWeight: tab === id ? 600 : 400,
               color: tab === id ? 'var(--primary)' : 'var(--on-surface-variant)',
               cursor: 'pointer', fontFamily: 'Manrope, sans-serif',
-              transition: 'color .15s',
+              transition: 'color .15s, border-color .15s',
             }}>
               {label}
             </button>
           ))}
         </div>
 
-        <div className="ui-scroll-area" style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
-          {tab === 'metals' && (
-            <DragList
-              items={settings.metalOrder}
-              renderLabel={g => g}
-              onReorder={setMetalOrder}
-              hint="Перетащите для изменения порядка в левой колонке калькулятора"
-            />
-          )}
-          {tab === 'sortament' && (
-            <DragList
-              items={settings.profileOrder}
-              renderLabel={k => profiles.find(p => p.key === k)?.name ?? k}
-              onReorder={order => setProfileOrder(order as ProfileKey[])}
-              hint="Перетащите для изменения порядка в средней колонке калькулятора"
-            />
-          )}
-          {tab === 'grades' && (
-            <GradesSettings
-              groups={settings.metalOrder}
-              gradeSorts={settings.gradeSorts}
-              onUpdate={setGradeSort}
-            />
-          )}
-          {tab === 'theme' && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <p style={{ fontSize: 12, color: 'var(--on-surface-variant)', margin: '0 0 8px' }}>
-                Выберите цветовую схему интерфейса
-              </p>
-              {THEME_OPTIONS.map(opt => {
-                const isActive = currentTheme === opt.value
-                return (
-                  <button
-                    key={opt.value}
-                    onClick={() => applyTheme(opt.value)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 14,
-                      background: isActive ? 'var(--primary-container)' : 'var(--surface)',
-                      border: `1px solid ${isActive ? 'var(--primary)' : 'var(--outline-variant)'}`,
-                      borderRadius: 'var(--radius-md)',
-                      padding: '14px 16px',
-                      cursor: 'pointer',
-                      fontFamily: 'Manrope, sans-serif',
-                      textAlign: 'left',
-                      transition: 'background .15s, border-color .15s, color .15s',
-                    }}
-                  >
-                    <span style={{ fontSize: 22, flexShrink: 0 }}>{opt.icon}</span>
-                    <div style={{ flex: 1 }}>
-                      <div style={{
-                        fontSize: 13, fontWeight: isActive ? 600 : 500,
-                        color: isActive ? 'var(--primary)' : 'var(--on-surface)',
-                        marginBottom: 2,
-                      }}>
-                        {opt.label}
-                      </div>
-                      <div style={{ fontSize: 11, color: 'var(--on-surface-variant)' }}>
-                        {opt.desc}
-                      </div>
-                    </div>
-                    <div style={{
-                      width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
-                      border: `2px solid ${isActive ? 'var(--primary)' : 'var(--outline)'}`,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      {isActive && <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--primary)' }} />}
-                    </div>
-                  </button>
-                )
-              })}
+        <div
+          className="t-page-slide"
+          data-page={tab}
+          style={{ flex: 1, minHeight: 0, overflow: 'hidden', ['--t-page-from-x' as string]: `${tabDirection * 8}px` }}
+        >
+          <section className={`t-page ${tab === 'metals' ? 'is-active' : ''}`} data-page-id="metals">
+            <div className="ui-scroll-area" style={pageContentStyle}>
+              <DragList
+                items={settings.metalOrder}
+                renderLabel={g => g}
+                onReorder={setMetalOrder}
+                hint="Перетащите для изменения порядка в левой колонке калькулятора"
+              />
             </div>
-          )}
+          </section>
+          <section className={`t-page ${tab === 'sortament' ? 'is-active' : ''}`} data-page-id="sortament">
+            <div className="ui-scroll-area" style={pageContentStyle}>
+              <DragList
+                items={settings.profileOrder}
+                renderLabel={k => profiles.find(p => p.key === k)?.name ?? k}
+                onReorder={order => setProfileOrder(order as ProfileKey[])}
+                hint="Перетащите для изменения порядка в средней колонке калькулятора"
+              />
+            </div>
+          </section>
+          <section className={`t-page ${tab === 'grades' ? 'is-active' : ''}`} data-page-id="grades">
+            <div className="ui-scroll-area" style={pageContentStyle}>
+              <GradesSettings
+                groups={settings.metalOrder}
+                gradeSorts={settings.gradeSorts}
+                onUpdate={setGradeSort}
+              />
+            </div>
+          </section>
+          <section className={`t-page ${tab === 'theme' ? 'is-active' : ''}`} data-page-id="theme">
+            <div className="ui-scroll-area" style={pageContentStyle}>
+              <ThemeSettings currentTheme={currentTheme} applyTheme={applyTheme} />
+            </div>
+          </section>
         </div>
 
         <div style={{
@@ -173,6 +155,63 @@ export default function SettingsPanel({ onClose }: Props) {
       </div>
     </AppDialog>
   )
+}
+
+function ThemeSettings({ currentTheme, applyTheme }: { currentTheme: Theme; applyTheme: (theme: Theme) => void }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <p style={{ fontSize: 12, color: 'var(--on-surface-variant)', margin: '0 0 8px' }}>
+        Выберите цветовую схему интерфейса
+      </p>
+      {THEME_OPTIONS.map(opt => {
+        const isActive = currentTheme === opt.value
+        return (
+          <button
+            key={opt.value}
+            onClick={() => applyTheme(opt.value)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 14,
+              background: isActive ? 'var(--primary-container)' : 'var(--surface)',
+              border: `1px solid ${isActive ? 'var(--primary)' : 'var(--outline-variant)'}`,
+              borderRadius: 'var(--radius-md)',
+              padding: '14px 16px',
+              cursor: 'pointer',
+              fontFamily: 'Manrope, sans-serif',
+              textAlign: 'left',
+              transition: 'background .15s, border-color .15s, color .15s',
+            }}
+          >
+            <span style={{ fontSize: 22, flexShrink: 0 }}>{opt.icon}</span>
+            <div style={{ flex: 1 }}>
+              <div style={{
+                fontSize: 13, fontWeight: isActive ? 600 : 500,
+                color: isActive ? 'var(--primary)' : 'var(--on-surface)',
+                marginBottom: 2,
+              }}>
+                {opt.label}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--on-surface-variant)' }}>
+                {opt.desc}
+              </div>
+            </div>
+            <div style={{
+              width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
+              border: `2px solid ${isActive ? 'var(--primary)' : 'var(--outline)'}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              {isActive && <div style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--primary)' }} />}
+            </div>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+const pageContentStyle: React.CSSProperties = {
+  height: '100%',
+  overflowY: 'auto',
+  padding: '16px 20px',
 }
 
 function DragList<T extends string>({
