@@ -31,17 +31,56 @@ export default function AccentSchemeToggle() {
     }
   }, [])
 
+  function setShifts(activeIdx: number | null, phase: 'in' | 'out') {
+    const root = rootRef.current
+    if (!root) return
+
+    const cs = getComputedStyle(document.documentElement)
+    const num = (name: string, fb: number) => {
+      const v = parseFloat(cs.getPropertyValue(name))
+      return Number.isFinite(v) ? v : fb
+    }
+    const ease = (name: string, fb: string) => cs.getPropertyValue(name).trim() || fb
+
+    const lift = num('--avatar-lift', -4)
+    const falloff = num('--avatar-falloff', 0.45)
+    const scale = num('--avatar-scale', 1.05)
+    const tf = phase === 'out'
+      ? ease('--avatar-ease-out', 'cubic-bezier(0.34, 3.85, 0.64, 1)')
+      : ease('--avatar-ease-in', 'cubic-bezier(0.22, 1, 0.36, 1)')
+
+    root.querySelectorAll<HTMLElement>('.t-avatar').forEach((el, i) => {
+      el.style.transitionTimingFunction = tf
+      if (activeIdx == null) {
+        el.style.setProperty('--shift', '0px')
+        el.style.setProperty('--scale-active', '1')
+        return
+      }
+
+      const d = Math.abs(i - activeIdx)
+      el.style.setProperty('--shift', `${(lift * Math.pow(falloff, d)).toFixed(3)}px`)
+      el.style.setProperty('--scale-active', i === activeIdx ? String(scale) : '1')
+    })
+  }
+
   return (
-    <div ref={rootRef} style={{ position: 'relative', width: 32, height: 32, flexShrink: 0 }}>
-      {options.map(option => {
+    <div
+      ref={rootRef}
+      className="t-avatar-group"
+      onMouseLeave={() => setShifts(null, 'out')}
+      style={{ position: 'relative', width: 32, height: 32, flexShrink: 0 }}
+    >
+      {options.map((option, index) => {
         const active = accentScheme === option.value
         return (
           <button
             key={option.value}
             type="button"
+            className="t-avatar"
             aria-label={option.label}
             title={option.label}
-            onClick={() => { setAccentScheme(option.value); setOpen(false) }}
+            onMouseEnter={() => setShifts(index, 'in')}
+            onClick={() => { setAccentScheme(option.value); setOpen(false); setShifts(null, 'out') }}
             style={{
               position: 'absolute',
               left: 1,
@@ -55,8 +94,9 @@ export default function AccentSchemeToggle() {
               cursor: 'pointer',
               opacity: open ? 1 : 0,
               pointerEvents: open ? 'auto' : 'none',
-              transform: open ? `translate(${option.x}px, ${option.y}px) scale(1)` : 'translate(0, 0) scale(.72)',
-              transition: 'opacity .16s var(--motion-standard), transform .18s var(--motion-decelerate)',
+              translate: open ? `${option.x}px ${option.y}px` : '0 0',
+              scale: open ? '1' : '.72',
+              transition: 'opacity .16s var(--motion-standard), translate .18s var(--motion-decelerate), scale .18s var(--motion-decelerate), transform var(--avatar-dur) var(--avatar-ease-in)',
               zIndex: open ? 20 : -1,
             }}
           />
