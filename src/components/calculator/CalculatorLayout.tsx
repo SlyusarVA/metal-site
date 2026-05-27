@@ -155,10 +155,10 @@ function SiteTab({ children, active, onClick }: { children: React.ReactNode; act
   return <button onClick={onClick} aria-current={active ? 'page' : undefined} style={siteTabStyle(active)}>{children}</button>
 }
 
-const desktopPageStyle: React.CSSProperties = { height: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '18px 16px 16px', overflow: 'hidden' }
-const desktopNavStyle: React.CSSProperties = { width: '100%', maxWidth: 'clamp(980px, 92vw, 1180px)', display: 'flex', alignItems: 'center', marginBottom: 12, gap: 4, flexShrink: 0 }
-const desktopShellStyle: React.CSSProperties = { width: '100%', maxWidth: 'clamp(980px, 92vw, 1180px)', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--outline-variant)', overflow: 'hidden', display: 'flex', flexDirection: 'column', height: 'min(692px, calc(100dvh - 80px))', minHeight: 0 }
-const footerNoteStyle: React.CSSProperties = { marginTop: 8, marginBottom: 0, fontSize: 'var(--text-xs)', color: 'var(--on-surface-variant)', textAlign: 'center', flexShrink: 0 }
+const desktopPageStyle: React.CSSProperties = { height: '100dvh', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 16px 10px', overflow: 'hidden' }
+const desktopNavStyle: React.CSSProperties = { width: '100%', maxWidth: 'clamp(980px, 92vw, 1180px)', display: 'flex', alignItems: 'center', marginBottom: 8, gap: 4, flexShrink: 0 }
+const desktopShellStyle: React.CSSProperties = { width: '100%', maxWidth: 'clamp(980px, 92vw, 1180px)', background: 'var(--surface)', borderRadius: 'var(--radius-md)', border: '1px solid var(--outline-variant)', overflow: 'hidden', display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0 }
+const footerNoteStyle: React.CSSProperties = { marginTop: 6, marginBottom: 0, fontSize: 'var(--text-xs)', color: 'var(--on-surface-variant)', textAlign: 'center', flexShrink: 0 }
 const mobilePageStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', height: '100dvh', minHeight: 0, background: 'var(--surface-variant)', overflow: 'hidden' }
 const mobileNavStyle: React.CSSProperties = { background: 'var(--surface)', borderBottom: '1px solid var(--outline-variant)', display: 'flex', alignItems: 'center', gap: 8, minHeight: 48, padding: '0 12px', flexShrink: 0 }
 const utilBtnStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'transparent', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--on-surface-variant)', fontSize: 'var(--text-xs)', fontWeight: 500, fontFamily: 'Manrope, sans-serif', height: 32, minBlockSize: 32, padding: '0 10px', whiteSpace: 'nowrap' }
