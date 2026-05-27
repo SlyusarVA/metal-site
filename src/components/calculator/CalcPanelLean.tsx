@@ -136,7 +136,7 @@ const st: Record<string, React.CSSProperties> = {
   headTitle: { fontSize: 'var(--text-base)', fontWeight: 600, color: 'var(--on-surface)' },
   search: { flexShrink: 0, padding: '7px 14px', background: 'var(--surface)', borderBottom: '1px solid var(--outline-variant)' },
   warn: { flexShrink: 0, padding: '7px 14px', color: 'var(--warning)', background: 'var(--warning-container)' },
-  work: { flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 },
+  work: { flex: '0 1 auto', minHeight: 0, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 },
   card: { padding: 10, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-md)', background: 'var(--surface)', display: 'flex', flexDirection: 'column', gap: 8 },
   cardTitle: { fontWeight: 700, color: 'var(--on-surface)' },
   tabs: { display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 4, padding: 3, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-sm)', background: 'var(--surface-container)' },
