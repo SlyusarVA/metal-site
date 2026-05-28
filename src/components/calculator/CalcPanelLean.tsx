@@ -210,7 +210,7 @@ const st: Record<string, React.CSSProperties> = {
   panel: { flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--surface-variant)' },
   head: { flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'nowrap', padding: '10px 14px', background: 'var(--surface)', borderBottom: '1px solid var(--outline-variant)', overflow: 'hidden' },
   headTitle: { fontSize: 'var(--text-base)', fontWeight: 600, color: 'var(--on-surface)', display: 'inline-flex', alignItems: 'baseline', whiteSpace: 'nowrap', flexShrink: 0 },
-  headMetalSlot: { display: 'inline-block', width: 76, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  headMetalSlot: { display: 'inline-block', width: 112, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   headProfileSlot: { display: 'inline-block', width: 118, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   headSeparator: { color: 'var(--on-surface-variant)', flexShrink: 0 },
   search: { flexShrink: 0, padding: '7px 14px', background: 'var(--surface)', borderBottom: '1px solid var(--outline-variant)' },
