@@ -2,11 +2,25 @@ import Link from 'next/link'
 import { getGradeBySlug, metalGrades } from '@/data/markochnik'
 import CompositionChart from '@/components/markochnik/CompositionChart'
 
- type Props = {
+type Props = {
   params: { family: string; category: string; grade: string }
 }
 
 type SourceRef = { document: string; section?: string; table?: string; note?: string; url?: string; status: string }
+
+const decoding = [
+  ['Х', 'хром'],
+  ['В', 'вольфрам'],
+  ['С', 'кремний'],
+  ['Г', 'марганец'],
+  ['Ф', 'ванадий'],
+]
+
+const supplyForms = ['Прутки', 'Полосы', 'Мотки']
+const quickActions = [
+  ['Рассчитать вес', '/'],
+  ['Сравнить марки', '/marki-metallov'],
+]
 
 export function generateStaticParams() {
   return metalGrades.map(grade => ({ family: grade.familySlug, category: grade.categorySlug, grade: grade.slug }))
@@ -32,7 +46,7 @@ export default function GradePage({ params }: Props) {
   }
 
   return (
-    <main style={st.page}>
+    <main id="top" style={st.page}>
       <nav style={st.breadcrumbs}>
         <Link href="/" style={st.crumb}>Калькулятор</Link><span>/</span>
         <Link href="/marki-metallov" style={st.crumb}>Марочник</Link><span>/</span>
@@ -62,6 +76,28 @@ export default function GradePage({ params }: Props) {
           <div style={st.chips}>{grade.application.examples.map(item => <span key={item} style={st.chip}>{item}</span>)}</div>
           <h3 style={st.h3}>Оборудование</h3>
           <div style={st.chips}>{grade.application.equipment.map(item => <span key={item} style={st.chipAlt}>{item}</span>)}</div>
+        </article>
+      </section>
+
+      <section style={st.featureGrid}>
+        <article style={st.card}>
+          <h2 style={st.h2}>Вид поставки</h2>
+          <div style={st.chips}>{supplyForms.map(item => <span key={item} style={st.chip}>{item}</span>)}</div>
+        </article>
+
+        <article style={st.card}>
+          <h2 style={st.h2}>Близкие марки</h2>
+          <div style={st.chips}>{grade.relatedGrades.map(item => <span key={item} style={st.chip}>{item}</span>)}</div>
+        </article>
+
+        <article style={st.card}>
+          <h2 style={st.h2}>Расшифровка</h2>
+          <div style={st.decodeGrid}>{decoding.map(([symbol, meaning]) => <div key={symbol} style={st.decodeItem}><strong>{symbol}</strong><span>{meaning}</span></div>)}</div>
+        </article>
+
+        <article style={st.card}>
+          <h2 style={st.h2}>Действия</h2>
+          <div style={st.actionRow}>{quickActions.map(([label, href]) => <Link key={label} href={href} style={st.action}>{label}</Link>)}</div>
         </article>
       </section>
 
@@ -97,6 +133,8 @@ export default function GradePage({ params }: Props) {
           ))}
         </div>
       </section>
+
+      <a href="#top" style={st.backTop}>Наверх</a>
     </main>
   )
 }
@@ -132,15 +170,15 @@ const st: Record<string, React.CSSProperties> = {
   breadcrumbs: { maxWidth: 1120, margin: '0 auto 10px', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: 'var(--text-xs)', color: 'var(--on-surface-variant)' },
   crumb: { color: 'var(--primary)', textDecoration: 'none', fontWeight: 700 },
   hero: { maxWidth: 1120, margin: '0 auto 12px', padding: 16, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-lg)', background: 'var(--surface)', boxShadow: 'var(--shadow-1)' },
-  kicker: { fontSize: 'var(--text-xs)', fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--primary)' },
   h1: { margin: '8px 0', fontSize: 'clamp(24px, 7vw, 44px)', lineHeight: 1.08 },
   h2: { margin: '0 0 12px', fontSize: 'var(--text-xl)', lineHeight: 1.2 },
   h3: { margin: '14px 0 8px', fontSize: 'var(--text-md)' },
   lead: { margin: 0, maxWidth: 820, color: 'var(--on-surface-variant)', lineHeight: 1.65 },
   topGrid: { maxWidth: 1120, margin: '0 auto 12px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 12 },
+  featureGrid: { maxWidth: 1120, margin: '0 auto 12px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(250px, 100%), 1fr))', gap: 12 },
   compositionGrid: { maxWidth: 1120, margin: '0 auto 12px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 12 },
   card: { minWidth: 0, padding: 14, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-lg)', background: 'var(--surface)', boxShadow: 'var(--shadow-1)', overflow: 'hidden' },
-  cardWide: { maxWidth: 1120, minWidth: 0, margin: '0 auto', padding: 14, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-lg)', background: 'var(--surface)', overflow: 'hidden' },
+  cardWide: { maxWidth: 1120, minWidth: 0, margin: '0 auto 12px', padding: 14, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-lg)', background: 'var(--surface)', overflow: 'hidden' },
   tableLike: { display: 'grid', gap: 0 },
   infoRow: { display: 'grid', gridTemplateColumns: 'minmax(0, 140px) minmax(0, 1fr)', gap: '4px 10px', padding: '10px 0', borderBottom: '1px solid var(--outline-variant)' },
   infoLabel: { minWidth: 0, fontSize: 'var(--text-xs)', fontWeight: 800, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '.04em', overflowWrap: 'anywhere' },
@@ -152,7 +190,11 @@ const st: Record<string, React.CSSProperties> = {
   chips: { display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 10 },
   chip: { border: '1px solid var(--outline-variant)', borderRadius: 999, padding: '6px 9px', background: 'var(--surface-container)', fontSize: 'var(--text-xs)', fontWeight: 700 },
   chipAlt: { border: '1px solid var(--info-border)', borderRadius: 999, padding: '6px 9px', background: 'var(--info-container)', color: 'var(--info)', fontSize: 'var(--text-xs)', fontWeight: 700 },
-  note: { margin: '12px 0 0', color: 'var(--on-surface-variant)', fontSize: 'var(--text-xs)', lineHeight: 1.55, overflowWrap: 'anywhere' },
+  decodeGrid: { display: 'grid', gap: 8 },
+  decodeItem: { display: 'grid', gridTemplateColumns: '32px 1fr', gap: 8, fontSize: 'var(--text-sm)' },
+  actionRow: { display: 'flex', flexWrap: 'wrap', gap: 8 },
+  action: { display: 'inline-flex', padding: '8px 10px', border: '1px solid var(--outline-variant)', borderRadius: 999, color: 'var(--primary)', textDecoration: 'none', fontSize: 'var(--text-xs)', fontWeight: 800 },
+  backTop: { display: 'inline-flex', maxWidth: 1120, padding: '8px 10px', border: '1px solid var(--outline-variant)', borderRadius: 999, color: 'var(--primary)', textDecoration: 'none', fontSize: 'var(--text-xs)', fontWeight: 800 },
   compTableWrap: { width: '100%', overflowX: 'auto' },
   compTable: { minWidth: 330, display: 'grid', gridTemplateColumns: 'minmax(140px, 1fr) 130px', border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-md)', overflow: 'hidden' },
   compHead: { padding: 9, background: 'var(--surface-container)', fontSize: 'var(--text-xs)', fontWeight: 800, color: 'var(--on-surface-variant)', borderBottom: '1px solid var(--outline-variant)' },
