@@ -4,16 +4,25 @@ export default function MarkochnikLayout({ children }: { children: React.ReactNo
   return (
     <div style={scrollShellStyle}>
       <MarkochnikSearch />
-      {children}
+      <div style={contentStyle}>{children}</div>
     </div>
   )
 }
 
 const scrollShellStyle: React.CSSProperties = {
+  position: 'fixed',
+  inset: 0,
   height: '100dvh',
+  width: '100vw',
   minHeight: 0,
-  overflowY: 'auto',
+  overflowY: 'scroll',
   overflowX: 'hidden',
+  overscrollBehaviorY: 'contain',
   WebkitOverflowScrolling: 'touch',
   background: 'var(--surface-variant)',
+  touchAction: 'pan-y',
+}
+
+const contentStyle: React.CSSProperties = {
+  minHeight: 0,
 }
