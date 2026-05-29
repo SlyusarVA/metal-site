@@ -5,6 +5,7 @@ export type NormativeRef = {
   section?: string
   table?: string
   note?: string
+  url?: string
   status: NormativeStatus
 }
 
@@ -117,6 +118,7 @@ const gost5950: NormativeRef = {
   section: 'Марки и химический состав',
   table: 'таблица химического состава инструментальных легированных сталей',
   note: 'Сверено для марки ХВСГФ. Значения приведены в процентах массовой доли элементов.',
+  url: 'https://docs.cntd.ru/document/1200022261',
   status: 'verified',
 }
 
