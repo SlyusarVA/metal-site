@@ -101,6 +101,26 @@
       overflow: hidden;
     }
 
+    body.markochnik-scroll-page,
+    body.markochnik-scroll-page > div,
+    body.markochnik-scroll-page > div > div,
+    body.markochnik-scroll-page > div > div > * {
+      block-size: auto !important;
+      max-block-size: none !important;
+      min-block-size: 100svh !important;
+      overflow: visible !important;
+    }
+
+    html:has(body.markochnik-scroll-page),
+    body.markochnik-scroll-page {
+      position: static !important;
+      overflow: auto !important;
+      overflow-y: auto !important;
+      overscroll-behavior-y: auto !important;
+      touch-action: pan-y !important;
+      -webkit-overflow-scrolling: touch;
+    }
+
     .ui-scroll-area {
       scrollbar-width: none;
       scrollbar-gutter: auto;
