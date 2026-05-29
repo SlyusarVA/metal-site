@@ -7,6 +7,8 @@ type Props = {
   params: { family: string; category: string; grade: string }
 }
 
+type SourceRef = { document: string; section?: string; table?: string; note?: string; url?: string; status: string }
+
 export function generateStaticParams() {
   return metalGrades.map(grade => ({ family: grade.familySlug, category: grade.categorySlug, grade: grade.slug }))
 }
@@ -50,10 +52,10 @@ export default function GradePage({ params }: Props) {
           <h2 style={st.h2}>Нормативный блок</h2>
           <div style={st.tableLike}>
             <InfoRow label="Марка" value={grade.designation} />
-            <InfoRow label="Класс" value={grade.gradeClass.value} help={<TermHelp termId="toolSteel" />} source={formatSource(grade.gradeClass.source)} />
-            <InfoRow label="Способ хранения" value={grade.storage.method.value} help={<TermHelp termId="storageMethod" />} source={formatSource(grade.storage.method.source)} />
-            <InfoRow label="Температурный режим" value={grade.storage.temperature.value} help={<TermHelp termId="temperatureMode" />} source={formatSource(grade.storage.temperature.source)} />
-            <InfoRow label="Защита от коррозии" value={grade.storage.corrosionProtection.value} source={formatSource(grade.storage.corrosionProtection.source)} />
+            <InfoRow label="Класс" value={grade.gradeClass.value} help={<TermHelp termId="toolSteel" />} source={grade.gradeClass.source} />
+            <InfoRow label="Способ хранения" value={grade.storage.method.value} help={<TermHelp termId="storageMethod" />} source={grade.storage.method.source} />
+            <InfoRow label="Температурный режим" value={grade.storage.temperature.value} help={<TermHelp termId="temperatureMode" />} source={grade.storage.temperature.source} />
+            <InfoRow label="Защита от коррозии" value={grade.storage.corrosionProtection.value} source={grade.storage.corrosionProtection.source} />
           </div>
         </article>
 
@@ -78,7 +80,7 @@ export default function GradePage({ params }: Props) {
               <ReactFragment key={item.element}>
                 <div style={st.compCell}><strong>{item.element}</strong> <span style={st.muted}>{item.label}</span></div>
                 <div style={st.compCell}>{item.valueText}</div>
-                <div style={st.compCell}>{formatSource(item.source)}</div>
+                <div style={st.compCell}><SourceLabel source={item.source} /></div>
               </ReactFragment>
             ))}
           </div>
@@ -91,7 +93,7 @@ export default function GradePage({ params }: Props) {
         <div style={st.sources}>
           {grade.documents.map((source, index) => (
             <div key={`${source.document}-${index}`} style={st.sourceItem}>
-              <strong>{source.document}</strong>
+              <SourceLabel source={source} strong />
               {source.section && <span>{source.section}</span>}
               {source.table && <span>{source.table}</span>}
               {source.note && <span>{source.note}</span>}
@@ -108,18 +110,24 @@ function ReactFragment({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-function formatSource(source?: { document: string; section?: string; table?: string; status: string }) {
+function sourceText(source?: SourceRef) {
   if (!source) return 'Источник не указан'
-  const parts = [source.document, source.section, source.table].filter(Boolean)
-  return parts.join(', ')
+  return [source.document, source.section, source.table].filter(Boolean).join(', ')
 }
 
-function InfoRow({ label, value, source, help }: { label: string; value: string; source?: string; help?: React.ReactNode }) {
+function SourceLabel({ source, strong }: { source?: SourceRef; strong?: boolean }) {
+  const text = sourceText(source)
+  const content = strong ? <strong>{text}</strong> : <span>{text}</span>
+  if (!source || !source.url) return content
+  return <a href={source.url} style={st.sourceLink}>{content}</a>
+}
+
+function InfoRow({ label, value, source, help }: { label: string; value: string; source?: SourceRef; help?: React.ReactNode }) {
   return (
     <div style={st.infoRow}>
       <div style={st.infoLabel}>{label} {help}</div>
       <div style={st.infoValue}>{value}</div>
-      {source && <div style={st.infoSource}>{source}</div>}
+      {source && <div style={st.infoSource}><SourceLabel source={source} /></div>}
     </div>
   )
 }
@@ -143,6 +151,7 @@ const st: Record<string, React.CSSProperties> = {
   infoLabel: { fontSize: 'var(--text-xs)', fontWeight: 800, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '.06em' },
   infoValue: { fontSize: 'var(--text-sm)', color: 'var(--on-surface)', lineHeight: 1.45 },
   infoSource: { gridColumn: '2', fontSize: 'var(--text-xs)', color: 'var(--primary)' },
+  sourceLink: { color: 'var(--primary)', textDecoration: 'underline', textUnderlineOffset: 3 },
   text: { margin: 0, color: 'var(--on-surface)', lineHeight: 1.55 },
   chips: { display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 10 },
   chip: { border: '1px solid var(--outline-variant)', borderRadius: 999, padding: '6px 9px', background: 'var(--surface-container)', fontSize: 'var(--text-xs)', fontWeight: 700 },
