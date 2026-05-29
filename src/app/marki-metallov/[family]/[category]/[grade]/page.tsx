@@ -17,7 +17,7 @@ export function generateMetadata({ params }: Props) {
   const grade = getGradeBySlug(params.family, params.category, params.grade)
   return {
     title: grade ? `${grade.title}: состав, хранение, применение` : 'Марка металла',
-    description: grade ? `${grade.title}: нормативные поля, хранение, температурный режим, химический состав и справочное применение.` : 'Карточка марки металла.',
+    description: grade ? `${grade.title}: нормативные поля, хранение, химический состав и применение.` : 'Карточка марки металла.',
   }
 }
 
@@ -44,7 +44,7 @@ export default function GradePage({ params }: Props) {
       <section style={st.hero}>
         <div style={st.kicker}>{grade.categoryTitle}</div>
         <h1 style={st.h1}>{grade.title}</h1>
-        <p style={st.lead}>Химический состав, классификация и условия хранения приведены с указанием нормативных источников. Справочное применение отделено от нормативных данных.</p>
+        <p style={st.lead}>Химический состав, классификация и условия хранения приведены с указанием нормативных источников.</p>
       </section>
 
       <section style={st.topGrid}>
@@ -52,20 +52,17 @@ export default function GradePage({ params }: Props) {
           <h2 style={st.h2}>Нормативный блок</h2>
           <div style={st.tableLike}>
             <InfoRow label="Марка" value={grade.designation} />
-            <InfoRow label="Класс" value={grade.gradeClass.value} help={<TermHelp termId="toolSteel" />} source={grade.gradeClass.source} />
-            <InfoRow label="Способ хранения" value={grade.storage.method.value} help={<TermHelp termId="storageMethod" />} source={grade.storage.method.source} />
-            <InfoRow label="Температурный режим" value={grade.storage.temperature.value} help={<TermHelp termId="temperatureMode" />} source={grade.storage.temperature.source} />
-            <InfoRow label="Защита от коррозии" value={grade.storage.corrosionProtection.value} source={grade.storage.corrosionProtection.source} />
+            <InfoRow label="Класс" value={grade.gradeClass.value} source={grade.gradeClass.source} />
+            <InfoRow label="Хранение" value={`${grade.storage.method.value} ${grade.storage.temperature.value} ${grade.storage.corrosionProtection.value}`} source={grade.storage.method.source} />
           </div>
         </article>
 
         <article style={st.card}>
-          <h2 style={st.h2}>Справочное применение <TermHelp termId="referenceApplication" /></h2>
+          <h2 style={st.h2}>Применение</h2>
           <p style={st.text}>{grade.application.summary}</p>
           <div style={st.chips}>{grade.application.examples.map(item => <span key={item} style={st.chip}>{item}</span>)}</div>
           <h3 style={st.h3}>Оборудование</h3>
           <div style={st.chips}>{grade.application.equipment.map(item => <span key={item} style={st.chipAlt}>{item}</span>)}</div>
-          <p style={st.note}>{grade.application.note}</p>
         </article>
       </section>
 
@@ -98,11 +95,9 @@ export default function GradePage({ params }: Props) {
               <SourceLabel source={source} strong />
               {source.section && <span>{source.section}</span>}
               {source.table && <span>{source.table}</span>}
-              {source.note && <span>{source.note}</span>}
             </div>
           ))}
         </div>
-        <p style={st.note}>Справочные блоки о применении и оборудовании не являются нормативным требованием и не заменяют ГОСТ, ТУ, КД или технологический процесс.</p>
       </section>
     </main>
   )
