@@ -1,8 +1,10 @@
 import MarkochnikSearch from '@/components/markochnik/MarkochnikSearch'
+import MarkochnikScrollFix from '@/components/markochnik/MarkochnikScrollFix'
 
 export default function MarkochnikLayout({ children }: { children: React.ReactNode }) {
   return (
     <div style={shellStyle}>
+      <MarkochnikScrollFix />
       <MarkochnikSearch />
       {children}
     </div>
