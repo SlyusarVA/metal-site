@@ -107,8 +107,12 @@
     body.markochnik-scroll-page > div > div > * {
       block-size: auto !important;
       max-block-size: none !important;
-      min-block-size: 100svh !important;
+      min-block-size: 0 !important;
       overflow: visible !important;
+    }
+
+    body.markochnik-scroll-page > div {
+      min-block-size: 100svh !important;
     }
 
     html:has(body.markochnik-scroll-page),
