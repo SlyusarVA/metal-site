@@ -104,7 +104,7 @@ export default function CalculatorLayout() {
       <div style={desktopPageStyle}>
         <nav aria-label="Основная навигация" style={desktopNavStyle}>
           <SiteTab active>Калькулятор</SiteTab>
-          <SiteTab onClick={() => {}}>Марочник</SiteTab>
+          <SiteTab onClick={() => router.push('/marki-metallov')}>Марочник</SiteTab>
           <SiteTab onClick={() => openGost(null)}>ГОСТы</SiteTab>
           <div style={{ flex: 1 }} />
           <button onClick={() => router.push('/history')} style={utilBtnStyle}>● История расчётов</button>
@@ -149,6 +149,7 @@ export default function CalculatorLayout() {
           <div style={{ fontSize: 'var(--text-sm)', fontWeight: 700, color: 'var(--on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Калькулятор металла</div>
           <div style={{ fontSize: 'var(--text-xs)', color: 'var(--on-surface-variant)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{state.metalGroup} · {state.profile.name}</div>
         </div>
+        <button onClick={() => router.push('/marki-metallov')} style={mobileTopBtnStyle}>Марочник</button>
         <button onClick={() => router.push('/history')} style={mobileTopBtnStyle}>История</button>
         <AccentSchemeToggle />
         <button onClick={() => setShowSettings(true)} aria-label="Открыть настройки" style={mobileIconBtnStyle}><SettingsIcon /></button>
