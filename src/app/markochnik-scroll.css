@@ -1,0 +1,33 @@
+@media (max-width: 767px) {
+  html:has(body.markochnik-scroll-page),
+  body.markochnik-scroll-page {
+    block-size: auto !important;
+    min-block-size: 100% !important;
+    position: static !important;
+    overflow: auto !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: auto !important;
+    touch-action: pan-y !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.markochnik-scroll-page > div {
+    block-size: auto !important;
+    max-block-size: none !important;
+    min-block-size: 100svh !important;
+    overflow: visible !important;
+  }
+
+  body.markochnik-scroll-page > div > div,
+  body.markochnik-scroll-page > div > div > * {
+    block-size: auto !important;
+    max-block-size: none !important;
+    min-block-size: 0 !important;
+    overflow: visible !important;
+  }
+
+  body.markochnik-scroll-page main {
+    min-block-size: auto !important;
+    overflow: visible !important;
+  }
+}
