@@ -138,6 +138,10 @@
     .ui-dialog select {
       min-block-size: 44px;
     }
+
+    .ui-dialog button[aria-label] {
+      min-block-size: 32px !important;
+    }
   }
 
   @media (prefers-contrast: more) {
