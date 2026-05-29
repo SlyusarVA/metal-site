@@ -1,9 +1,8 @@
 import Link from 'next/link'
 import { getGradeBySlug, metalGrades } from '@/data/markochnik'
 import CompositionChart from '@/components/markochnik/CompositionChart'
-import TermHelp from '@/components/markochnik/TermHelp'
 
-type Props = {
+ type Props = {
   params: { family: string; category: string; grade: string }
 }
 
@@ -37,12 +36,12 @@ export default function GradePage({ params }: Props) {
       <nav style={st.breadcrumbs}>
         <Link href="/" style={st.crumb}>Калькулятор</Link><span>/</span>
         <Link href="/marki-metallov" style={st.crumb}>Марочник</Link><span>/</span>
+        <Link href={`/marki-metallov/${grade.familySlug}`} style={st.crumb}>Стали</Link><span>/</span>
         <Link href={`/marki-metallov/${grade.familySlug}/${grade.categorySlug}`} style={st.crumb}>{grade.categoryTitle}</Link><span>/</span>
         <span>{grade.designation}</span>
       </nav>
 
       <section style={st.hero}>
-        <div style={st.kicker}>{grade.categoryTitle}</div>
         <h1 style={st.h1}>{grade.title}</h1>
         <p style={st.lead}>Химический состав, классификация и условия хранения приведены с указанием нормативных источников.</p>
       </section>
@@ -69,16 +68,15 @@ export default function GradePage({ params }: Props) {
       <section style={st.compositionGrid}>
         <article style={st.card}>
           <h2 style={st.h2}>Химический состав</h2>
+          <p style={st.sourceLine}><SourceLabel source={grade.composition[0]?.source} /></p>
           <div style={st.compTableWrap}>
             <div style={st.compTable}>
               <div style={st.compHead}>Элемент</div>
-              <div style={st.compHead}>Содержание</div>
-              <div style={st.compHead}>Источник</div>
+              <div style={st.compHead}>Содержание, %</div>
               {grade.composition.map(item => (
                 <ReactFragment key={item.element}>
                   <div style={st.compCell}><strong>{item.element}</strong> <span style={st.muted}>{item.label}</span></div>
                   <div style={st.compCell}>{item.valueText}</div>
-                  <div style={st.compCell}><SourceLabel source={item.source} /></div>
                 </ReactFragment>
               ))}
             </div>
@@ -119,10 +117,10 @@ function SourceLabel({ source, strong }: { source?: SourceRef; strong?: boolean 
   return <a href={source.url} style={st.sourceLink}>{content}</a>
 }
 
-function InfoRow({ label, value, source, help }: { label: string; value: string; source?: SourceRef; help?: React.ReactNode }) {
+function InfoRow({ label, value, source }: { label: string; value: string; source?: SourceRef }) {
   return (
     <div style={st.infoRow}>
-      <div style={st.infoLabel}>{label} {help}</div>
+      <div style={st.infoLabel}>{label}</div>
       <div style={st.infoValue}>{value}</div>
       {source && <div style={st.infoSource}><SourceLabel source={source} /></div>}
     </div>
@@ -149,13 +147,14 @@ const st: Record<string, React.CSSProperties> = {
   infoValue: { minWidth: 0, fontSize: 'var(--text-sm)', color: 'var(--on-surface)', lineHeight: 1.45, overflowWrap: 'anywhere' },
   infoSource: { minWidth: 0, gridColumn: '2', fontSize: 'var(--text-xs)', color: 'var(--primary)', overflowWrap: 'anywhere' },
   sourceLink: { color: 'var(--primary)', textDecoration: 'underline', textUnderlineOffset: 3, overflowWrap: 'anywhere' },
+  sourceLine: { margin: '0 0 10px', fontSize: 'var(--text-xs)', color: 'var(--primary)', overflowWrap: 'anywhere' },
   text: { margin: 0, color: 'var(--on-surface)', lineHeight: 1.55 },
   chips: { display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 10 },
   chip: { border: '1px solid var(--outline-variant)', borderRadius: 999, padding: '6px 9px', background: 'var(--surface-container)', fontSize: 'var(--text-xs)', fontWeight: 700 },
   chipAlt: { border: '1px solid var(--info-border)', borderRadius: 999, padding: '6px 9px', background: 'var(--info-container)', color: 'var(--info)', fontSize: 'var(--text-xs)', fontWeight: 700 },
   note: { margin: '12px 0 0', color: 'var(--on-surface-variant)', fontSize: 'var(--text-xs)', lineHeight: 1.55, overflowWrap: 'anywhere' },
   compTableWrap: { width: '100%', overflowX: 'auto' },
-  compTable: { minWidth: 520, display: 'grid', gridTemplateColumns: '130px 120px minmax(180px, 1fr)', border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-md)', overflow: 'hidden' },
+  compTable: { minWidth: 330, display: 'grid', gridTemplateColumns: 'minmax(140px, 1fr) 130px', border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-md)', overflow: 'hidden' },
   compHead: { padding: 9, background: 'var(--surface-container)', fontSize: 'var(--text-xs)', fontWeight: 800, color: 'var(--on-surface-variant)', borderBottom: '1px solid var(--outline-variant)' },
   compCell: { minWidth: 0, padding: 9, borderTop: '1px solid var(--outline-variant)', fontSize: 'var(--text-xs)', lineHeight: 1.4, overflowWrap: 'anywhere' },
   muted: { color: 'var(--on-surface-variant)', marginLeft: 4 },
