@@ -57,7 +57,7 @@ export default function MarkochnikSearch() {
   const normalizedQuery = normalize(query)
 
   const results = useMemo(() => {
-    if (!normalizedQuery) return searchItems.slice(0, 6)
+    if (!normalizedQuery) return []
     return searchItems
       .map(item => ({ item, index: normalize(item.searchText).indexOf(normalizedQuery) }))
       .filter(result => result.index !== -1)
@@ -77,7 +77,7 @@ export default function MarkochnikSearch() {
           placeholder="Марка, ГОСТ, применение, группа..."
           style={st.input}
         />
-        {(query || results.length > 0) && (
+        {query && (
           <div style={st.results}>
             {results.length > 0 ? results.map(item => (
               <Link key={`${item.kind}-${item.href}`} href={item.href} style={st.result} onClick={() => setQuery('')}>
