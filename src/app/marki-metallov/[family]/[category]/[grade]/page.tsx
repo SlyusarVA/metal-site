@@ -1,11 +1,61 @@
 import Link from 'next/link'
 import { getGradeBySlug, metalGrades } from '@/data/markochnik'
 import CompositionChart from '@/components/markochnik/CompositionChart'
-import TermHelp from '@/components/markochnik/TermHelp'
 
 type Props = {
   params: { family: string; category: string; grade: string }
 }
+
+type SourceRef = { document: string; section?: string; table?: string; note?: string; url?: string; status: string }
+
+const decoding = [
+  ['Х', 'хром'],
+  ['В', 'вольфрам'],
+  ['С', 'кремний'],
+  ['Г', 'марганец'],
+  ['Ф', 'ванадий'],
+]
+
+const supplyForms = ['Прутки круглого и квадратного сечения', 'Полосы', 'Мотки']
+const quickActions = [
+  ['Рассчитать вес', '/?metal=Сталь&grade=ХВСГФ&profile=round&d=20&length=1'],
+  ['Сравнить марки', '/marki-metallov?compare=xvsgf'],
+]
+
+const gost5950Sortament: SourceRef = {
+  document: 'ГОСТ 5950-2000',
+  section: 'п. 3.3.1',
+  table: 'сортамент: прутки круглого и квадратного сечений, полосы и мотки',
+  status: 'verified',
+}
+
+const gost5950Hardness: SourceRef = {
+  document: 'ГОСТ 5950-2000',
+  section: 'п. 4.1.2.1',
+  table: 'таблица 3: твердость в состоянии поставки',
+  status: 'verified',
+}
+
+const gost5950HeatTreatment: SourceRef = {
+  document: 'ГОСТ 5950-2000',
+  section: 'п. 4.1.2.2',
+  table: 'таблица 4: температура закалки и твердость HRC',
+  status: 'verified',
+}
+
+const gost5950Marking: SourceRef = {
+  document: 'ГОСТ 5950-2000',
+  section: 'примечание к таблице 1',
+  table: 'обозначение легирующих элементов в марке стали',
+  status: 'verified',
+}
+
+const hardnessRows = [
+  { label: 'Состояние поставки', value: 'отожженная для режущего инструмента', source: gost5950Hardness },
+  { label: 'Твердость в поставке', value: 'не более 241 HB; диаметр отпечатка не менее 3,9 мм', source: gost5950Hardness },
+  { label: 'Закалка образцов', value: '840–860 °C, масло', source: gost5950HeatTreatment },
+  { label: 'Твердость после закалки', value: 'не менее 63 HRC', source: gost5950HeatTreatment },
+]
 
 export function generateStaticParams() {
   return metalGrades.map(grade => ({ family: grade.familySlug, category: grade.categorySlug, grade: grade.slug }))
@@ -15,7 +65,7 @@ export function generateMetadata({ params }: Props) {
   const grade = getGradeBySlug(params.family, params.category, params.grade)
   return {
     title: grade ? `${grade.title}: состав, хранение, применение` : 'Марка металла',
-    description: grade ? `${grade.title}: нормативные поля, хранение, температурный режим, химический состав и справочное применение.` : 'Карточка марки металла.',
+    description: grade ? `${grade.title}: нормативные поля, хранение, химический состав и применение.` : 'Карточка марки металла.',
   }
 }
 
@@ -31,18 +81,18 @@ export default function GradePage({ params }: Props) {
   }
 
   return (
-    <main style={st.page}>
+    <main id="top" style={st.page}>
       <nav style={st.breadcrumbs}>
         <Link href="/" style={st.crumb}>Калькулятор</Link><span>/</span>
         <Link href="/marki-metallov" style={st.crumb}>Марочник</Link><span>/</span>
+        <Link href={`/marki-metallov/${grade.familySlug}`} style={st.crumb}>Стали</Link><span>/</span>
         <Link href={`/marki-metallov/${grade.familySlug}/${grade.categorySlug}`} style={st.crumb}>{grade.categoryTitle}</Link><span>/</span>
         <span>{grade.designation}</span>
       </nav>
 
       <section style={st.hero}>
-        <div style={st.kicker}>{grade.categoryTitle}</div>
         <h1 style={st.h1}>{grade.title}</h1>
-        <p style={st.lead}>Карточка разделяет нормативные поля и справочные пояснения. Хранение и температурный режим публикуются только при наличии нормативного основания.</p>
+        <p style={st.lead}>Химический состав, классификация, поставка, твердость и условия хранения приведены с указанием нормативных источников.</p>
       </section>
 
       <section style={st.topGrid}>
@@ -50,38 +100,64 @@ export default function GradePage({ params }: Props) {
           <h2 style={st.h2}>Нормативный блок</h2>
           <div style={st.tableLike}>
             <InfoRow label="Марка" value={grade.designation} />
-            <InfoRow label="Класс" value={grade.gradeClass.value} help={<TermHelp termId="toolSteel" />} source={formatSource(grade.gradeClass.source)} />
-            <InfoRow label="Способ хранения" value={grade.storage.method.value} help={<TermHelp termId="storageMethod" />} source={formatSource(grade.storage.method.source)} />
-            <InfoRow label="Температурный режим" value={grade.storage.temperature.value} help={<TermHelp termId="temperatureMode" />} source={formatSource(grade.storage.temperature.source)} />
-            <InfoRow label="Защита от коррозии" value={grade.storage.corrosionProtection.value} source={formatSource(grade.storage.corrosionProtection.source)} />
+            <InfoRow label="Класс" value={grade.gradeClass.value} source={grade.gradeClass.source} />
+            <InfoRow label="Хранение" value={`${grade.storage.method.value} ${grade.storage.temperature.value} ${grade.storage.corrosionProtection.value}`} source={grade.storage.method.source} />
           </div>
-          <p style={st.warning}>Неподтверждённые значения не выводятся как нормативные. До проверки ГОСТ/НД поле остаётся в статусе «требует проверки».</p>
         </article>
 
         <article style={st.card}>
-          <h2 style={st.h2}>Справочное применение <TermHelp termId="referenceApplication" /></h2>
+          <h2 style={st.h2}>Применение</h2>
           <p style={st.text}>{grade.application.summary}</p>
           <div style={st.chips}>{grade.application.examples.map(item => <span key={item} style={st.chip}>{item}</span>)}</div>
           <h3 style={st.h3}>Оборудование</h3>
           <div style={st.chips}>{grade.application.equipment.map(item => <span key={item} style={st.chipAlt}>{item}</span>)}</div>
-          <p style={st.note}>{grade.application.note}</p>
         </article>
+      </section>
+
+      <section style={st.featureGrid}>
+        <article style={st.card}>
+          <h2 style={st.h2}>Вид поставки</h2>
+          <div style={st.chips}>{supplyForms.map(item => <span key={item} style={st.chip}>{item}</span>)}</div>
+          <p style={st.sourceLine}><SourceLabel source={gost5950Sortament} /></p>
+        </article>
+
+        <article style={st.card}>
+          <h2 style={st.h2}>Близкие марки</h2>
+          <div style={st.chips}>{grade.relatedGrades.map(item => <span key={item} style={st.chip}>{item}</span>)}</div>
+        </article>
+
+        <article style={st.card}>
+          <h2 style={st.h2}>Расшифровка</h2>
+          <div style={st.decodeGrid}>{decoding.map(([symbol, meaning]) => <div key={symbol} style={st.decodeItem}><strong>{symbol}</strong><span>{meaning}</span></div>)}</div>
+          <p style={st.sourceLine}><SourceLabel source={gost5950Marking} /></p>
+        </article>
+
+        <article style={st.card}>
+          <h2 style={st.h2}>Действия</h2>
+          <div style={st.actionRow}>{quickActions.map(([label, href]) => <Link key={label} href={href} style={st.action}>{label}</Link>)}</div>
+        </article>
+      </section>
+
+      <section style={st.cardWide}>
+        <h2 style={st.h2}>Твердость и термообработка</h2>
+        <div style={st.tableLike}>{hardnessRows.map(row => <InfoRow key={row.label} label={row.label} value={row.value} source={row.source} />)}</div>
       </section>
 
       <section style={st.compositionGrid}>
         <article style={st.card}>
           <h2 style={st.h2}>Химический состав</h2>
-          <div style={st.compTable}>
-            <div style={st.compHead}>Элемент</div>
-            <div style={st.compHead}>Содержание</div>
-            <div style={st.compHead}>Источник</div>
-            {grade.composition.map(item => (
-              <ReactFragment key={item.element}>
-                <div style={st.compCell}><strong>{item.element}</strong> <span style={st.muted}>{item.label}</span></div>
-                <div style={st.compCell}>{item.valueText}</div>
-                <div style={st.compCell}>{formatSource(item.source)}</div>
-              </ReactFragment>
-            ))}
+          <p style={st.sourceLine}><SourceLabel source={grade.composition[0]?.source} /></p>
+          <div style={st.compTableWrap}>
+            <div style={st.compTable}>
+              <div style={st.compHead}>Элемент</div>
+              <div style={st.compHead}>Содержание, %</div>
+              {grade.composition.map(item => (
+                <ReactFragment key={item.element}>
+                  <div style={st.compCell}><strong>{item.element}</strong> <span style={st.muted}>{item.label}</span></div>
+                  <div style={st.compCell}>{item.valueText}</div>
+                </ReactFragment>
+              ))}
+            </div>
           </div>
         </article>
         <CompositionChart items={grade.composition} withoutFe />
@@ -92,14 +168,15 @@ export default function GradePage({ params }: Props) {
         <div style={st.sources}>
           {grade.documents.map((source, index) => (
             <div key={`${source.document}-${index}`} style={st.sourceItem}>
-              <strong>{source.document}</strong>
-              <span>Статус: {source.status === 'needs_check' ? 'требует проверки' : source.status}</span>
-              {source.note && <span>{source.note}</span>}
+              <SourceLabel source={source} strong />
+              {source.section && <span>{source.section}</span>}
+              {source.table && <span>{source.table}</span>}
             </div>
           ))}
         </div>
-        <p style={st.note}>Справочные блоки о применении и оборудовании не являются нормативным требованием и не заменяют ГОСТ, ТУ, КД или технологический процесс.</p>
       </section>
+
+      <a href="#top" style={st.backTop}>Наверх</a>
     </main>
   )
 }
@@ -108,51 +185,63 @@ function ReactFragment({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
-function formatSource(source?: { document: string; section?: string; table?: string; status: string }) {
+function sourceText(source?: SourceRef) {
   if (!source) return 'Источник не указан'
-  const parts = [source.document, source.section, source.table].filter(Boolean)
-  return parts.join(', ')
+  return [source.document, source.section, source.table].filter(Boolean).join(', ')
 }
 
-function InfoRow({ label, value, source, help }: { label: string; value: string; source?: string; help?: React.ReactNode }) {
+function SourceLabel({ source, strong }: { source?: SourceRef; strong?: boolean }) {
+  const text = sourceText(source)
+  const content = strong ? <strong>{text}</strong> : <span>{text}</span>
+  if (!source || !source.url) return content
+  return <a href={source.url} style={st.sourceLink}>{content}</a>
+}
+
+function InfoRow({ label, value, source }: { label: string; value: string; source?: SourceRef }) {
   return (
     <div style={st.infoRow}>
-      <div style={st.infoLabel}>{label} {help}</div>
+      <div style={st.infoLabel}>{label}</div>
       <div style={st.infoValue}>{value}</div>
-      {source && <div style={st.infoSource}>{source}</div>}
+      {source && <div style={st.infoSource}><SourceLabel source={source} /></div>}
     </div>
   )
 }
 
 const st: Record<string, React.CSSProperties> = {
-  page: { minHeight: '100dvh', padding: '24px 16px 48px', background: 'var(--surface-variant)', color: 'var(--on-surface)' },
-  breadcrumbs: { maxWidth: 1120, margin: '0 auto 12px', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: 'var(--text-xs)', color: 'var(--on-surface-variant)' },
+  page: { minHeight: '100dvh', padding: '16px 10px 40px', background: 'var(--surface-variant)', color: 'var(--on-surface)', overflowX: 'hidden' },
+  breadcrumbs: { maxWidth: 1120, margin: '0 auto 10px', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', fontSize: 'var(--text-xs)', color: 'var(--on-surface-variant)' },
   crumb: { color: 'var(--primary)', textDecoration: 'none', fontWeight: 700 },
-  hero: { maxWidth: 1120, margin: '0 auto 14px', padding: 22, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-lg)', background: 'var(--surface)', boxShadow: 'var(--shadow-1)' },
-  kicker: { fontSize: 'var(--text-xs)', fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--primary)' },
-  h1: { margin: '8px 0', fontSize: 'clamp(28px, 5vw, 44px)', lineHeight: 1.08 },
+  hero: { maxWidth: 1120, margin: '0 auto 12px', padding: 16, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-lg)', background: 'var(--surface)', boxShadow: 'var(--shadow-1)' },
+  h1: { margin: '8px 0', fontSize: 'clamp(24px, 7vw, 44px)', lineHeight: 1.08 },
   h2: { margin: '0 0 12px', fontSize: 'var(--text-xl)', lineHeight: 1.2 },
   h3: { margin: '14px 0 8px', fontSize: 'var(--text-md)' },
   lead: { margin: 0, maxWidth: 820, color: 'var(--on-surface-variant)', lineHeight: 1.65 },
-  topGrid: { maxWidth: 1120, margin: '0 auto 14px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 14 },
-  compositionGrid: { maxWidth: 1120, margin: '0 auto 14px', display: 'grid', gridTemplateColumns: 'minmax(0, 1.25fr) minmax(300px, .75fr)', gap: 14 },
-  card: { padding: 18, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-lg)', background: 'var(--surface)', boxShadow: 'var(--shadow-1)' },
-  cardWide: { maxWidth: 1120, margin: '0 auto', padding: 18, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-lg)', background: 'var(--surface)' },
-  tableLike: { display: 'grid', gap: 8 },
-  infoRow: { display: 'grid', gridTemplateColumns: '180px minmax(0, 1fr)', gap: '4px 12px', padding: '10px 0', borderBottom: '1px solid var(--outline-variant)' },
-  infoLabel: { fontSize: 'var(--text-xs)', fontWeight: 800, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '.06em' },
-  infoValue: { fontSize: 'var(--text-sm)', color: 'var(--on-surface)', lineHeight: 1.45 },
-  infoSource: { gridColumn: '2', fontSize: 'var(--text-xs)', color: 'var(--primary)' },
-  warning: { margin: '12px 0 0', padding: 10, border: '1px solid var(--warning-border)', borderRadius: 'var(--radius-md)', background: 'var(--warning-container)', color: 'var(--warning)', fontSize: 'var(--text-xs)', lineHeight: 1.5 },
+  topGrid: { maxWidth: 1120, margin: '0 auto 12px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 12 },
+  featureGrid: { maxWidth: 1120, margin: '0 auto 12px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(250px, 100%), 1fr))', gap: 12 },
+  compositionGrid: { maxWidth: 1120, margin: '0 auto 12px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(320px, 100%), 1fr))', gap: 12 },
+  card: { minWidth: 0, padding: 14, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-lg)', background: 'var(--surface)', boxShadow: 'var(--shadow-1)', overflow: 'hidden' },
+  cardWide: { maxWidth: 1120, minWidth: 0, margin: '0 auto 12px', padding: 14, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-lg)', background: 'var(--surface)', overflow: 'hidden' },
+  tableLike: { display: 'grid', gap: 0 },
+  infoRow: { display: 'grid', gridTemplateColumns: 'minmax(0, 140px) minmax(0, 1fr)', gap: '4px 10px', padding: '10px 0', borderBottom: '1px solid var(--outline-variant)' },
+  infoLabel: { minWidth: 0, fontSize: 'var(--text-xs)', fontWeight: 800, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '.04em', overflowWrap: 'anywhere' },
+  infoValue: { minWidth: 0, fontSize: 'var(--text-sm)', color: 'var(--on-surface)', lineHeight: 1.45, overflowWrap: 'anywhere' },
+  infoSource: { minWidth: 0, gridColumn: '2', fontSize: 'var(--text-xs)', color: 'var(--primary)', overflowWrap: 'anywhere' },
+  sourceLink: { color: 'var(--primary)', textDecoration: 'underline', textUnderlineOffset: 3, overflowWrap: 'anywhere' },
+  sourceLine: { margin: '10px 0 0', fontSize: 'var(--text-xs)', color: 'var(--primary)', overflowWrap: 'anywhere' },
   text: { margin: 0, color: 'var(--on-surface)', lineHeight: 1.55 },
   chips: { display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 10 },
   chip: { border: '1px solid var(--outline-variant)', borderRadius: 999, padding: '6px 9px', background: 'var(--surface-container)', fontSize: 'var(--text-xs)', fontWeight: 700 },
   chipAlt: { border: '1px solid var(--info-border)', borderRadius: 999, padding: '6px 9px', background: 'var(--info-container)', color: 'var(--info)', fontSize: 'var(--text-xs)', fontWeight: 700 },
-  note: { margin: '12px 0 0', color: 'var(--on-surface-variant)', fontSize: 'var(--text-xs)', lineHeight: 1.55 },
-  compTable: { display: 'grid', gridTemplateColumns: '150px 130px minmax(160px, 1fr)', border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-md)', overflow: 'hidden' },
+  decodeGrid: { display: 'grid', gap: 8 },
+  decodeItem: { display: 'grid', gridTemplateColumns: '32px 1fr', gap: 8, fontSize: 'var(--text-sm)' },
+  actionRow: { display: 'flex', flexWrap: 'wrap', gap: 8 },
+  action: { display: 'inline-flex', padding: '8px 10px', border: '1px solid var(--outline-variant)', borderRadius: 999, color: 'var(--primary)', textDecoration: 'none', fontSize: 'var(--text-xs)', fontWeight: 800 },
+  backTop: { display: 'inline-flex', maxWidth: 1120, padding: '8px 10px', border: '1px solid var(--outline-variant)', borderRadius: 999, color: 'var(--primary)', textDecoration: 'none', fontSize: 'var(--text-xs)', fontWeight: 800 },
+  compTableWrap: { width: '100%', overflowX: 'auto' },
+  compTable: { minWidth: 330, display: 'grid', gridTemplateColumns: 'minmax(140px, 1fr) 130px', border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-md)', overflow: 'hidden' },
   compHead: { padding: 9, background: 'var(--surface-container)', fontSize: 'var(--text-xs)', fontWeight: 800, color: 'var(--on-surface-variant)', borderBottom: '1px solid var(--outline-variant)' },
-  compCell: { padding: 9, borderTop: '1px solid var(--outline-variant)', fontSize: 'var(--text-xs)', lineHeight: 1.4 },
+  compCell: { minWidth: 0, padding: 9, borderTop: '1px solid var(--outline-variant)', fontSize: 'var(--text-xs)', lineHeight: 1.4, overflowWrap: 'anywhere' },
   muted: { color: 'var(--on-surface-variant)', marginLeft: 4 },
   sources: { display: 'grid', gap: 8 },
-  sourceItem: { display: 'grid', gap: 4, padding: 10, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-md)', background: 'var(--surface-container)', fontSize: 'var(--text-xs)' },
+  sourceItem: { minWidth: 0, display: 'grid', gap: 4, padding: 10, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-md)', background: 'var(--surface-container)', fontSize: 'var(--text-xs)', overflowWrap: 'anywhere' },
 }

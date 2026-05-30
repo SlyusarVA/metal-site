@@ -39,6 +39,7 @@ export const materials: MetalMaterial[] = [
   { group: 'Сталь', grade: 'У12',    density: 7830, gost: 'ГОСТ 1435-99' },
   { group: 'Сталь', grade: 'У8',     density: 7830, gost: 'ГОСТ 1435-99' },
   { group: 'Сталь', grade: 'ХВГ',    density: 7830, gost: 'ГОСТ 5950-2000' },
+  { group: 'Сталь', grade: 'ХВСГФ',  density: 7830, gost: 'ГОСТ 5950-2000' },
 
   // ── НЕРЖАВЕЙКА ─────────────────────────────────────────────────────────
   { group: 'Нержавейка', grade: '03Х17Н14М3 (316L)', density: 7980, gost: 'ГОСТ 5632-2014' },

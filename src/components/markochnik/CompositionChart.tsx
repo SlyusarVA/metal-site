@@ -38,15 +38,15 @@ export default function CompositionChart({ items, withoutFe = true }: Props) {
 }
 
 const st: Record<string, React.CSSProperties> = {
-  card: { border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-md)', background: 'var(--surface)', padding: 14, boxShadow: 'var(--shadow-1)' },
+  card: { minWidth: 0, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-md)', background: 'var(--surface)', padding: 14, boxShadow: 'var(--shadow-1)', overflow: 'hidden' },
   head: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 10 },
   title: { fontSize: 'var(--text-md)', fontWeight: 800, color: 'var(--on-surface)' },
   subtitle: { marginTop: 2, fontSize: 'var(--text-xs)', color: 'var(--on-surface-variant)' },
   rows: { display: 'flex', flexDirection: 'column', gap: 8 },
-  row: { display: 'grid', gridTemplateColumns: '36px minmax(80px, 1fr) 92px', alignItems: 'center', gap: 8 },
+  row: { minWidth: 0, display: 'grid', gridTemplateColumns: '28px minmax(0, 1fr) 76px', alignItems: 'center', gap: 7 },
   label: { fontSize: 'var(--text-xs)', fontWeight: 800, color: 'var(--primary)' },
-  track: { height: 10, borderRadius: 999, background: 'var(--surface-container)', border: '1px solid var(--outline-variant)', overflow: 'hidden' },
+  track: { minWidth: 0, height: 10, borderRadius: 999, background: 'var(--surface-container)', border: '1px solid var(--outline-variant)', overflow: 'hidden' },
   bar: { height: '100%', borderRadius: 999, background: 'var(--primary)' },
-  value: { fontSize: 'var(--text-xs)', color: 'var(--on-surface-variant)', textAlign: 'right', fontVariantNumeric: 'tabular-nums' },
-  note: { margin: '10px 0 0', fontSize: 'var(--text-xs)', color: 'var(--on-surface-variant)', lineHeight: 1.45 },
+  value: { minWidth: 0, fontSize: 'var(--text-xs)', color: 'var(--on-surface-variant)', textAlign: 'right', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' },
+  note: { margin: '10px 0 0', fontSize: 'var(--text-xs)', color: 'var(--on-surface-variant)', lineHeight: 1.45, overflowWrap: 'anywhere' },
 }
