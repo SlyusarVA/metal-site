@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { profiles, ProfileKey } from '@/data/profiles'
 import { getAllowedProfiles, getGradesForGroup } from '@/data/materials'
 import { useCalculator } from '@/hooks/useCalculator'
@@ -21,8 +21,9 @@ const DESKTOP_OUTER_RESERVED_HEIGHT = 70
 
 export default function CalculatorLayout() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const calc = useCalculator()
-  const { state, selectProfile, selectMetal } = calc
+  const { state, selectProfile, selectMetal, setParam, setLength, setMass, setQuantity } = calc
   const { settings } = useSettings()
   const [showSettings, setShowSettings] = useState(false)
   const [showGost, setShowGost] = useState(false)
@@ -31,6 +32,7 @@ export default function CalculatorLayout() {
   const [highlightedMetals, setHighlightedMetals] = useState<string[]>([])
   const [highlightedProfiles, setHighlightedProfiles] = useState<ProfileKey[]>([])
   const [needsSortament, setNeedsSortament] = useState(false)
+  const appliedPresetRef = useRef<string | null>(null)
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
@@ -38,6 +40,33 @@ export default function CalculatorLayout() {
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
   }, [])
+
+  useEffect(() => {
+    const presetKey = searchParams.toString()
+    if (!presetKey || appliedPresetRef.current === presetKey) return
+
+    const metal = searchParams.get('metal')
+    const grade = searchParams.get('grade')
+    const profile = searchParams.get('profile') as ProfileKey | null
+    const length = Number(searchParams.get('length'))
+    const mass = Number(searchParams.get('mass'))
+    const qty = Number(searchParams.get('qty') ?? searchParams.get('quantity'))
+
+    if (profile && profiles.some(item => item.key === profile)) selectProfile(profile)
+    if (metal && grade) selectMetal(metal, grade)
+    if (Number.isFinite(length) && length > 0) setLength(length)
+    if (Number.isFinite(mass) && mass > 0) setMass(mass)
+    if (Number.isFinite(qty) && qty > 0) setQuantity(qty)
+
+    for (const profileParam of profiles.flatMap(item => item.params)) {
+      const raw = searchParams.get(profileParam.key)
+      if (raw == null) continue
+      const value = Number(raw)
+      if (Number.isFinite(value) && value > 0) setParam(profileParam.key, value)
+    }
+
+    appliedPresetRef.current = presetKey
+  }, [searchParams, selectMetal, selectProfile, setLength, setMass, setParam, setQuantity])
 
   const orderedMetals = settings.metalOrder
   const orderedProfiles = settings.profileOrder
