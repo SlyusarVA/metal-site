@@ -150,6 +150,12 @@ const gost2591: NormativeRef = {
   status: 'verified',
 }
 
+const gost4405: NormativeRef = {
+  document: 'ГОСТ 4405-75',
+  section: 'Полосы горячекатаные и кованые из инструментальной стали. Сортамент',
+  status: 'verified',
+}
+
 export const metalGrades: MetalGradePage[] = [
   {
     slug: 'xvsgf',
@@ -162,7 +168,7 @@ export const metalGrades: MetalGradePage[] = [
       value: 'Инструментальная легированная сталь',
       source: gost5950,
     },
-    documents: [gost5950, gost7566, gost1051, gost2590, gost2591],
+    documents: [gost5950, gost7566, gost1051, gost2590, gost2591, gost4405],
     storage: {
       method: {
         value: 'Хранить в закрытых помещениях, под навесами или на открытых площадках по требованиям документа на конкретный вид металлопродукции. Для открытой площадки требуется твердое покрытие с уклоном для стока воды, подставки не ниже 100 мм и укрытие водонепроницаемым материалом.',
