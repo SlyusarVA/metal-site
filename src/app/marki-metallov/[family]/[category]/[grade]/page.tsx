@@ -16,10 +16,45 @@ const decoding = [
   ['Ф', 'ванадий'],
 ]
 
-const supplyForms = ['Прутки', 'Полосы', 'Мотки']
+const supplyForms = ['Прутки круглого и квадратного сечения', 'Полосы', 'Мотки']
 const quickActions = [
   ['Рассчитать вес', '/'],
   ['Сравнить марки', '/marki-metallov'],
+]
+
+const gost5950Sortament: SourceRef = {
+  document: 'ГОСТ 5950-2000',
+  section: 'п. 3.3.1',
+  table: 'сортамент: прутки круглого и квадратного сечений, полосы и мотки',
+  status: 'verified',
+}
+
+const gost5950Hardness: SourceRef = {
+  document: 'ГОСТ 5950-2000',
+  section: 'п. 4.1.2.1',
+  table: 'таблица 3: твердость в состоянии поставки',
+  status: 'verified',
+}
+
+const gost5950HeatTreatment: SourceRef = {
+  document: 'ГОСТ 5950-2000',
+  section: 'п. 4.1.2.2',
+  table: 'таблица 4: температура закалки и твердость HRC',
+  status: 'verified',
+}
+
+const gost5950Marking: SourceRef = {
+  document: 'ГОСТ 5950-2000',
+  section: 'примечание к таблице 1',
+  table: 'обозначение легирующих элементов в марке стали',
+  status: 'verified',
+}
+
+const hardnessRows = [
+  { label: 'Состояние поставки', value: 'отожженная для режущего инструмента', source: gost5950Hardness },
+  { label: 'Твердость в поставке', value: 'не более 241 HB; диаметр отпечатка не менее 3,9 мм', source: gost5950Hardness },
+  { label: 'Закалка образцов', value: '840–860 °C, масло', source: gost5950HeatTreatment },
+  { label: 'Твердость после закалки', value: 'не менее 63 HRC', source: gost5950HeatTreatment },
 ]
 
 export function generateStaticParams() {
@@ -57,7 +92,7 @@ export default function GradePage({ params }: Props) {
 
       <section style={st.hero}>
         <h1 style={st.h1}>{grade.title}</h1>
-        <p style={st.lead}>Химический состав, классификация и условия хранения приведены с указанием нормативных источников.</p>
+        <p style={st.lead}>Химический состав, классификация, поставка, твердость и условия хранения приведены с указанием нормативных источников.</p>
       </section>
 
       <section style={st.topGrid}>
@@ -83,6 +118,7 @@ export default function GradePage({ params }: Props) {
         <article style={st.card}>
           <h2 style={st.h2}>Вид поставки</h2>
           <div style={st.chips}>{supplyForms.map(item => <span key={item} style={st.chip}>{item}</span>)}</div>
+          <p style={st.sourceLine}><SourceLabel source={gost5950Sortament} /></p>
         </article>
 
         <article style={st.card}>
@@ -93,12 +129,18 @@ export default function GradePage({ params }: Props) {
         <article style={st.card}>
           <h2 style={st.h2}>Расшифровка</h2>
           <div style={st.decodeGrid}>{decoding.map(([symbol, meaning]) => <div key={symbol} style={st.decodeItem}><strong>{symbol}</strong><span>{meaning}</span></div>)}</div>
+          <p style={st.sourceLine}><SourceLabel source={gost5950Marking} /></p>
         </article>
 
         <article style={st.card}>
           <h2 style={st.h2}>Действия</h2>
           <div style={st.actionRow}>{quickActions.map(([label, href]) => <Link key={label} href={href} style={st.action}>{label}</Link>)}</div>
         </article>
+      </section>
+
+      <section style={st.cardWide}>
+        <h2 style={st.h2}>Твердость и термообработка</h2>
+        <div style={st.tableLike}>{hardnessRows.map(row => <InfoRow key={row.label} label={row.label} value={row.value} source={row.source} />)}</div>
       </section>
 
       <section style={st.compositionGrid}>
@@ -185,7 +227,7 @@ const st: Record<string, React.CSSProperties> = {
   infoValue: { minWidth: 0, fontSize: 'var(--text-sm)', color: 'var(--on-surface)', lineHeight: 1.45, overflowWrap: 'anywhere' },
   infoSource: { minWidth: 0, gridColumn: '2', fontSize: 'var(--text-xs)', color: 'var(--primary)', overflowWrap: 'anywhere' },
   sourceLink: { color: 'var(--primary)', textDecoration: 'underline', textUnderlineOffset: 3, overflowWrap: 'anywhere' },
-  sourceLine: { margin: '0 0 10px', fontSize: 'var(--text-xs)', color: 'var(--primary)', overflowWrap: 'anywhere' },
+  sourceLine: { margin: '10px 0 0', fontSize: 'var(--text-xs)', color: 'var(--primary)', overflowWrap: 'anywhere' },
   text: { margin: 0, color: 'var(--on-surface)', lineHeight: 1.55 },
   chips: { display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 10 },
   chip: { border: '1px solid var(--outline-variant)', borderRadius: 999, padding: '6px 9px', background: 'var(--surface-container)', fontSize: 'var(--text-xs)', fontWeight: 700 },
