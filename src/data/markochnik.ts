@@ -136,6 +136,13 @@ const gost1051: NormativeRef = {
   status: 'verified',
 }
 
+const gost2590: NormativeRef = {
+  document: 'ГОСТ 2590-2006',
+  section: 'Прокат сортовой стальной горячекатаный круглый. Сортамент',
+  table: 'таблица 1: номинальный диаметр, площадь сечения и масса 1 м',
+  status: 'verified',
+}
+
 export const metalGrades: MetalGradePage[] = [
   {
     slug: 'xvsgf',
@@ -148,7 +155,7 @@ export const metalGrades: MetalGradePage[] = [
       value: 'Инструментальная легированная сталь',
       source: gost5950,
     },
-    documents: [gost5950, gost7566, gost1051],
+    documents: [gost5950, gost7566, gost1051, gost2590],
     storage: {
       method: {
         value: 'Хранить в закрытых помещениях, под навесами или на открытых площадках по требованиям документа на конкретный вид металлопродукции. Для открытой площадки требуется твердое покрытие с уклоном для стока воды, подставки не ниже 100 мм и укрытие водонепроницаемым материалом.',
@@ -199,7 +206,7 @@ export const markochnikCategories = [
 ]
 
 export function getGradeBySlug(family: string, category: string, grade: string) {
-  return metalGrades.find(item => item.familySlug === family && item.categorySlug === category)
+  return metalGrades.find(item => item.familySlug === family && item.categorySlug === category && item.slug === grade)
 }
 
 export function getCategoryGrades(family: string, category: string) {
