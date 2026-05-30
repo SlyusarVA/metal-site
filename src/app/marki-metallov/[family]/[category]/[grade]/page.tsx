@@ -18,8 +18,8 @@ const decoding = [
 
 const supplyForms = ['Прутки круглого и квадратного сечения', 'Полосы', 'Мотки']
 const quickActions = [
-  ['Рассчитать вес', '/'],
-  ['Сравнить марки', '/marki-metallov'],
+  ['Рассчитать вес', '/?metal=Сталь&grade=ХВСГФ&profile=round&d=20&length=1'],
+  ['Сравнить марки', '/marki-metallov?compare=xvsgf'],
 ]
 
 const gost5950Sortament: SourceRef = {
