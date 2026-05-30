@@ -156,6 +156,33 @@ const gost4405: NormativeRef = {
   status: 'verified',
 }
 
+const gost7417: NormativeRef = {
+  document: 'ГОСТ 7417-75',
+  section: 'Сталь калиброванная круглая. Сортамент',
+  table: 'таблица 1: диаметры, предельные отклонения, площадь сечения и масса 1 м',
+  status: 'verified',
+}
+
+const gost8559: NormativeRef = {
+  document: 'ГОСТ 8559-75',
+  section: 'Сталь калиброванная квадратная. Сортамент',
+  table: 'таблица 1: сторона квадрата, предельные отклонения, площадь сечения и масса 1 м',
+  status: 'verified',
+}
+
+const gost8560: NormativeRef = {
+  document: 'ГОСТ 8560-78',
+  section: 'Прокат калиброванный шестигранный. Сортамент',
+  table: 'таблица 1: размер под ключ, предельные отклонения, площадь сечения и масса 1 м',
+  status: 'verified',
+}
+
+const gost14955: NormativeRef = {
+  document: 'ГОСТ 14955-77',
+  section: 'Сталь качественная круглая со специальной отделкой поверхности. Технические условия',
+  status: 'verified',
+}
+
 export const metalGrades: MetalGradePage[] = [
   {
     slug: 'xvsgf',
@@ -168,7 +195,7 @@ export const metalGrades: MetalGradePage[] = [
       value: 'Инструментальная легированная сталь',
       source: gost5950,
     },
-    documents: [gost5950, gost7566, gost1051, gost2590, gost2591, gost4405],
+    documents: [gost5950, gost7566, gost1051, gost2590, gost2591, gost4405, gost7417, gost8559, gost8560, gost14955],
     storage: {
       method: {
         value: 'Хранить в закрытых помещениях, под навесами или на открытых площадках по требованиям документа на конкретный вид металлопродукции. Для открытой площадки требуется твердое покрытие с уклоном для стока воды, подставки не ниже 100 мм и укрытие водонепроницаемым материалом.',
