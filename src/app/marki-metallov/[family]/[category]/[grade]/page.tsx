@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { getGradeBySlug, metalGrades } from '@/data/markochnik'
+import { designationTerms, getGradeBySlug, markochnikCategories, metalGrades } from '@/data/markochnik'
 import CompositionChart from '@/components/markochnik/CompositionChart'
 
 type Props = {
@@ -7,55 +7,6 @@ type Props = {
 }
 
 type SourceRef = { document: string; section?: string; table?: string; note?: string; url?: string; status: string }
-
-const decoding = [
-  ['Х', 'хром'],
-  ['В', 'вольфрам'],
-  ['С', 'кремний'],
-  ['Г', 'марганец'],
-  ['Ф', 'ванадий'],
-]
-
-const supplyForms = ['Прутки круглого и квадратного сечения', 'Полосы', 'Мотки']
-const quickActions = [
-  ['Рассчитать вес', '/?metal=Сталь&grade=ХВСГФ&profile=round&d=20&length=1'],
-  ['Сравнить марки', '/marki-metallov?compare=xvsgf'],
-]
-
-const gost5950Sortament: SourceRef = {
-  document: 'ГОСТ 5950-2000',
-  section: 'п. 3.3.1',
-  table: 'сортамент: прутки круглого и квадратного сечений, полосы и мотки',
-  status: 'verified',
-}
-
-const gost5950Hardness: SourceRef = {
-  document: 'ГОСТ 5950-2000',
-  section: 'п. 4.1.2.1',
-  table: 'таблица 3: твердость в состоянии поставки',
-  status: 'verified',
-}
-
-const gost5950HeatTreatment: SourceRef = {
-  document: 'ГОСТ 5950-2000',
-  section: 'п. 4.1.2.2',
-  table: 'таблица 4: температура закалки и твердость HRC',
-  status: 'verified',
-}
-
-const gost5950Marking: SourceRef = {
-  document: 'ГОСТ 5950-2000',
-  section: 'примечание к таблице 1',
-  table: 'обозначение легирующих элементов в марке стали',
-  status: 'verified',
-}
-
-const hardnessRows = [
-  { label: 'Состояние поставки', value: 'отожженная для режущего инструмента', source: gost5950Hardness },
-  { label: 'Твердость в поставке', value: 'не более 241 HB; диаметр отпечатка не менее 3,9 мм', source: gost5950Hardness },
-  { label: 'Закалка образцов', value: '840–860 °C, масло', source: gost5950HeatTreatment },
-  { label: 'Твердость после закалки', value: 'не менее 63 HRC', source: gost5950HeatTreatment },
-]
 
 export function generateStaticParams() {
   return metalGrades.map(grade => ({ family: grade.familySlug, category: grade.categorySlug, grade: grade.slug }))
@@ -71,6 +22,17 @@ export function generateMetadata({ params }: Props) {
 
 export default function GradePage({ params }: Props) {
   const grade = getGradeBySlug(params.family, params.category, params.grade)
+  const family = markochnikCategories.find(item => item.familySlug === params.family)
+  const designationLinks = grade
+    ? designationTerms.filter(term => grade.designationTermSlugs?.includes(term.slug))
+    : []
+  const relatedGradeLinks = grade?.relatedGrades.map(name => {
+    const target = metalGrades.find(item =>
+      item.designation === name &&
+      (item.familySlug === grade.familySlug || item.categorySlug === grade.categorySlug)
+    ) ?? metalGrades.find(item => item.designation === name)
+    return { name, target }
+  }) ?? []
 
   if (!grade) {
     return (
@@ -85,14 +47,14 @@ export default function GradePage({ params }: Props) {
       <nav style={st.breadcrumbs}>
         <Link href="/" style={st.crumb}>Калькулятор</Link><span>/</span>
         <Link href="/marki-metallov" style={st.crumb}>Марочник</Link><span>/</span>
-        <Link href={`/marki-metallov/${grade.familySlug}`} style={st.crumb}>Стали</Link><span>/</span>
+        <Link href={`/marki-metallov/${grade.familySlug}`} style={st.crumb}>{family?.title ?? 'Раздел'}</Link><span>/</span>
         <Link href={`/marki-metallov/${grade.familySlug}/${grade.categorySlug}`} style={st.crumb}>{grade.categoryTitle}</Link><span>/</span>
         <span>{grade.designation}</span>
       </nav>
 
       <section style={st.hero}>
         <h1 style={st.h1}>{grade.title}</h1>
-        <p style={st.lead}>Химический состав, классификация, поставка, твердость и условия хранения приведены с указанием нормативных источников.</p>
+        <p style={st.lead}>Классификация, поставка, хранение, применение и состав показаны с указанием нормативных источников из локальной подборки ГОСТов.</p>
       </section>
 
       <section style={st.topGrid}>
@@ -117,50 +79,94 @@ export default function GradePage({ params }: Props) {
       <section style={st.featureGrid}>
         <article style={st.card}>
           <h2 style={st.h2}>Вид поставки</h2>
-          <div style={st.chips}>{supplyForms.map(item => <span key={item} style={st.chip}>{item}</span>)}</div>
-          <p style={st.sourceLine}><SourceLabel source={gost5950Sortament} /></p>
+          {grade.deliveryForms?.length ? (
+            <div style={st.chips}>{grade.deliveryForms.map(item => <span key={item.value} style={st.chip}>{item.value}</span>)}</div>
+          ) : (
+            <p style={st.text}>Формы поставки уточняются по документу на продукцию.</p>
+          )}
+          <p style={st.sourceLine}><SourceLabel source={grade.deliveryForms?.[0]?.source ?? grade.documents[0]} /></p>
         </article>
 
         <article style={st.card}>
           <h2 style={st.h2}>Близкие марки</h2>
-          <div style={st.chips}>{grade.relatedGrades.map(item => <span key={item} style={st.chip}>{item}</span>)}</div>
+          <div style={st.chips}>
+            {relatedGradeLinks.map(item => item.target ? (
+              <Link
+                key={item.name}
+                href={`/marki-metallov/${item.target.familySlug}/${item.target.categorySlug}/${item.target.slug}`}
+                style={{ ...st.chip, ...st.chipLink }}
+              >
+                {item.name}
+              </Link>
+            ) : (
+              <span key={item.name} style={st.chip}>{item.name}</span>
+            ))}
+          </div>
         </article>
+
+        {designationLinks.length ? (
+          <article style={st.card}>
+            <h2 style={st.h2}>Обозначения поставки</h2>
+            <div style={st.designationList}>
+              {designationLinks.map(term => (
+                <Link
+                  key={term.slug}
+                  href={`/marki-metallov/rasshifrovki#${term.slug}`}
+                  style={st.designationLink}
+                >
+                  <strong>{term.code}</strong>
+                  <span>{term.summary}</span>
+                </Link>
+              ))}
+            </div>
+          </article>
+        ) : null}
 
         <article style={st.card}>
           <h2 style={st.h2}>Расшифровка</h2>
-          <div style={st.decodeGrid}>{decoding.map(([symbol, meaning]) => <div key={symbol} style={st.decodeItem}><strong>{symbol}</strong><span>{meaning}</span></div>)}</div>
-          <p style={st.sourceLine}><SourceLabel source={gost5950Marking} /></p>
+          {grade.decoding?.length ? (
+            <div style={st.decodeGrid}>{grade.decoding.map(item => <div key={item.symbol} style={st.decodeItem}><strong>{item.symbol}</strong><span>{item.meaning}</span></div>)}</div>
+          ) : (
+            <p style={st.text}>Для этой марки отдельная расшифровка обозначения пока не опубликована.</p>
+          )}
+          <p style={st.sourceLine}><SourceLabel source={grade.documents[0]} /></p>
         </article>
 
         <article style={st.card}>
           <h2 style={st.h2}>Действия</h2>
-          <div style={st.actionRow}>{quickActions.map(([label, href]) => <Link key={label} href={href} style={st.action}>{label}</Link>)}</div>
+          <div style={st.actionRow}>{(grade.calculatorLinks ?? []).map(item => <Link key={item.label} href={item.href} style={st.action}>{item.label}</Link>)}</div>
         </article>
       </section>
 
-      <section style={st.cardWide}>
-        <h2 style={st.h2}>Твердость и термообработка</h2>
-        <div style={st.tableLike}>{hardnessRows.map(row => <InfoRow key={row.label} label={row.label} value={row.value} source={row.source} />)}</div>
-      </section>
+      {grade.technicalProperties?.length ? (
+        <section style={st.cardWide}>
+          <h2 style={st.h2}>Свойства и обработка</h2>
+          <div style={st.tableLike}>{grade.technicalProperties.map(row => <InfoRow key={row.label} label={row.label} value={row.value} source={row.source} />)}</div>
+        </section>
+      ) : null}
 
       <section style={st.compositionGrid}>
         <article style={st.card}>
           <h2 style={st.h2}>Химический состав</h2>
           <p style={st.sourceLine}><SourceLabel source={grade.composition[0]?.source} /></p>
-          <div style={st.compTableWrap}>
-            <div style={st.compTable}>
-              <div style={st.compHead}>Элемент</div>
-              <div style={st.compHead}>Содержание, %</div>
-              {grade.composition.map(item => (
-                <ReactFragment key={item.element}>
-                  <div style={st.compCell}><strong>{item.element}</strong> <span style={st.muted}>{item.label}</span></div>
-                  <div style={st.compCell}>{item.valueText}</div>
-                </ReactFragment>
-              ))}
+          {grade.composition.length ? (
+            <div style={st.compTableWrap}>
+              <div style={st.compTable}>
+                <div style={st.compHead}>Элемент</div>
+                <div style={st.compHead}>Содержание, %</div>
+                {grade.composition.map(item => (
+                  <ReactFragment key={item.element}>
+                    <div style={st.compCell}><strong>{item.element}</strong> <span style={st.muted}>{item.label}</span></div>
+                    <div style={st.compCell}>{item.valueText}</div>
+                  </ReactFragment>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : (
+            <p style={st.text}>Состав не опубликован до проверки таблицы конкретного ГОСТа.</p>
+          )}
         </article>
-        <CompositionChart items={grade.composition} withoutFe />
+        {grade.composition.length ? <CompositionChart items={grade.composition} withoutFe={grade.composition.length > 1 && grade.composition.some(item => item.element === 'Fe')} /> : null}
       </section>
 
       <section style={st.cardWide}>
@@ -231,7 +237,10 @@ const st: Record<string, React.CSSProperties> = {
   text: { margin: 0, color: 'var(--on-surface)', lineHeight: 1.55 },
   chips: { display: 'flex', flexWrap: 'wrap', gap: 7, marginTop: 10 },
   chip: { border: '1px solid var(--outline-variant)', borderRadius: 999, padding: '6px 9px', background: 'var(--surface-container)', fontSize: 'var(--text-xs)', fontWeight: 700 },
+  chipLink: { color: 'inherit', textDecoration: 'none' },
   chipAlt: { border: '1px solid var(--info-border)', borderRadius: 999, padding: '6px 9px', background: 'var(--info-container)', color: 'var(--info)', fontSize: 'var(--text-xs)', fontWeight: 700 },
+  designationList: { display: 'grid', gap: 8 },
+  designationLink: { display: 'grid', gap: 4, padding: 10, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-md)', background: 'var(--surface-container)', color: 'inherit', textDecoration: 'none', fontSize: 'var(--text-sm)', lineHeight: 1.4 },
   decodeGrid: { display: 'grid', gap: 8 },
   decodeItem: { display: 'grid', gridTemplateColumns: '32px 1fr', gap: 8, fontSize: 'var(--text-sm)' },
   actionRow: { display: 'flex', flexWrap: 'wrap', gap: 8 },

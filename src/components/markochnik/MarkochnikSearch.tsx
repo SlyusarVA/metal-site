@@ -2,10 +2,10 @@
 
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
-import { markochnikCategories, metalGrades } from '@/data/markochnik'
+import { designationTerms, markochnikCategories, metalGrades } from '@/data/markochnik'
 
 type SearchItem = {
-  kind: 'Марка' | 'Раздел' | 'Группа'
+  kind: 'Марка' | 'Раздел' | 'Группа' | 'Обозначение'
   title: string
   subtitle: string
   href: string
@@ -17,6 +17,13 @@ function normalize(value: string) {
 }
 
 const searchItems: SearchItem[] = [
+  {
+    kind: 'Раздел',
+    title: 'Расшифровки обозначений',
+    subtitle: 'ДПРНМ, Б-2А и другие коды состояния, формы поставки и точности',
+    href: '/marki-metallov/rasshifrovki',
+    searchText: 'расшифровки обозначения коды состояние поставка точность ДПРНМ Б2А Б-2А проволока латунь',
+  },
   ...markochnikCategories.flatMap(family => [
     {
       kind: 'Раздел' as const,
@@ -43,11 +50,22 @@ const searchItems: SearchItem[] = [
       grade.title,
       grade.categoryTitle,
       grade.gradeClass.value,
-      grade.application.summary,
-      ...grade.application.examples,
-      ...grade.application.equipment,
-      ...grade.relatedGrades,
       ...grade.documents.map(source => `${source.document} ${source.section ?? ''} ${source.table ?? ''}`),
+    ].join(' '),
+  })),
+  ...designationTerms.map(term => ({
+    kind: 'Обозначение' as const,
+    title: term.code,
+    subtitle: `${term.title} · ${term.productGroup}`,
+    href: `/marki-metallov/rasshifrovki#${term.slug}`,
+    searchText: [
+      term.code,
+      ...term.aliases,
+      term.title,
+      term.productGroup,
+      term.materialScope,
+      term.source.document,
+      term.source.section ?? '',
     ].join(' '),
   })),
 ]
@@ -74,7 +92,7 @@ export default function MarkochnikSearch() {
           id="markochnik-search"
           value={query}
           onChange={event => setQuery(event.target.value)}
-          placeholder="Марка, ГОСТ, применение, группа..."
+          placeholder="Марка, ГОСТ, группа, обозначение..."
           style={st.input}
         />
         {query && (
