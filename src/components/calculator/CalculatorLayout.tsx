@@ -174,10 +174,6 @@ export default function CalculatorLayout() {
   return (
     <div style={mobilePageStyle}>
       <nav aria-label="Основная навигация" style={mobileNavStyle}>
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontSize: 'var(--text-sm)', fontWeight: 700, color: 'var(--on-surface)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>Калькулятор металла</div>
-          <div style={{ fontSize: 'var(--text-xs)', color: 'var(--on-surface-variant)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{state.metalGroup} · {state.profile.name}</div>
-        </div>
         <button onClick={() => router.push('/marki-metallov')} style={mobileTopBtnStyle}>Марочник</button>
         <button onClick={() => router.push('/history')} style={mobileTopBtnStyle}>История</button>
         <AccentSchemeToggle />
@@ -225,7 +221,7 @@ const desktopPageStyle: React.CSSProperties = { height: '100dvh', boxSizing: 'bo
 const desktopNavStyle: React.CSSProperties = { width: '100%', maxWidth: 'clamp(980px, 92vw, 1180px)', display: 'flex', alignItems: 'center', marginBottom: 8, gap: 4, flexShrink: 0 }
 const footerNoteStyle: React.CSSProperties = { marginTop: 6, marginBottom: 0, fontSize: 'var(--text-xs)', color: 'var(--on-surface-variant)', textAlign: 'center', flexShrink: 0 }
 const mobilePageStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', height: '100dvh', minHeight: 0, background: 'var(--surface-variant)', overflow: 'hidden' }
-const mobileNavStyle: React.CSSProperties = { background: 'var(--surface)', borderBottom: '1px solid var(--outline-variant)', display: 'flex', alignItems: 'center', gap: 8, minHeight: 48, padding: '0 12px', flexShrink: 0 }
+const mobileNavStyle: React.CSSProperties = { background: 'var(--surface)', borderBottom: '1px solid var(--outline-variant)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, minHeight: 48, padding: '0 12px', flexShrink: 0 }
 const utilBtnStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'transparent', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--on-surface-variant)', fontSize: 'var(--text-xs)', fontWeight: 500, fontFamily: 'Manrope, sans-serif', height: 32, minBlockSize: 32, padding: '0 10px', whiteSpace: 'nowrap' }
 const topbarIconBtnStyle: React.CSSProperties = { width: 32, padding: 0, gap: 0, flexShrink: 0 }
 const mobileTopBtnStyle: React.CSSProperties = { border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-sm)', background: 'var(--surface-container)', color: 'var(--on-surface)', fontSize: 'var(--text-xs)', fontWeight: 600, fontFamily: 'Manrope, sans-serif', minHeight: 38, padding: '0 12px', cursor: 'pointer', flexShrink: 0 }
