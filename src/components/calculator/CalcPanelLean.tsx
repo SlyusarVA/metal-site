@@ -85,11 +85,13 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
   return (
     <div style={st.panel}>
       <div style={st.head}>
-        <span style={st.headTitle}>
-          <span style={st.headMetalSlot}><AnimatedText text={state.metalGroup} /></span>
-          <span style={st.headSeparator}> · </span>
-          <span style={st.headProfileSlot}><AnimatedText text={state.profile.name} /></span>
-        </span>
+        {!isMobile && (
+          <span style={st.headTitle}>
+            <span style={st.headMetalSlot}><AnimatedText text={state.metalGroup} /></span>
+            <span style={st.headSeparator}> · </span>
+            <span style={st.headProfileSlot}><AnimatedText text={state.profile.name} /></span>
+          </span>
+        )}
         <GostTags profile={state.profile} density={state.density} onGostClick={onGostOpen} />
       </div>
       <div style={st.search}><GostSearchBar onResult={onGostResult} onClear={onGostClear} /></div>
