@@ -95,14 +95,19 @@ export default function GostSearchBar({ onResult, onClear }: Props) {
         transition: 'all .2s',
       }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-          stroke={hasResult ? 'var(--primary)' : 'var(--on-surface-variant)'} strokeWidth="2">
+          stroke={hasResult ? 'var(--primary)' : 'var(--on-surface-variant)'} strokeWidth="2"
+          aria-hidden="true" focusable="false">
           <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
         </svg>
 
         <input
           ref={inputRef}
+          id="gost-search"
+          name="gost-search"
           type="text"
           value={query}
+          aria-label="Поиск по марочнику"
+          autoComplete="off"
           placeholder="Поиск: марка (Д16Т, Ст3сп), ГОСТ (8239-89), металл (латунь)..."
           onChange={e => setQuery(e.target.value)}
           onFocus={() => results.length > 0 && setOpen(true)}
@@ -128,11 +133,12 @@ export default function GostSearchBar({ onResult, onClear }: Props) {
         )}
 
         {query.length > 0 && (
-          <button onClick={handleClear} style={{
+          <button type="button" aria-label="Очистить поиск" onClick={handleClear} style={{
             background: 'none', border: 'none', cursor: 'pointer',
             padding: 2, color: 'var(--on-surface-variant)', lineHeight: 1, flexShrink: 0,
           }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+              aria-hidden="true" focusable="false">
               <path d="M18 6 6 18M6 6l12 12"/>
             </svg>
           </button>
@@ -147,7 +153,7 @@ export default function GostSearchBar({ onResult, onClear }: Props) {
           zIndex: 50, overflow: 'hidden', maxHeight: 320, overflowY: 'auto',
         }}>
           {results.map((r, i) => (
-            <button key={i} onClick={() => handleSelect(r)} style={{
+            <button key={i} type="button" onClick={() => handleSelect(r)} style={{
               display: 'flex', flexDirection: 'column', width: '100%', textAlign: 'left',
               background: 'none', border: 'none',
               borderBottom: '1px solid var(--outline-variant)',

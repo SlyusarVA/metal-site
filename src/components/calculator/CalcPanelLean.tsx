@@ -99,25 +99,25 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
       <div className="ui-scroll-area" style={st.work}>
         <section style={st.card}>
           <div style={st.cardTitle}>Калькулятор металла</div>
-          <div style={st.tabs}>{(['mass', 'length', 'quick'] as const).map(x => <button key={x} onClick={() => switchMode(x)} style={tab(mode === x)}>{modes[x].label}</button>)}</div>
+          <div style={st.tabs}>{(['mass', 'length', 'quick'] as const).map(x => <button key={x} type="button" onClick={() => switchMode(x)} style={tab(mode === x)}>{modes[x].label}</button>)}</div>
           <div style={st.hint}><AnimatedText text={modes[mode].hint} /></div>
         </section>
         {mode === 'quick' && <section style={st.card}>
-          <div style={st.quick}><input value={quickInput} onChange={e => setQuickInput(e.target.value)} style={st.textInput} /><button onClick={applyQuick} style={st.actionSmall}>Применить</button></div>
+          <div style={st.quick}><input id="calc-quick-input" name="quick-input" aria-label="Быстрый ввод параметров" value={quickInput} onChange={e => setQuickInput(e.target.value)} style={st.textInput} /><button type="button" onClick={applyQuick} style={st.actionSmall}>Применить</button></div>
           <div style={st.chips}><span>Распознано:</span>{quickChips.map(x => <span key={x} style={st.chip}>{x}</span>)}</div>
           {quickStatus && <div style={status(quickStatus.kind)}>{quickStatus.message}</div>}
         </section>}
         {isMobile && <div style={st.mobilePickers}>
-          <FieldSelect label="Металл" value={state.metalGroup} onChange={setGroup} options={metalGroups.map(x => ({ value: x, label: x }))} />
-          <FieldSelect label="Сортамент" value={state.profileKey} onChange={v => selectProfile(v as ProfileKey)} options={profiles.map(x => ({ value: x.key, label: x.name }))} />
+          <FieldSelect id="calc-mobile-metal" name="mobile-metal" label="Металл" value={state.metalGroup} onChange={setGroup} options={metalGroups.map(x => ({ value: x, label: x }))} />
+          <FieldSelect id="calc-mobile-profile" name="mobile-profile" label="Сортамент" value={state.profileKey} onChange={v => selectProfile(v as ProfileKey)} options={profiles.map(x => ({ value: x.key, label: x.name }))} />
         </div>}
-        <div style={st.markRow}><span style={st.inlineLabel}>Марка</span><select value={state.grade} onChange={e => selectMetal(state.metalGroup, e.target.value)} style={st.select}>{grades.map(x => <option key={x.grade}>{x.grade}</option>)}</select></div>
+        <div style={st.markRow}><span id="calc-grade-label" style={st.inlineLabel}>Марка</span><select id="calc-grade" name="grade" aria-labelledby="calc-grade-label" value={state.grade} onChange={e => selectMetal(state.metalGroup, e.target.value)} style={st.select}>{grades.map(x => <option key={x.grade}>{x.grade}</option>)}</select></div>
         <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 8 }}>
-          {state.profile.params.map(p => <div key={p.key}><Label>{p.label}</Label><UnitInput value={state.params[p.key] ?? ''} unit={p.unit} onChange={v => setParam(p.key, v)} /></div>)}
-          {!state.profile.isVolume && <div><Label>{mode === 'length' ? 'Масса' : 'Длина L'}</Label><UnitInput value={mode === 'length' ? state.mass ?? '' : state.length ?? ''} unit={mode === 'length' ? 'кг.' : 'м.'} onChange={setSource} /></div>}
-          <div><Label>Количество</Label><div style={st.qty}><button onClick={decrementQty} style={st.qtyBtn}>−</button><input type="number" min={1} step={1} value={state.quantity} onChange={e => setQuantity(e.target.value ? Number(e.target.value) : 1)} style={st.qtyInput} /><button onClick={incrementQty} style={st.qtyBtn}>+</button></div></div>
+          {state.profile.params.map(p => <div key={p.key}><Label>{p.label}</Label><UnitInput id={`calc-param-${p.key}`} name={`param-${p.key}`} label={p.label} value={state.params[p.key] ?? ''} unit={p.unit} onChange={v => setParam(p.key, v)} /></div>)}
+          {!state.profile.isVolume && <div><Label>{mode === 'length' ? 'Масса' : 'Длина L'}</Label><UnitInput id={mode === 'length' ? 'calc-mass' : 'calc-length'} name={mode === 'length' ? 'mass' : 'length'} label={mode === 'length' ? 'Масса' : 'Длина L'} value={mode === 'length' ? state.mass ?? '' : state.length ?? ''} unit={mode === 'length' ? 'кг.' : 'м.'} onChange={setSource} /></div>}
+          <div><Label>Количество</Label><div style={st.qty}><button type="button" aria-label="Уменьшить количество" onClick={decrementQty} style={st.qtyBtn}>−</button><input id="calc-quantity" name="quantity" aria-label="Количество" type="number" min={1} step={1} value={state.quantity} onChange={e => setQuantity(e.target.value ? Number(e.target.value) : 1)} style={st.qtyInput} /><button type="button" aria-label="Увеличить количество" onClick={incrementQty} style={st.qtyBtn}>+</button></div></div>
         </div>
-        <button onClick={calculate} style={st.action}>Рассчитать</button>
+        <button type="button" onClick={calculate} style={st.action}>Рассчитать</button>
         {state.error && <ErrorMessage message={state.error.message} />}
         {state.snackbar && <div style={st.note}>{state.snackbar.message}</div>}
       </div>
@@ -135,8 +135,8 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
 }
 
 function Label({ children }: { children: React.ReactNode }) { return <div style={st.label}>{children}</div> }
-function UnitInput({ value, unit, onChange }: { value: number | string; unit: string; onChange: (v: number | null) => void }) { return <div style={st.unitWrap}><input type="number" min={0} step={0.1} value={value} onChange={e => onChange(e.target.value ? parseFloat(e.target.value) : null)} style={st.input} /><span style={st.unit}>{unit}</span></div> }
-function FieldSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) { return <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><Label>{label}</Label><select value={value} onChange={e => onChange(e.target.value)} style={st.mobileSelect}>{options.map(x => <option key={x.value} value={x.value}>{x.label}</option>)}</select></label> }
+function UnitInput({ id, name, label, value, unit, onChange }: { id: string; name: string; label: string; value: number | string; unit: string; onChange: (v: number | null) => void }) { return <div style={st.unitWrap}><input id={id} name={name} aria-label={label} type="number" min={0} step={0.1} value={value} onChange={e => onChange(e.target.value ? parseFloat(e.target.value) : null)} style={st.input} /><span style={st.unit}>{unit}</span></div> }
+function FieldSelect({ id, name, label, value, onChange, options }: { id: string; name: string; label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) { return <label htmlFor={id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><Label>{label}</Label><select id={id} name={name} value={value} onChange={e => onChange(e.target.value)} style={st.mobileSelect}>{options.map(x => <option key={x.value} value={x.value}>{x.label}</option>)}</select></label> }
 function tab(active: boolean): React.CSSProperties { return { border: 'none', borderRadius: 7, padding: '7px 8px', background: active ? 'var(--primary)' : 'transparent', color: active ? '#fff' : 'var(--on-surface-variant)', fontWeight: active ? 700 : 500, fontFamily: 'Manrope, sans-serif', cursor: 'pointer' } }
 function status(kind: QuickStatus['kind']): React.CSSProperties { return { padding: '7px 9px', borderRadius: 7, fontSize: 'var(--text-xs)', background: kind === 'error' ? 'var(--error-container)' : kind === 'warning' ? 'var(--warning-container)' : 'var(--success-container)', color: kind === 'error' ? 'var(--error)' : kind === 'warning' ? 'var(--warning)' : 'var(--success)' } }
 
