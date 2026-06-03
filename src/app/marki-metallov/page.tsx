@@ -7,10 +7,19 @@ export const metadata = {
 }
 
 const designationTermsByCategory: Record<string, string[]> = {
-  konstrukcionnye: ['steel-deoxidation-gost-380', 'b-2a', 'spring-wire-gost-9389'],
+  konstrukcionnye: ['steel-sheet-special-gost-11268', 'steel-hot-sheet-gost-19903', 'steel-cold-sheet-gost-19904', 'steel-carbon-sheet-gost-16523', 'steel-deoxidation-gost-380', 'b-2a', 'spring-wire-gost-9389'],
+  nerzhaveyushchie: ['stainless-sheet-gost-5582', 'steel-hot-sheet-gost-19903', 'steel-cold-sheet-gost-19904'],
   latuni: ['dprnm', 'latun-rods-gost-2060'],
   med: ['copper-flat-gost-1173'],
+  bronzy: ['bronze-grade-letters'],
+  nikel: ['nickel-grade-letters'],
   'alyuminievye-splavy': ['aluminum-temper'],
+  'titanovye-splavy': ['titanium-grade-letters'],
+  cink: ['zinc-grade-letters'],
+  'precizionnye-splavy': ['precision-alloy-letters'],
+  volfram: ['tungsten-grade-letters'],
+  molibden: ['molybdenum-grade-letters'],
+  cirkoniy: ['zirconium-grade-letters'],
 }
 
 const designationTermsBySlug = new Map(designationTerms.map(term => [term.slug, term]))
