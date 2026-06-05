@@ -92,7 +92,7 @@ export default function GostSearchBar({ onResult, onClear }: Props) {
         border: `1px solid ${hasResult ? 'var(--primary)' : 'var(--outline-variant)'}`,
         borderRadius: 'var(--radius-sm)',
         padding: '0 10px', gap: 8,
-        transition: 'all .2s',
+        transition: 'background .2s, border-color .2s',
       }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
           stroke={hasResult ? 'var(--primary)' : 'var(--on-surface-variant)'} strokeWidth="2"

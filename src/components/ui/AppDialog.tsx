@@ -22,21 +22,59 @@ export default function AppDialog({
   labelledById,
 }: AppDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const onCloseRef = useRef(onClose)
   const generatedTitleId = useId()
   const titleId = labelledById ?? generatedTitleId
+
+  useEffect(() => {
+    onCloseRef.current = onClose
+  }, [onClose])
 
   useEffect(() => {
     const dialog = dialogRef.current
     if (!dialog) return
 
+    let closeTimer: number | null = null
+    let openFrame: number | null = null
+
+    function closeAfterTransition() {
+      if (!dialog.open || dialog.classList.contains('is-closing')) return
+
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        dialog.close()
+        return
+      }
+
+      dialog.classList.remove('is-open')
+      dialog.classList.add('is-closing')
+      const duration = parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue('--modal-close-dur')
+      ) || 150
+      closeTimer = window.setTimeout(() => dialog.close(), duration)
+    }
+
     if (!dialog.open) dialog.showModal()
+    openFrame = requestAnimationFrame(() => {
+      void dialog.offsetWidth
+      dialog.classList.add('is-open')
+    })
 
     function handleClose() {
-      onClose()
+      onCloseRef.current()
+    }
+
+    function handleCancel(event: Event) {
+      event.preventDefault()
+      closeAfterTransition()
     }
 
     function handleClick(event: MouseEvent) {
-      if (!dialog || event.target !== dialog) return
+      const target = event.target as Element | null
+      if (target?.closest('[data-dialog-close]')) {
+        closeAfterTransition()
+        return
+      }
+      if (event.target !== dialog) return
 
       const rect = dialog.getBoundingClientRect()
       const insideDialog =
@@ -45,28 +83,27 @@ export default function AppDialog({
         rect.left <= event.clientX &&
         event.clientX <= rect.left + rect.width
 
-      if (!insideDialog) dialog.close()
+      if (!insideDialog) closeAfterTransition()
     }
 
     dialog.addEventListener('close', handleClose)
-
-    if (!('closedBy' in HTMLDialogElement.prototype)) {
-      dialog.addEventListener('click', handleClick)
-    }
+    dialog.addEventListener('cancel', handleCancel)
+    dialog.addEventListener('click', handleClick)
 
     return () => {
+      if (openFrame !== null) cancelAnimationFrame(openFrame)
+      if (closeTimer !== null) window.clearTimeout(closeTimer)
       dialog.removeEventListener('close', handleClose)
+      dialog.removeEventListener('cancel', handleCancel)
       dialog.removeEventListener('click', handleClick)
-      if (dialog.open) dialog.close()
     }
-  }, [onClose])
+  }, [])
 
   return (
     <dialog
       ref={dialogRef}
-      className="ui-dialog t-modal is-open"
+      className="ui-dialog t-modal"
       aria-labelledby={titleId}
-      {...({ closedby: 'any' } as Record<string, string>)}
       style={{
         width,
         height,

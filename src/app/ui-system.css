@@ -10,8 +10,28 @@
   }
 
   .ui-dialog::backdrop {
+    background: rgba(0, 0, 0, 0);
+    backdrop-filter: blur(0);
+    transition:
+      background var(--modal-open-dur) var(--modal-ease),
+      backdrop-filter var(--modal-open-dur) var(--modal-ease);
+  }
+
+  .ui-dialog.is-open::backdrop {
     background: rgba(0, 0, 0, .36);
     backdrop-filter: blur(2px);
+  }
+
+  .ui-dialog.is-closing::backdrop {
+    background: rgba(0, 0, 0, 0);
+    backdrop-filter: blur(0);
+    transition-duration: var(--modal-close-dur);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ui-dialog::backdrop {
+      transition: none;
+    }
   }
 
   .ui-dialog-shell {

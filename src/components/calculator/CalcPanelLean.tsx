@@ -99,7 +99,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
       <div className="ui-scroll-area" style={st.work}>
         <section style={st.card}>
           <div style={st.cardTitle}>Калькулятор металла</div>
-          <div style={st.tabs}>{(['mass', 'length', 'quick'] as const).map(x => <button key={x} type="button" onClick={() => switchMode(x)} style={tab(mode === x)}>{modes[x].label}</button>)}</div>
+          <ModeTabs mode={mode} onSelect={switchMode} />
           <div style={st.hint}><AnimatedText text={modes[mode].hint} /></div>
         </section>
         {mode === 'quick' && <section style={st.card}>
@@ -118,7 +118,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
           <div><Label>Количество</Label><div style={st.qty}><button type="button" aria-label="Уменьшить количество" onClick={decrementQty} style={st.qtyBtn}>−</button><input id="calc-quantity" name="quantity" aria-label="Количество" type="number" min={1} step={1} value={state.quantity} onChange={e => setQuantity(e.target.value ? Number(e.target.value) : 1)} style={st.qtyInput} /><button type="button" aria-label="Увеличить количество" onClick={incrementQty} style={st.qtyBtn}>+</button></div></div>
         </div>
         <button type="button" onClick={calculate} style={st.action}>Рассчитать</button>
-        {state.error && <ErrorMessage message={state.error.message} />}
+        {state.error && <ErrorMessage error={state.error} />}
         {state.snackbar && <div style={st.note}>{state.snackbar.message}</div>}
       </div>
       <div style={st.result}>
@@ -137,8 +137,65 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
 function Label({ children }: { children: React.ReactNode }) { return <div style={st.label}>{children}</div> }
 function UnitInput({ id, name, label, value, unit, onChange }: { id: string; name: string; label: string; value: number | string; unit: string; onChange: (v: number | null) => void }) { return <div style={st.unitWrap}><input id={id} name={name} aria-label={label} type="number" min={0} step={0.1} value={value} onChange={e => onChange(e.target.value ? parseFloat(e.target.value) : null)} style={st.input} /><span style={st.unit}>{unit}</span></div> }
 function FieldSelect({ id, name, label, value, onChange, options }: { id: string; name: string; label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) { return <label htmlFor={id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><Label>{label}</Label><select id={id} name={name} value={value} onChange={e => onChange(e.target.value)} style={st.mobileSelect}>{options.map(x => <option key={x.value} value={x.value}>{x.label}</option>)}</select></label> }
-function tab(active: boolean): React.CSSProperties { return { border: 'none', borderRadius: 7, padding: '7px 8px', background: active ? 'var(--primary)' : 'transparent', color: active ? '#fff' : 'var(--on-surface-variant)', fontWeight: active ? 700 : 500, fontFamily: 'Manrope, sans-serif', cursor: 'pointer' } }
 function status(kind: QuickStatus['kind']): React.CSSProperties { return { padding: '7px 9px', borderRadius: 7, fontSize: 'var(--text-xs)', background: kind === 'error' ? 'var(--error-container)' : kind === 'warning' ? 'var(--warning-container)' : 'var(--success-container)', color: kind === 'error' ? 'var(--error)' : kind === 'warning' ? 'var(--warning)' : 'var(--success)' } }
+
+function ModeTabs({ mode, onSelect }: { mode: CalcMode; onSelect: (mode: CalcMode) => void }) {
+  const barRef = useRef<HTMLDivElement>(null)
+  const pillRef = useRef<HTMLSpanElement>(null)
+  const readyRef = useRef(false)
+
+  function moveToActive(animate: boolean) {
+    const bar = barRef.current
+    const pill = pillRef.current
+    const active = bar?.querySelector<HTMLButtonElement>('.t-tab[aria-selected="true"]')
+    if (!bar || !pill || !active) return
+
+    const previousTransition = pill.style.transition
+    if (!animate) pill.style.transition = 'none'
+    pill.style.transform = `translateX(${active.offsetLeft}px)`
+    pill.style.width = `${active.offsetWidth}px`
+    if (!animate) {
+      void pill.offsetWidth
+      pill.style.transition = previousTransition
+    }
+  }
+
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => {
+      moveToActive(false)
+      readyRef.current = true
+    })
+    const onResize = () => moveToActive(false)
+    window.addEventListener('resize', onResize)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('resize', onResize)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (readyRef.current) moveToActive(true)
+  }, [mode])
+
+  return (
+    <div ref={barRef} className="t-tabs" role="tablist" aria-label="Режим расчёта" style={st.tabs}>
+      <span ref={pillRef} className="t-tabs-pill" aria-hidden="true" />
+      {(['mass', 'length', 'quick'] as const).map(item => (
+        <button
+          key={item}
+          type="button"
+          role="tab"
+          aria-selected={mode === item}
+          className="t-tab"
+          onClick={() => onSelect(item)}
+          style={st.tab}
+        >
+          {modes[item].label}
+        </button>
+      ))}
+    </div>
+  )
+}
 
 function AnimatedText({ text }: { text: string }) {
   const [shown, setShown] = useState(text)
@@ -198,11 +255,21 @@ function AnimatedNumber({ value, digits }: { value: number | null; digits: numbe
   )
 }
 
-function ErrorMessage({ message }: { message: string }) {
+function ErrorMessage({ error }: { error: { message: string } }) {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const element = ref.current
+    if (!element) return
+    element.classList.remove('is-shaking')
+    void element.offsetWidth
+    element.classList.add('is-shaking')
+  }, [error])
+
   return (
-    <div key={message} className="t-input-wrap is-error" style={st.errorWrap}>
-      <div className="t-input is-error is-shaking" style={st.error}>
-        <p className="t-error-msg" style={st.errorMsg}>{message}</p>
+    <div className="t-input-wrap is-error" style={st.errorWrap}>
+      <div ref={ref} className="t-input is-error" style={st.error}>
+        <p className="t-error-msg" style={st.errorMsg}>{error.message}</p>
       </div>
     </div>
   )
@@ -220,7 +287,8 @@ const st: Record<string, React.CSSProperties> = {
   work: { flex: '0 1 auto', minHeight: 0, overflowY: 'auto', padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 },
   card: { padding: 10, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-md)', background: 'var(--surface)', display: 'flex', flexDirection: 'column', gap: 8 },
   cardTitle: { fontWeight: 700, color: 'var(--on-surface)' },
-  tabs: { display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 4, padding: 3, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-sm)', background: 'var(--surface-container)' },
+  tabs: { display: 'grid', gridTemplateColumns: 'repeat(3,minmax(0,1fr))', gap: 4, padding: 3, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-sm)', background: 'var(--surface-container)', ['--tabs-bar-bg' as string]: 'var(--surface-container)', ['--tabs-pill-bg' as string]: 'var(--primary)', ['--tabs-text-muted' as string]: 'var(--on-surface-variant)', ['--tabs-text-active' as string]: '#fff' },
+  tab: { width: '100%', padding: '4px 8px', fontWeight: 600, fontFamily: 'Manrope, sans-serif' },
   hint: { fontSize: 'var(--text-xs)', color: 'var(--on-surface-variant)' },
   quick: { display: 'flex', gap: 8 },
   textInput: { flex: 1, minWidth: 0, height: 38, padding: '0 10px', border: '1px solid var(--outline)', borderRadius: 7, background: 'var(--surface-container)', color: 'var(--on-surface)' },
