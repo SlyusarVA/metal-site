@@ -54,6 +54,10 @@ export default function SettingsPanel({ onClose }: Props) {
   }
 
   const tabDirection = TAB_INDEX[tab] >= TAB_INDEX[previousTab] ? 1 : -1
+  const pageDirection = (page: Tab) => {
+    if (page === tab) return tabDirection
+    return TAB_INDEX[page] < TAB_INDEX[tab] ? -1 : 1
+  }
 
   return (
     <AppDialog title="Настройки" onClose={onClose} width={540} height={520}>
@@ -63,7 +67,7 @@ export default function SettingsPanel({ onClose }: Props) {
           padding: '18px 20px 0', flexShrink: 0,
         }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Настройки</h2>
-          <button onClick={onClose} className="ui-icon-button" aria-label="Закрыть настройки">
+          <button type="button" data-dialog-close="" className="ui-icon-button" aria-label="Закрыть настройки">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <path d="M18 6 6 18M6 6l12 12"/>
             </svg>
@@ -92,9 +96,9 @@ export default function SettingsPanel({ onClose }: Props) {
         <div
           className="t-page-slide"
           data-page={tab}
-          style={{ flex: 1, minHeight: 0, overflow: 'hidden', ['--t-page-from-x' as string]: `${tabDirection * 8}px` }}
+          style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}
         >
-          <section className={`t-page ${tab === 'metals' ? 'is-active' : ''}`} data-page-id="metals">
+          <section ref={element => setPageInert(element, tab !== 'metals')} aria-hidden={tab !== 'metals'} className={`t-page ${tab === 'metals' ? 'is-active' : ''}`} data-page-id="metals" style={{ ['--t-page-from-x' as string]: `${pageDirection('metals') * 8}px` }}>
             <div className="ui-scroll-area" style={pageContentStyle}>
               <DragList
                 items={settings.metalOrder}
@@ -104,7 +108,7 @@ export default function SettingsPanel({ onClose }: Props) {
               />
             </div>
           </section>
-          <section className={`t-page ${tab === 'sortament' ? 'is-active' : ''}`} data-page-id="sortament">
+          <section ref={element => setPageInert(element, tab !== 'sortament')} aria-hidden={tab !== 'sortament'} className={`t-page ${tab === 'sortament' ? 'is-active' : ''}`} data-page-id="sortament" style={{ ['--t-page-from-x' as string]: `${pageDirection('sortament') * 8}px` }}>
             <div className="ui-scroll-area" style={pageContentStyle}>
               <DragList
                 items={settings.profileOrder}
@@ -114,7 +118,7 @@ export default function SettingsPanel({ onClose }: Props) {
               />
             </div>
           </section>
-          <section className={`t-page ${tab === 'grades' ? 'is-active' : ''}`} data-page-id="grades">
+          <section ref={element => setPageInert(element, tab !== 'grades')} aria-hidden={tab !== 'grades'} className={`t-page ${tab === 'grades' ? 'is-active' : ''}`} data-page-id="grades" style={{ ['--t-page-from-x' as string]: `${pageDirection('grades') * 8}px` }}>
             <div className="ui-scroll-area" style={pageContentStyle}>
               <GradesSettings
                 groups={settings.metalOrder}
@@ -123,7 +127,7 @@ export default function SettingsPanel({ onClose }: Props) {
               />
             </div>
           </section>
-          <section className={`t-page ${tab === 'theme' ? 'is-active' : ''}`} data-page-id="theme">
+          <section ref={element => setPageInert(element, tab !== 'theme')} aria-hidden={tab !== 'theme'} className={`t-page ${tab === 'theme' ? 'is-active' : ''}`} data-page-id="theme" style={{ ['--t-page-from-x' as string]: `${pageDirection('theme') * 8}px` }}>
             <div className="ui-scroll-area" style={pageContentStyle}>
               <ThemeSettings currentTheme={currentTheme} applyTheme={applyTheme} />
             </div>
@@ -143,7 +147,7 @@ export default function SettingsPanel({ onClose }: Props) {
           }}>
             Сбросить к умолчанию
           </button>
-          <button onClick={onClose} style={{
+          <button type="button" data-dialog-close="" style={{
             background: 'var(--primary)', border: 'none',
             borderRadius: 'var(--radius-full)', padding: '7px 20px',
             fontSize: 12, fontWeight: 600, color: '#fff', cursor: 'pointer',
@@ -155,6 +159,10 @@ export default function SettingsPanel({ onClose }: Props) {
       </div>
     </AppDialog>
   )
+}
+
+function setPageInert(element: HTMLElement | null, inactive: boolean) {
+  if (element) element.inert = inactive
 }
 
 function ThemeSettings({ currentTheme, applyTheme }: { currentTheme: Theme; applyTheme: (theme: Theme) => void }) {
@@ -348,7 +356,7 @@ function GradesSettings({ groups, gradeSorts, onUpdate }: {
                   border: `2px solid ${sort.enabled ? 'var(--primary)' : 'var(--outline)'}`,
                   background: sort.enabled ? 'var(--primary)' : 'transparent',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'all .15s', padding: 0,
+                  transition: 'background .15s, border-color .15s', padding: 0,
                 }}
               >
                 {sort.enabled && (

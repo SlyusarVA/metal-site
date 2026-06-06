@@ -78,6 +78,8 @@ export default function AccentSchemeToggle() {
             type="button"
             className="t-avatar"
             aria-label={option.label}
+            aria-hidden={!open}
+            tabIndex={open ? 0 : -1}
             title={option.label}
             onMouseEnter={() => setShifts(index, 'in')}
             onClick={() => { setAccentScheme(option.value); setOpen(false); setShifts(null, 'out') }}

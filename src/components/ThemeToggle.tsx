@@ -54,24 +54,7 @@ export default function ThemeToggle() {
       return
     }
 
-    const doc = document as Document
-    const canvas = doc.createElement('canvas')
-    canvas.width = window.innerWidth
-    canvas.height = window.innerHeight
-    Object.assign(canvas.style, { position: 'fixed', inset: '0', zIndex: '9999', pointerEvents: 'none' })
-    doc.body.appendChild(canvas)
-    const ctx = canvas.getContext('2d')!
-    const newBg = next === 'dark' ? '#1A1A1E' : '#F5F7FA'
-    let r = 0
-    function draw() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2)
-      ctx.fillStyle = newBg; ctx.fill()
-      r += maxR / 20
-      if (r < maxR) requestAnimationFrame(draw)
-      else { setTheme(next); canvas.remove() }
-    }
-    requestAnimationFrame(draw)
+    setTheme(next)
   }
 
   return (

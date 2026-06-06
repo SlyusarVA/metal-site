@@ -34,7 +34,7 @@ export default function GostPanel({ onClose, initialCode }: Props) {
           flexShrink: 0,
         }}>
           <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Справочник ГОСТ</h2>
-          <button onClick={onClose} className="ui-icon-button" aria-label="Закрыть справочник ГОСТ">
+          <button type="button" data-dialog-close="" className="ui-icon-button" aria-label="Закрыть справочник ГОСТ">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <path d="M18 6 6 18M6 6l12 12"/>
             </svg>
