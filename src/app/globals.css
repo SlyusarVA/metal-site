@@ -264,3 +264,94 @@ h1, h2, h3, h4, h5, h6 { text-wrap: balance; }
 p, li, dd, figcaption { text-wrap: pretty; }
 input, select, textarea, button { font: inherit; }
 button { -webkit-tap-highlight-color: transparent; }
+
+.ui-dialog {
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--on-surface);
+  box-shadow: var(--shadow-2);
+}
+
+.ui-dialog::backdrop {
+  background: rgba(0, 0, 0, .52);
+  backdrop-filter: blur(2px);
+}
+
+.ui-dialog-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ui-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+}
+
+.ui-icon-button:hover { background: var(--surface-container); }
+
+@media (max-width: 767px) {
+  html, body {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .ui-dialog {
+    width: calc(100vw - 18px) !important;
+    max-width: calc(100vw - 18px) !important;
+    height: auto !important;
+    max-height: calc(100dvh - 18px) !important;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+
+  .ui-dialog-shell {
+    height: min(560px, calc(100dvh - 18px)) !important;
+    max-height: calc(100dvh - 18px);
+  }
+
+  .ui-dialog-shell > div:first-child {
+    padding: 14px 16px !important;
+  }
+
+  .ui-dialog-shell > div:first-child h2 {
+    font-size: 15px !important;
+  }
+
+  .ui-dialog-shell > div:nth-child(2):has(button) {
+    overflow-x: auto;
+    padding: 8px 10px 0 !important;
+    scrollbar-width: none;
+  }
+
+  .ui-dialog-shell > div:nth-child(2):has(button)::-webkit-scrollbar {
+    display: none;
+  }
+
+  .ui-dialog-shell > div:nth-child(2):has(button) button {
+    flex: 1 0 auto;
+    min-width: max-content;
+    padding-inline: 12px !important;
+  }
+
+  .ui-dialog-shell > div:last-child:has(> button) {
+    padding: 10px 12px !important;
+    gap: 10px;
+  }
+
+  .ui-dialog-shell > div:last-child:has(> button) button {
+    min-height: 44px;
+  }
+}
