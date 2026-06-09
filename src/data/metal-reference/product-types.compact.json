@@ -1,0 +1,182 @@
+{
+  "metadata": {
+    "status": "partial-seed",
+    "source": "reference-sources/verified-metal-facts.json",
+    "sourceScope": "7 primary ГОСТов",
+    "generatedFor": "metal designation decoder",
+    "warning": "not a full ГОСТ database"
+  },
+  "productTypes": [
+    {
+      "id": "product-form-krug",
+      "token": "Круг",
+      "key": "round",
+      "aliases": [
+        "Круг",
+        "круг"
+      ],
+      "type": "product-form",
+      "meaning": "круглая форма проката; в обозначениях с ГОСТ 7417-75 или ГОСТ 2590-2006 относится к круглой стали или круглому прокату.",
+      "confidence": "verified",
+      "sourceGosts": [
+        "7417-75",
+        "2590-2006",
+        "14955-77"
+      ],
+      "appliesTo": [
+        "round-steel",
+        "round-rolled-product",
+        "product-form"
+      ],
+      "displayWarning": null,
+      "sourceFactId": "product-form-krug"
+    },
+    {
+      "id": "product-form-list",
+      "token": "лист",
+      "key": "sheet",
+      "aliases": [
+        "лист",
+        "Лист"
+      ],
+      "type": "product-form",
+      "meaning": "листовая форма проката; применимо к листовым сортаментным ГОСТам.",
+      "confidence": "verified",
+      "sourceGosts": [
+        "19903-2015",
+        "19904-90"
+      ],
+      "appliesTo": [
+        "sheet-steel",
+        "sheet-rolled-product",
+        "product-form"
+      ],
+      "displayWarning": null,
+      "sourceFactId": "product-form-list"
+    },
+    {
+      "id": "assortment-prokat",
+      "token": "прокат",
+      "key": "rolled-product",
+      "aliases": [
+        "прокат",
+        "Прокат"
+      ],
+      "type": "assortment",
+      "meaning": "общий контекст прокатной металлопродукции; точный вид определяется соседними токенами и ссылкой на ГОСТ.",
+      "confidence": "verified",
+      "sourceGosts": [
+        "1051-73",
+        "2590-2006",
+        "19903-2015",
+        "19904-90"
+      ],
+      "appliesTo": [
+        "rolled-product",
+        "designation-context"
+      ],
+      "displayWarning": null,
+      "sourceFactId": "assortment-prokat"
+    },
+    {
+      "id": "assortment-calibrated-rolled-products",
+      "token": "калиброванный прокат",
+      "key": "calibrated-rolled-products",
+      "aliases": [
+        "калиброванный прокат"
+      ],
+      "type": "assortment",
+      "meaning": "контекст калиброванного проката; может дополнять сортаментный ГОСТ при разборе обозначения.",
+      "confidence": "verified",
+      "sourceGosts": [
+        "1051-73"
+      ],
+      "appliesTo": [
+        "calibrated-rolled-products",
+        "technical-condition-context"
+      ],
+      "displayWarning": null,
+      "sourceFactId": "assortment-calibrated-rolled-products"
+    },
+    {
+      "id": "assortment-hot-rolled-round-steel",
+      "token": "горячекатаный круглый прокат",
+      "key": "hot-rolled-round-steel",
+      "aliases": [
+        "горячекатаный круглый прокат"
+      ],
+      "type": "assortment",
+      "meaning": "контекст горячекатаного круглого проката и его сортамента.",
+      "confidence": "verified",
+      "sourceGosts": [
+        "2590-2006"
+      ],
+      "appliesTo": [
+        "hot-rolled-round-steel",
+        "round-product-standard"
+      ],
+      "displayWarning": null,
+      "sourceFactId": "assortment-hot-rolled-round-steel"
+    },
+    {
+      "id": "assortment-hot-rolled-sheet",
+      "token": "горячекатаный листовой прокат",
+      "key": "hot-rolled-sheet",
+      "aliases": [
+        "горячекатаный листовой прокат"
+      ],
+      "type": "assortment",
+      "meaning": "контекст горячекатаного листового проката и его сортамента.",
+      "confidence": "verified",
+      "sourceGosts": [
+        "19903-2015"
+      ],
+      "appliesTo": [
+        "hot-rolled-sheet",
+        "sheet-product-standard"
+      ],
+      "displayWarning": null,
+      "sourceFactId": "assortment-hot-rolled-sheet"
+    },
+    {
+      "id": "assortment-cold-rolled-sheet",
+      "token": "холоднокатаный листовой прокат",
+      "key": "cold-rolled-sheet",
+      "aliases": [
+        "холоднокатаный листовой прокат"
+      ],
+      "type": "assortment",
+      "meaning": "контекст холоднокатаного листового проката и его сортамента.",
+      "confidence": "verified",
+      "sourceGosts": [
+        "19904-90"
+      ],
+      "appliesTo": [
+        "cold-rolled-sheet",
+        "sheet-product-standard"
+      ],
+      "displayWarning": null,
+      "sourceFactId": "assortment-cold-rolled-sheet"
+    },
+    {
+      "id": "surface-quality-special-finish",
+      "token": "специальная отделка поверхности",
+      "key": "special-surface-finish",
+      "aliases": [
+        "специальная отделка поверхности"
+      ],
+      "type": "surface-quality",
+      "meaning": "контекст специальной отделки поверхности для качественной круглой стали.",
+      "confidence": "verified",
+      "sourceGosts": [
+        "14955-77"
+      ],
+      "appliesTo": [
+        "quality-round-steel",
+        "surface-quality-context"
+      ],
+      "displayWarning": null,
+      "sourceFactId": "surface-quality-special-finish"
+    }
+  ]
+}
