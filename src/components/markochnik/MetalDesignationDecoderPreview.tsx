@@ -54,7 +54,7 @@ export default function MetalDesignationDecoderPreview() {
         ))}
       </div>
 
-      <div style={st.tokenList} aria-label="Найденные токены">
+      <div style={st.tokenList} aria-label="Найденные токены" aria-live="polite" aria-atomic="false">
         {result.tokens.length > 0 ? (
           result.tokens.map(token => <TokenCard key={`${token.raw}-${token.span.start}-${token.span.end}`} token={token} />)
         ) : (
