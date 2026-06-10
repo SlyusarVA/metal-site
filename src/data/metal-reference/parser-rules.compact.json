@@ -1,0 +1,185 @@
+{
+  "metadata": {
+    "status": "partial-seed",
+    "source": "reference-sources/verified-metal-facts.json",
+    "sourceScope": "7 primary ГОСТов",
+    "generatedFor": "metal designation decoder",
+    "warning": "not a full ГОСТ database"
+  },
+  "rules": [
+    {
+      "id": "rule-recognize-gost-reference",
+      "key": "recognize-gost-reference",
+      "token": "ГОСТ",
+      "type": "gost-reference",
+      "meaning": "распознавать ссылку на ГОСТ из первичного набора compact seed.",
+      "confidence": "verified",
+      "sourceGosts": [
+        "7417-75",
+        "4543-2016",
+        "1051-73",
+        "14955-77",
+        "2590-2006",
+        "19903-2015",
+        "19904-90"
+      ],
+      "appliesTo": [
+        "gost-reference",
+        "token-recognition"
+      ],
+      "displayWarning": null,
+      "match": {
+        "kind": "explicit-token-list",
+        "tokens": [
+          "ГОСТ 7417-75",
+          "ГОСТ 4543-2016",
+          "ГОСТ 1051-73",
+          "ГОСТ 14955-77",
+          "ГОСТ 2590-2006",
+          "ГОСТ 19903-2015",
+          "ГОСТ 19904-90"
+        ]
+      }
+    },
+    {
+      "id": "rule-recognize-product-form",
+      "key": "recognize-product-form",
+      "token": "круг|лист|прокат",
+      "type": "product-form",
+      "meaning": "распознавать базовые формы и общий прокатный контекст из compact seed.",
+      "confidence": "verified",
+      "sourceGosts": [
+        "7417-75",
+        "2590-2006",
+        "14955-77",
+        "19903-2015",
+        "19904-90",
+        "1051-73"
+      ],
+      "appliesTo": [
+        "product-form",
+        "assortment-context",
+        "token-recognition"
+      ],
+      "displayWarning": null,
+      "match": {
+        "kind": "case-insensitive-token-list",
+        "tokens": [
+          "круг",
+          "лист",
+          "прокат"
+        ]
+      }
+    },
+    {
+      "id": "rule-recognize-tolerance-plus-decimal-comma-size",
+      "key": "recognize-tolerance-plus-decimal-comma-size",
+      "token": "h11-7,0",
+      "type": "size-pattern",
+      "meaning": "распознавать связку поля допуска и размера с десятичной запятой, например h11-7,0.",
+      "confidence": "contextual",
+      "sourceGosts": [
+        "7417-75"
+      ],
+      "appliesTo": [
+        "round-calibrated-steel",
+        "dimension-tolerance",
+        "size-pattern"
+      ],
+      "displayWarning": "Правило только выделяет кандидатную структуру поля допуска и размера; точные значения допуска и строки сортамента требуют ручной проверки.",
+      "match": {
+        "kind": "regular-expression",
+        "pattern": "\\b[hH]\\d{1,2}-\\d+(?:,\\d+)?\\b",
+        "captures": [
+          "toleranceField",
+          "decimalCommaDimension"
+        ]
+      }
+    },
+    {
+      "id": "rule-recognize-decimal-comma-dimension",
+      "key": "recognize-decimal-comma-dimension",
+      "token": "7,0",
+      "type": "dimension",
+      "meaning": "распознавать размер, записанный с десятичной запятой.",
+      "confidence": "contextual",
+      "sourceGosts": [
+        "7417-75"
+      ],
+      "appliesTo": [
+        "dimension",
+        "decimal-comma-size",
+        "token-recognition"
+      ],
+      "displayWarning": "Размер с десятичной запятой получает точное значение только в контексте формы проката и ссылочного ГОСТ.",
+      "match": {
+        "kind": "regular-expression",
+        "pattern": "\\b\\d+,\\d+\\b"
+      }
+    },
+    {
+      "id": "rule-candidate-lookalike-normalization",
+      "key": "candidate-lookalike-normalization",
+      "token": "Х/X С/C А/A В/B О/O/0 Н/H З/3 Р/P М/M",
+      "type": "contextual-modifier",
+      "meaning": "помечать русско-латинские совпадения как кандидаты на нормализацию без тихой замены.",
+      "confidence": "contextual",
+      "sourceGosts": [
+        "4543-2016",
+        "7417-75",
+        "14955-77",
+        "19903-2015",
+        "19904-90"
+      ],
+      "appliesTo": [
+        "normalization-candidate",
+        "ocr-or-user-input-review",
+        "steel-grade-token"
+      ],
+      "displayWarning": "Нормализация похожих русских, латинских и цифровых символов должна быть candidate/needs-review; не выполнять silent replacement.",
+      "match": {
+        "kind": "lookalike-pair-list",
+        "action": "candidate-needs-review",
+        "pairs": [
+          [
+            "Х",
+            "X"
+          ],
+          [
+            "С",
+            "C"
+          ],
+          [
+            "А",
+            "A"
+          ],
+          [
+            "В",
+            "B"
+          ],
+          [
+            "О",
+            "O",
+            "0"
+          ],
+          [
+            "Н",
+            "H"
+          ],
+          [
+            "З",
+            "3"
+          ],
+          [
+            "Р",
+            "P"
+          ],
+          [
+            "М",
+            "M"
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,144 @@
+{
+  "metadata": {
+    "status": "partial-seed",
+    "source": "reference-sources/verified-metal-facts.json",
+    "sourceScope": "7 primary ГОСТов",
+    "generatedFor": "metal designation decoder",
+    "warning": "not a full ГОСТ database"
+  },
+  "tokens": [
+    {
+      "id": "tolerance-field-h11-contextual",
+      "token": "h11",
+      "key": "h11",
+      "type": "tolerance-field",
+      "meaning": "обозначение поля допуска или предельных отклонений в размерной части обозначения.",
+      "confidence": "contextual",
+      "sourceGosts": [
+        "7417-75"
+      ],
+      "appliesTo": [
+        "round-calibrated-steel",
+        "dimension-tolerance",
+        "gost-7417-75-designation"
+      ],
+      "displayWarning": "В OCR-тексте ГОСТ 7417-75 виден контекст таблицы предельных отклонений, но точное значение h11 нужно подтверждать по строке таблицы и нормализации записи h11/H11/н11.",
+      "sourceFactId": "tolerance-field-h11-contextual"
+    },
+    {
+      "id": "dimension-decimal-comma-7-0",
+      "token": "7,0",
+      "key": "decimal-comma-dimension-example",
+      "type": "dimension",
+      "meaning": "размер с десятичной запятой; в обозначении круглого проката может быть номинальным диаметром в миллиметрах.",
+      "confidence": "contextual",
+      "sourceGosts": [
+        "7417-75"
+      ],
+      "appliesTo": [
+        "dimension",
+        "decimal-comma-size",
+        "round-steel-designation"
+      ],
+      "displayWarning": "Точная роль размера 7,0 подтверждается только вместе с полной размерной записью, формой проката и ссылкой на сортаментный ГОСТ.",
+      "sourceFactId": "dimension-decimal-comma-7-0"
+    },
+    {
+      "id": "steel-grade-30khgsa-contextual",
+      "token": "30ХГСА",
+      "key": "30khgsa",
+      "type": "steel-grade",
+      "meaning": "марка стали из проектного тестового обозначения.",
+      "confidence": "contextual",
+      "sourceGosts": [
+        "4543-2016"
+      ],
+      "appliesTo": [
+        "steel-grade-token",
+        "gost-4543-2016-designation"
+      ],
+      "displayWarning": "Токен полезен для тестового обозначения, но точное подтверждение строки марки 30ХГСА в текущих 7 source-card не зафиксировано; перед verified-фактом нужна ручная проверка таблицы/контекста.",
+      "sourceFactId": "steel-grade-30khgsa-contextual"
+    },
+    {
+      "id": "contextual-modifier-v",
+      "token": "В",
+      "key": "v-cyrillic-contextual",
+      "type": "contextual-modifier",
+      "meaning": "служебный или контекстный индекс в обозначении.",
+      "confidence": "contextual",
+      "sourceGosts": [
+        "4543-2016",
+        "14955-77",
+        "19903-2015",
+        "19904-90"
+      ],
+      "appliesTo": [
+        "order-designation",
+        "material-designation",
+        "surface-or-quality-group"
+      ],
+      "displayWarning": "Точная трактовка В зависит от полного обозначения, связанного ГОСТа и локального раздела стандарта; это не универсальное verified-значение.",
+      "sourceFactId": "contextual-modifier-v"
+    },
+    {
+      "id": "delivery-condition-to-contextual",
+      "token": "ТО",
+      "key": "to-cyrillic-contextual",
+      "type": "delivery-condition",
+      "meaning": "обычно указывает на термически обработанное состояние или термическую обработку.",
+      "confidence": "contextual",
+      "sourceGosts": [
+        "4543-2016"
+      ],
+      "appliesTo": [
+        "delivery-condition",
+        "thermal-treatment-context",
+        "gost-4543-2016-designation"
+      ],
+      "displayWarning": "Даже при наличии связи с термической обработкой точная трактовка ТО зависит от полного обозначения заказа и раздела ГОСТ 4543-2016.",
+      "sourceFactId": "delivery-condition-to-contextual"
+    },
+    {
+      "id": "contextual-modifier-a",
+      "token": "А",
+      "key": "a-cyrillic-contextual",
+      "type": "contextual-modifier",
+      "meaning": "короткий буквенный индекс, который может быть частью марки, группы или класса в зависимости от источника.",
+      "confidence": "contextual",
+      "sourceGosts": [
+        "4543-2016",
+        "14955-77",
+        "19903-2015",
+        "19904-90"
+      ],
+      "appliesTo": [
+        "steel-grade-token",
+        "quality-group",
+        "accuracy-or-surface-context"
+      ],
+      "displayWarning": "Не трактовать А как универсальный признак без полного обозначения и конкретного ГОСТа; возможны русско-латинские совпадения А/A.",
+      "sourceFactId": "contextual-modifier-a"
+    },
+    {
+      "id": "contextual-modifier-sh",
+      "token": "Ш",
+      "key": "sh-cyrillic-contextual",
+      "type": "contextual-modifier",
+      "meaning": "короткий буквенный индекс, требующий привязки к конкретному разделу стандарта.",
+      "confidence": "contextual",
+      "sourceGosts": [
+        "4543-2016",
+        "19903-2015",
+        "19904-90"
+      ],
+      "appliesTo": [
+        "steel-grade-token",
+        "surface-or-accuracy-context",
+        "short-index"
+      ],
+      "displayWarning": "Не использовать Ш как точное значение без ручной проверки связанного обозначения и раздела ГОСТ.",
+      "sourceFactId": "contextual-modifier-sh"
+    }
+  ]
+}
