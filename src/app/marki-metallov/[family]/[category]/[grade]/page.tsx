@@ -200,7 +200,17 @@ function SourceLabel({ source, strong }: { source?: SourceRef; strong?: boolean 
   const text = sourceText(source)
   const content = strong ? <strong>{text}</strong> : <span>{text}</span>
   if (!source || !source.url) return content
-  return <a href={source.url} style={st.sourceLink}>{content}</a>
+  return (
+    <a
+      href={source.url}
+      target="_blank"
+      rel="noopener noreferrer nofollow"
+      style={st.sourceLink}
+    >
+      {content}
+      <span> · Внешний справочный источник ↗</span>
+    </a>
+  )
 }
 
 function InfoRow({ label, value, source }: { label: string; value: string; source?: SourceRef }) {

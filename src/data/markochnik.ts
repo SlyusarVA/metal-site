@@ -386,8 +386,7 @@ export const designationTerms: DesignationTerm[] = [
     source: {
       document: 'ГОСТ 380-2005',
       section: 'обозначения степени раскисления в марках стали',
-      url: 'https://metal.place/ru/wiki/standart/gost-380-2005/',
-      status: 'verified',
+      status: 'needs_check',
     },
   },
   {

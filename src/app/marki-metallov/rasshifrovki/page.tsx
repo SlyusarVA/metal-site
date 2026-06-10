@@ -97,7 +97,17 @@ function sourceText(source: NormativeRef) {
 function SourceLabel({ source }: { source: NormativeRef }) {
   const content = <span>{sourceText(source)}</span>
   if (!source.url) return content
-  return <a href={source.url} style={st.sourceLink}>{content}</a>
+  return (
+    <a
+      href={source.url}
+      target="_blank"
+      rel="noopener noreferrer nofollow"
+      style={st.sourceLink}
+    >
+      {content}
+      <span> · Внешний справочный источник ↗</span>
+    </a>
+  )
 }
 
 const st: Record<string, React.CSSProperties> = {
