@@ -191,7 +191,7 @@ export default function CalcPanel({
           </div>
         </div>
 
-        <button onClick={calculate} style={primaryBtnStyle}>Рассчитать</button>
+        <button onClick={() => calculate()} style={primaryBtnStyle}>Рассчитать</button>
 
         {state.error && <div role="alert" style={errorStyle}>{state.error.message}</div>}
         {state.snackbar && <div role="status" style={snackbarStyle}>{state.snackbar.message}</div>}

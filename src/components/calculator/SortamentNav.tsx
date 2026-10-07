@@ -71,7 +71,7 @@ export default function SortamentNav({
             src={`/icons/${p.icon}.svg`}
             alt=""
             width={iconSize} height={iconSize}
-            style={{ flexShrink: 0, opacity: isActive || isHighlighted ? 1 : 0.62 }}
+            style={{ flexShrink: 0 }}
           />
           <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
           {isHighlighted && !isActive && (

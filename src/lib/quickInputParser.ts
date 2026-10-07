@@ -1,3 +1,4 @@
+import { validateDimensions } from './validation'
 import { materials } from '@/data/materials'
 import { profiles, ProfileKey } from '@/data/profiles'
 
@@ -61,6 +62,7 @@ function normalize(input: string): string {
     .toLowerCase()
     .replace(/ё/g, 'е')
     .replace(/[×*]/g, 'х')
+    .replace(/(\d)\s*x\s*(?=\d)/g, '$1х')
     .replace(/,/g, '.')
     .replace(/\s+/g, ' ')
     .trim()
@@ -82,8 +84,10 @@ function removeWord(input: string, word: string): string {
 }
 
 function findMetalGroup(input: string, fallbackGroup: string): string {
-  for (const [group, aliases] of Object.entries(GROUP_ALIASES)) {
-    if (aliases.some(alias => hasWord(input, alias))) return group
+  const aliases = Object.entries(GROUP_ALIASES).flatMap(([group, words]) => words.map(word => ({ group, word })))
+    .sort((a, b) => b.word.length - a.word.length)
+  for (const { group, word } of aliases) {
+    if (hasWord(input, word)) return group
   }
   return fallbackGroup
 }
@@ -93,6 +97,13 @@ function findGrade(input: string, group: string): string | null {
     .filter(m => m.group === group)
     .map(m => m.grade)
     .sort((a, b) => b.length - a.length)
+
+  // A grade immediately following the metal name takes precedence over dimensions.
+  for (const alias of [...(GROUP_ALIASES[group] ?? []), 'марка']) {
+    for (const grade of groupGrades) {
+      if (new RegExp(`(^|[^0-9a-zа-я])${escapeRegExp(normalize(alias))}\\s+${escapeRegExp(normalize(grade))}(?=[^0-9a-zа-я]|$)`, 'i').test(input)) return grade
+    }
+  }
 
   for (const grade of groupGrades) {
     if (hasWord(input, grade)) return grade
@@ -113,10 +124,10 @@ function findProfile(input: string): ProfileKey | null {
 }
 
 function findMass(input: string): number | null {
-  const explicit = input.match(/(?:масса|вес)\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(?:кг|kg|к)?\b/)
+  const explicit = input.match(/(?:масса|вес)\s*[:=]?\s*(\d+(?:\.\d+)?)\s*(?:кг|kg|к)?(?=\s|$|[;,.])/)
   if (explicit) return Number(explicit[1])
 
-  const withUnit = input.match(/(\d+(?:\.\d+)?)\s*(?:кг|kg|к)\b/)
+  const withUnit = input.match(/(\d+(?:\.\d+)?)\s*(?:кг|kg|к)(?=\s|$|[;,.])/)
   if (withUnit) return Number(withUnit[1])
 
   const numbers = input.match(/\d+(?:\.\d+)?/g)?.map(Number) ?? []
@@ -127,20 +138,23 @@ function findMass(input: string): number | null {
 
 function removeMass(input: string): string {
   return input
-    .replace(/(?:масса|вес)\s*[:=]?\s*\d+(?:\.\d+)?\s*(?:кг|kg|к)?\b/g, ' ')
-    .replace(/\d+(?:\.\d+)?\s*(?:кг|kg|к)\b/g, ' ')
+    .replace(/(?:масса|вес)\s*[:=]?\s*\d+(?:\.\d+)?\s*(?:кг|kg|к)?(?=\s|$|[;,.])/g, ' ')
+    .replace(/\d+(?:\.\d+)?\s*(?:кг|kg|к)(?=\s|$|[;,.])/g, ' ')
 }
 
-function extractDimensionSource(input: string, group: string, grade: string, profileKey: ProfileKey, mass: number): string {
+function extractDimensionSource(input: string, grade: string, profileKey: ProfileKey): string {
   let source = input
   for (const aliases of Object.values(GROUP_ALIASES)) {
     for (const alias of aliases) source = removeWord(source, alias)
   }
-  source = removeWord(source, grade)
+  // Remove only the first grade occurrence; a dimension may have the same value.
+  source = source.replace(new RegExp(`(^|[^0-9a-zа-я])${escapeRegExp(normalize(grade))}(?=[^0-9a-zа-я]|$)`, 'i'), '$1 ')
   for (const alias of PROFILE_ALIASES[profileKey] ?? []) source = removeWord(source, alias)
-  source = removeMass(source)
+  const withoutMass = removeMass(source)
+  const hadExplicitMass = withoutMass !== source
+  source = withoutMass
   // Remove one remaining mass token for shorthand without unit: "круг 16 сталь 45 120".
-  source = source.replace(new RegExp(`(^|\\s)${escapeRegExp(String(mass))}(?=\\s|$)`), ' ')
+  if (!hadExplicitMass) source = source.replace(/(^|\s)\d+(?:\.\d+)?\s*$/, ' ')
   return source.replace(/\s+/g, ' ').trim()
 }
 
@@ -190,9 +204,9 @@ function parseParams(profileKey: ProfileKey, source: string): Record<string, num
 }
 
 function buildParamChip(profileKey: ProfileKey, params: Record<string, number>): string {
-  if ('d' in params) return `Ø${params.d}`
   if (profileKey === 'pipe_prof') return `${params.a}×${params.b}×${params.t}`
   if (profileKey === 'pipe') return `${params.d}×${params.t}`
+  if ('d' in params) return `Ø${params.d}`
   if ('a' in params && 'b' in params && 't' in params) return `${params.t}×${params.b}`
   if ('b' in params && 't' in params) return `${params.b}×${params.t}`
   return Object.values(params).join('×')
@@ -217,16 +231,18 @@ export function parseQuickInput(input: string, fallbackGroup: string): QuickInpu
   }
 
   const mass = findMass(normalized)
-  if (mass == null || mass <= 0) {
+  if (mass == null || !Number.isFinite(mass) || mass <= 0) {
     return { ok: false, message: 'Не удалось распознать массу. Укажите значение в кг, например: «масса 120 кг».' }
   }
 
-  const dimensionSource = extractDimensionSource(normalized, metalGroup, grade, profileKey, mass)
+  const dimensionSource = extractDimensionSource(normalized, grade, profileKey)
   const params = parseParams(profileKey, dimensionSource)
   if (!params) {
     return { ok: false, message: 'Не удалось распознать размеры. Примеры: «круг 16», «труба 57х3», «полоса 40х4».' }
   }
 
+  const dimensionError = validateDimensions(profileKey, params)
+  if (dimensionError) return { ok: false, message: dimensionError }
   const profile = profiles.find(p => p.key === profileKey)
 
   return {

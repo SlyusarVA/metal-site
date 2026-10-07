@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { profiles, ProfileKey, autocorrectProfile, MetalProfile } from '@/data/profiles'
 import { materials, getMetalGroups, getGradesForGroup, isNonFerrous } from '@/data/materials'
 import { calcMass, calcLength } from '@/lib/calculations'
-import { saveRecord, HistoryRecord } from '@/lib/history'
+import { createRecord, persistRecord, HistoryRecord } from '@/lib/history'
+
+import { validateDimensions } from '@/lib/validation'
 
 // ── Константы полей ────────────────────────────────────────────────────────────
 export const K_LENGTH   = 'length'
@@ -111,6 +113,17 @@ function makeInitialState(): CalculatorState {
 export function useCalculator() {
   const [state, setState] = useState<CalculatorState>(makeInitialState)
   const snackbarTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const newestRecord = state.history[0]
+  useEffect(() => {
+    if (newestRecord && !persistRecord(newestRecord)) {
+      setState(s => ({ ...s, snackbar: { message: 'Расчёт выполнен, но историю не удалось сохранить в браузере.', id: Date.now() } }))
+    }
+  }, [newestRecord])
+
+  useEffect(() => () => {
+    if (snackbarTimerRef.current) clearTimeout(snackbarTimerRef.current)
+  }, [])
 
   // ── Показать снэкбар ───────────────────────────────────────────────────────
   const showSnackbar = useCallback((message: string) => {
@@ -269,152 +282,36 @@ export function useCalculator() {
     }))
   }, [])
 
-  // ── Очистить поле предыдущего результата (как _clearPrevResultField) ────────
-  const clearPrevResultField = useCallback((s: CalculatorState): CalculatorState => {
-    if (!s.prevResult) return s
-    if (s.prevResult.target === 'mass') {
-      return { ...s, mass: null, prevResult: null }
-    }
-    if (s.prevResult.target === 'length') {
-      return { ...s, length: null, prevResult: null }
-    }
-    return s
-  }, [])
-
-  // ── Основной расчёт (аналог _calculate в Flutter) ─────────────────────────
-  const calculate = useCallback(() => {
+  // Source fields stay separate from calculated results.
+  const calculate = useCallback((requestedTarget?: 'mass' | 'length') => {
     setState(s => {
-      // Очищаем поле предыдущего результата
-      const cleared = clearPrevResultField(s)
-
-      // Определяем что считаем
       const params: Record<string, number> = {}
-      const missingDims: string[] = []
-
-      for (const p of cleared.profile.params) {
-        const v = cleared.params[p.key]
-        if (v == null || v <= 0) {
-          missingDims.push(p.label)
-        } else {
-          params[p.key] = v
+      for (const p of s.profile.params) params[p.key] = s.params[p.key] ?? NaN
+      const dimensionError = validateDimensions(s.profileKey, params)
+      if (dimensionError) return { ...s, result: null, error: { message: dimensionError, missingFields: [] } }
+      const hasLength = s.length != null && Number.isFinite(s.length) && s.length > 0
+      const hasMass = s.mass != null && Number.isFinite(s.mass) && s.mass > 0
+      const target = s.profile.isVolume ? 'mass' : requestedTarget ??
+        (hasLength && !hasMass ? 'mass' : hasMass && !hasLength ? 'length' : null)
+      const input = { profileKey: s.profileKey, params, metalGroup: s.metalGroup, grade: s.grade, quantity: s.quantity }
+      if (target === 'mass' && (s.profile.isVolume || hasLength)) {
+        const result = calcMass({ ...input, length: s.length })
+        if (result) return buildFinalState(s, target, result.mass, result, params)
+      } else if (target === 'length' && hasMass) {
+        const length = calcLength(s.mass!, input)
+        if (length != null && length > 0) {
+          const result = calcMass({ ...input, length })
+          if (result) return buildFinalState(s, target, length, result, params)
         }
       }
-
-      if (missingDims.length > 0) {
-        return {
-          ...cleared,
-          result: null,
-          error: { message: 'Заполните размеры', missingFields: missingDims },
-        }
-      }
-
-      const hasLength = cleared.length != null && cleared.length > 0
-      const hasMass   = cleared.mass   != null && cleared.mass   > 0
-
-      // Для листа/плиты — только масса, длина не нужна
-      if (cleared.profile.isVolume) {
-        const res = calcMass({
-          profileKey: cleared.profileKey,
-          params,
-          metalGroup: cleared.metalGroup,
-          grade: cleared.grade,
-          quantity: cleared.quantity,
-          length: 1, // не используется для isVolume
-        })
-        if (!res) {
-          return { ...cleared, result: null, error: { message: 'Ошибка расчёта', missingFields: [] } }
-        }
-        const calcResult: CalcResult = {
-          target: 'mass',
-          value: res.mass,
-          linearMass: res.massOne,   // для листа: 1 шт = X кг
-          massOne: res.massOne,
-        }
-        const same = cleared.prevResult?.target === 'mass' &&
-          Math.abs((cleared.prevResult?.value ?? 0) - res.mass) < 0.0001
-
-        const newRecord = !same ? saveRecord({
-          profileKey: cleared.profileKey,
-          profileName: cleared.profile.name,
-          metalGroup: cleared.metalGroup,
-          grade: cleared.grade,
-          params,
-          quantity: cleared.quantity,
-          length: 0,
-          mass: res.mass,
-          massOne: res.massOne,
-          linearDensity: 0,
-        }) : null
-
-        return {
-          ...cleared,
-          result: calcResult,
-          prevResult: calcResult,
-          error: null,
-          unchanged: same,
-          history: newRecord ? [newRecord, ...cleared.history].slice(0, 50) : cleared.history,
-        }
-      }
-
-      // Обычный профиль — определяем что считаем
-      let target: CalcTarget = null
-      let resultValue = 0
-      let massResult = null
-
-      if (hasLength && !hasMass) {
-        // Считаем массу
-        const res = calcMass({
-          profileKey: cleared.profileKey,
-          params,
-          metalGroup: cleared.metalGroup,
-          grade: cleared.grade,
-          quantity: cleared.quantity,
-          length: cleared.length!,
-        })
-        if (!res) {
-          return { ...cleared, result: null, error: { message: 'Ошибка расчёта', missingFields: [] } }
-        }
-        target = 'mass'
-        resultValue = res.mass
-        massResult = res
-
-        return buildFinalState(cleared, target, resultValue, res, params)
-
-      } else if (hasMass && !hasLength) {
-        // Считаем длину
-        const length = calcLength(cleared.mass!, {
-          profileKey: cleared.profileKey,
-          params,
-          metalGroup: cleared.metalGroup,
-          grade: cleared.grade,
-          quantity: cleared.quantity,
-        })
-        if (length == null) {
-          return { ...cleared, result: null, error: { message: 'Не удалось рассчитать длину', missingFields: [] } }
-        }
-        target = 'length'
-        resultValue = length
-
-        // Считаем линейную плотность для результата
-        const res = calcMass({
-          profileKey: cleared.profileKey,
-          params,
-          metalGroup: cleared.metalGroup,
-          grade: cleared.grade,
-          quantity: cleared.quantity,
-          length,
-        })
-        return buildFinalState(cleared, target, resultValue, res, params)
-
-      } else {
-        // Оба поля или ни одного
-        const msg = (!hasLength && !hasMass)
-          ? 'Введите длину или массу'
-          : 'Оставьте одно поле пустым для расчёта'
-        return { ...cleared, result: null, error: { message: msg, missingFields: [] } }
-      }
+      return { ...s, result: null, error: {
+        message: target === 'mass' && !hasLength && !s.profile.isVolume ? 'Введите длину' :
+          target === 'length' && !hasMass ? 'Введите массу' :
+          !target ? 'Введите длину или массу, оставив второе поле пустым' : 'Проверьте значения: результат вне допустимого диапазона',
+        missingFields: [],
+      } }
     })
-  }, [clearPrevResultField])
+  }, [])
 
   // ── Очистить все поля (кнопка "Очистить поля") ─────────────────────────────
   const resetAll = useCallback(() => {
@@ -504,37 +401,24 @@ function buildFinalState(
     massOne: massResult?.massOne ?? 0,
   }
 
-  const same = s.prevResult?.target === target &&
-    Math.abs((s.prevResult?.value ?? 0) - value) < 0.0001
-
-  const newState: CalculatorState = {
-    ...s,
-    result: calcResult,
-    prevResult: calcResult,
-    error: null,
-    unchanged: same,
+  const recordData = {
+    profileKey: s.profileKey, profileName: s.profile.name,
+    metalGroup: s.metalGroup, grade: s.grade, params, quantity: s.quantity,
+    length: s.profile.isVolume ? 0 : target === 'length' ? value : s.length ?? 0,
+    mass: target === 'mass' ? value : s.mass ?? 0,
+    massOne: massResult?.massOne ?? 0,
+    linearDensity: massResult?.linearDensity ?? 0,
   }
+  const previous = s.history[0]
+  const same = !!previous && previous.profileKey === recordData.profileKey &&
+    previous.metalGroup === recordData.metalGroup && previous.grade === recordData.grade &&
+    previous.quantity === recordData.quantity && previous.length === recordData.length &&
+    previous.mass === recordData.mass &&
+    s.profile.params.every(p => previous.params[p.key] === params[p.key])
 
-  // Вписываем результат в соответствующее поле для совместимости с историей и восстановлением.
-  if (target === 'mass') newState.mass = value
-  if (target === 'length') newState.length = value
-
-  // Сохраняем в историю
-  if (!same) {
-    const record = saveRecord({
-      profileKey: s.profileKey,
-      profileName: s.profile.name,
-      metalGroup: s.metalGroup,
-      grade: s.grade,
-      params,
-      quantity: s.quantity,
-      length: newState.length ?? 0,
-      mass: newState.mass ?? 0,
-      massOne: massResult?.massOne ?? 0,
-      linearDensity: massResult?.linearDensity ?? 0,
-    })
-    newState.history = [record, ...s.history].slice(0, 50)
+  return {
+    ...s, result: { ...calcResult, linearMass: s.profile.isVolume ? calcResult.massOne : calcResult.linearMass },
+    prevResult: calcResult, error: null, unchanged: same,
+    history: same ? s.history : [createRecord(recordData), ...s.history].slice(0, 50),
   }
-
-  return newState
 }

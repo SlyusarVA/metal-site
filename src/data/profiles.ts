@@ -146,7 +146,7 @@ export const profiles: MetalProfile[] = [
   },
 
   {
-    key: 'flat', name: 'Полоса', gost: 'ГОСТ 103-2006', icon: 'strip',
+    key: 'flat', name: 'Полоса', gost: 'ГОСТ 103-2006', icon: 'flat_bar',
     params: [
       { key: 'b', label: 'Ширина a',  unit: 'мм', defaultValue: 40 },
       { key: 't', label: 'Толщина t', unit: 'мм', defaultValue: 4 },

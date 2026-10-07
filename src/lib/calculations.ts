@@ -3,6 +3,7 @@
 
 import { profileMap, ProfileKey } from '../data/profiles'
 import { getDensity } from '../data/materials'
+import { validateDimensions } from './validation'
 
 export interface CalcInput {
   profileKey: ProfileKey
@@ -28,8 +29,9 @@ export interface CalcResult {
  */
 export function calcMass(input: CalcInput): CalcResult | null {
   const profile = profileMap.get(input.profileKey)
-  if (!profile) return null
-  if (input.length == null || input.length <= 0) return null
+  if (!profile || validateDimensions(input.profileKey, input.params)) return null
+  if (!Number.isSafeInteger(input.quantity) || input.quantity <= 0) return null
+  if (!profile.isVolume && (input.length == null || !Number.isFinite(input.length) || input.length <= 0)) return null
 
   const density = getDensity(input.metalGroup, input.grade)   // кг/м³
   const densityMm3 = density * 1e-9                           // кг/мм³
@@ -42,12 +44,13 @@ export function calcMass(input: CalcInput): CalcResult | null {
     // Лист/Плита: объём уже в мм³, длина не используется
     massOne = densityMm3 * area
   } else {
-    const lengthMm = input.length * 1000                      // м → мм
+    const lengthMm = input.length! * 1000                      // м → мм
     massOne = densityMm3 * area * lengthMm
   }
 
   const mass = massOne * input.quantity
   const linearDensity = profile.isVolume ? 0 : densityMm3 * area * 1000 // кг/м
+  if (![density, mass, massOne].every(v => Number.isFinite(v) && v > 0) || !Number.isFinite(linearDensity)) return null
 
   return {
     mass: round(mass, 4),
@@ -68,7 +71,9 @@ export function calcLength(
 ): number | null {
   const profile = profileMap.get(input.profileKey)
   if (!profile || profile.isVolume) return null  // для листа обратный расчёт не применим
-  if (massKg <= 0) return null
+  if (!Number.isFinite(massKg) || massKg <= 0) return null
+  if (!Number.isSafeInteger(input.quantity) || input.quantity <= 0) return null
+  if (validateDimensions(input.profileKey, input.params)) return null
 
   const density = getDensity(input.metalGroup, input.grade)
   const densityMm3 = density * 1e-9
@@ -78,10 +83,10 @@ export function calcLength(
 
   const massOne = massKg / input.quantity
   const lengthMm = massOne / (densityMm3 * area)
-  return round(lengthMm / 1000, 4)  // мм → м
+  const length = lengthMm / 1000
+  return Number.isFinite(length) && length > 0 ? round(length, 4) : null
 }
 
 function round(value: number, decimals: number): number {
-  const factor = Math.pow(10, decimals)
-  return Math.round(value * factor) / factor
+  return Number(value.toFixed(decimals))
 }
