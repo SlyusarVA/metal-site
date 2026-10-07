@@ -1,5 +1,5 @@
 // История расчётов — localStorage
-import { ProfileKey } from '../data/profiles'
+import { ProfileKey, profileMap } from '../data/profiles'
 
 export interface HistoryRecord {
   id: string
@@ -19,29 +19,49 @@ export interface HistoryRecord {
 const STORAGE_KEY = 'metal_calc_history'
 const MAX_RECORDS = 50
 
+function isRecord(value: unknown): value is HistoryRecord {
+  if (!value || typeof value !== 'object') return false
+  const r = value as HistoryRecord
+  const profile = profileMap.get(r.profileKey)
+  return !!profile && typeof r.id === 'string' && typeof r.profileName === 'string' &&
+    typeof r.metalGroup === 'string' && typeof r.grade === 'string' &&
+    Number.isFinite(r.timestamp) && Number.isSafeInteger(r.quantity) && r.quantity > 0 &&
+    [r.length, r.mass, r.massOne, r.linearDensity].every(v => Number.isFinite(v) && v >= 0) &&
+    !!r.params && typeof r.params === 'object' && !Array.isArray(r.params) &&
+    profile.params.every(p => Number.isFinite(r.params[p.key]) && r.params[p.key] > 0)
+}
+
 export function loadHistory(): HistoryRecord[] {
   if (typeof window === 'undefined') return []
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : []
+    const parsed: unknown = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed) ? parsed.filter(isRecord).slice(0, MAX_RECORDS) : []
   } catch {
     return []
   }
 }
 
-export function saveRecord(record: Omit<HistoryRecord, 'id' | 'timestamp'>): HistoryRecord {
-  const full: HistoryRecord = {
+export function createRecord(record: Omit<HistoryRecord, 'id' | 'timestamp'>): HistoryRecord {
+  return {
     ...record,
     id: crypto.randomUUID(),
     timestamp: Date.now(),
   }
-  const history = [full, ...loadHistory()].slice(0, MAX_RECORDS)
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(history))
-  return full
+}
+
+export function persistRecord(record: HistoryRecord): boolean {
+  try {
+    const history = [record, ...loadHistory().filter(item => item.id !== record.id)].slice(0, MAX_RECORDS)
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history))
+    return true
+  } catch {
+    return false
+  }
 }
 
 export function clearHistory(): void {
-  localStorage.removeItem(STORAGE_KEY)
+  try { localStorage.removeItem(STORAGE_KEY) } catch { /* Storage may be unavailable. */ }
 }
 
 export function formatTimestamp(ts: number): string {

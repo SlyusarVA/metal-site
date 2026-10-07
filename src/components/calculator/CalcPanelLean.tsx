@@ -31,7 +31,8 @@ const modes: Record<CalcMode, { label: string; hint: string }> = {
 
 export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostClear, onGostOpen, needsSortament, isMobile = false, metalGroups = [], profiles = [] }: Props) {
   const { state, selectMetal, selectProfile, setParam, setLength, setMass, setQuantity, incrementQty, decrementQty, calculate } = calc
-  const [mode, setMode] = useState<CalcMode>('mass')
+  const [selectedMode, setMode] = useState<CalcMode>('mass')
+  const mode = state.profile.isVolume && selectedMode === 'length' ? 'mass' : selectedMode
   const [quickInput, setQuickInput] = useState('Сталь 20 круг 16 масса 120 кг')
   const [quickStatus, setQuickStatus] = useState<QuickStatus | null>(null)
   const [quickChips, setQuickChips] = useState(['Сталь', '20', 'Круг', 'Ø16', '120 кг'])
@@ -52,7 +53,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
   }
 
   function setSource(value: number | null) {
-    if (mode === 'mass') {
+    if (mode !== 'length') {
       setMass(null)
       setLength(value)
     } else {
@@ -77,7 +78,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
     Object.entries(parsed.params).forEach(([key, value]) => setParam(key, value))
     setLength(null)
     setMass(parsed.mass)
-    setMode('length')
+    setMode(parsed.unsupportedReason ? 'mass' : 'length')
     setQuickChips(parsed.chips)
     setQuickStatus(parsed.unsupportedReason ? { kind: 'warning', message: parsed.unsupportedReason } : { kind: 'success', message: 'Данные перенесены в режим «Расчёт длины». Нажмите «Рассчитать».' })
   }
@@ -99,14 +100,14 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
       <div className="ui-scroll-area" style={st.work}>
         <section style={st.card}>
           <div style={st.cardTitle}>Калькулятор металла</div>
-          <ModeTabs mode={mode} onSelect={switchMode} />
+          <ModeTabs mode={mode} onSelect={switchMode} isVolume={!!state.profile.isVolume} />
           <div style={st.hint}><AnimatedText text={modes[mode].hint} /></div>
         </section>
         {mode === 'quick' && <section style={st.card}>
           <div style={st.quick}><input id="calc-quick-input" name="quick-input" aria-label="Быстрый ввод параметров" value={quickInput} onChange={e => setQuickInput(e.target.value)} style={st.textInput} /><button type="button" onClick={applyQuick} style={st.actionSmall}>Применить</button></div>
           <div style={st.chips}><span>Распознано:</span>{quickChips.map(x => <span key={x} style={st.chip}>{x}</span>)}</div>
-          {quickStatus && <div style={status(quickStatus.kind)}>{quickStatus.message}</div>}
         </section>}
+        {quickStatus && <div role="status" style={status(quickStatus.kind)}>{quickStatus.message}</div>}
         {isMobile && <div style={st.mobilePickers}>
           <FieldSelect id="calc-mobile-metal" name="mobile-metal" label="Металл" value={state.metalGroup} onChange={setGroup} options={metalGroups.map(x => ({ value: x, label: x }))} />
           <FieldSelect id="calc-mobile-profile" name="mobile-profile" label="Сортамент" value={state.profileKey} onChange={v => selectProfile(v as ProfileKey)} options={profiles.map(x => ({ value: x.key, label: x.name }))} />
@@ -117,7 +118,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
           {!state.profile.isVolume && <div><Label>{mode === 'length' ? 'Масса' : 'Длина L'}</Label><UnitInput id={mode === 'length' ? 'calc-mass' : 'calc-length'} name={mode === 'length' ? 'mass' : 'length'} label={mode === 'length' ? 'Масса' : 'Длина L'} value={mode === 'length' ? state.mass ?? '' : state.length ?? ''} unit={mode === 'length' ? 'кг.' : 'м.'} onChange={setSource} /></div>}
           <div><Label>Количество</Label><div style={st.qty}><button type="button" aria-label="Уменьшить количество" onClick={decrementQty} style={st.qtyBtn}>−</button><input id="calc-quantity" name="quantity" aria-label="Количество" type="number" min={1} step={1} value={state.quantity} onChange={e => setQuantity(e.target.value ? Number(e.target.value) : 1)} style={st.qtyInput} /><button type="button" aria-label="Увеличить количество" onClick={incrementQty} style={st.qtyBtn}>+</button></div></div>
         </div>
-        <button type="button" onClick={calculate} style={st.action}>Рассчитать</button>
+        <button type="button" onClick={() => calculate(mode === 'length' ? 'length' : 'mass')} style={st.action}>Рассчитать</button>
         {state.error && <ErrorMessage error={state.error} />}
         {state.snackbar && <div style={st.note}>{state.snackbar.message}</div>}
       </div>
@@ -127,7 +128,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
           <span style={st.resultValue}><AnimatedNumber value={displayResult} digits={3} /></span> <span style={st.unitText}>{mode === 'length' ? 'м' : 'кг'}</span>
           {massMin != null && massMax != null && <div style={st.tol}><AnimatedNumber value={massMin} digits={2} /> ··· <AnimatedNumber value={massMax} digits={2} /> кг</div>}
         </div>
-        {state.result?.linearMass != null && state.result.linearMass > 0 && <div style={{ marginInlineStart: 18 }}><div style={st.resultLabel}>Погонный вес</div><b><AnimatedNumber value={state.result.linearMass} digits={4} /></b> <span style={st.unitText}>кг/м</span></div>}
+        {state.result?.linearMass != null && state.result.linearMass > 0 && <div style={{ marginInlineStart: 18 }}><div style={st.resultLabel}>{state.profile.isVolume ? 'Масса штуки' : 'Погонный вес'}</div><b><AnimatedNumber value={state.result.linearMass} digits={4} /></b> <span style={st.unitText}>{state.profile.isVolume ? 'кг/шт' : 'кг/м'}</span></div>}
         {tolerance && mode === 'mass' && <span style={st.pill}>{tolerance.label}</span>}
       </div>
     </div>
@@ -139,7 +140,7 @@ function UnitInput({ id, name, label, value, unit, onChange }: { id: string; nam
 function FieldSelect({ id, name, label, value, onChange, options }: { id: string; name: string; label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) { return <label htmlFor={id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><Label>{label}</Label><select id={id} name={name} value={value} onChange={e => onChange(e.target.value)} style={st.mobileSelect}>{options.map(x => <option key={x.value} value={x.value}>{x.label}</option>)}</select></label> }
 function status(kind: QuickStatus['kind']): React.CSSProperties { return { padding: '7px 9px', borderRadius: 7, fontSize: 'var(--text-xs)', background: kind === 'error' ? 'var(--error-container)' : kind === 'warning' ? 'var(--warning-container)' : 'var(--success-container)', color: kind === 'error' ? 'var(--error)' : kind === 'warning' ? 'var(--warning)' : 'var(--success)' } }
 
-function ModeTabs({ mode, onSelect }: { mode: CalcMode; onSelect: (mode: CalcMode) => void }) {
+function ModeTabs({ mode, onSelect, isVolume }: { mode: CalcMode; onSelect: (mode: CalcMode) => void; isVolume: boolean }) {
   const barRef = useRef<HTMLDivElement>(null)
   const pillRef = useRef<HTMLSpanElement>(null)
   const readyRef = useRef(false)
@@ -185,6 +186,7 @@ function ModeTabs({ mode, onSelect }: { mode: CalcMode; onSelect: (mode: CalcMod
           key={item}
           type="button"
           role="tab"
+          disabled={isVolume && item === 'length'}
           aria-selected={mode === item}
           className="t-tab"
           onClick={() => onSelect(item)}
