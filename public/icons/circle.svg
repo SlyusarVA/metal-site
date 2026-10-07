@@ -1,11 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40">
-  <defs>
-    <pattern id="h" patternUnits="userSpaceOnUse" width="3" height="3" patternTransform="rotate(45)">
-      <line x1="0" y1="0" x2="0" y2="3" stroke="#90A4AE" stroke-width="0.6"/>
-    </pattern>
-  </defs>
-  <circle cx="20" cy="20" r="16" fill="url(#h)" stroke="#455A64" stroke-width="1.5"/>
-  <line x1="20" y1="20" x2="36" y2="20" stroke="#1565C0" stroke-width="1.2"/>
-  <line x1="19" y1="18" x2="35" y2="18" stroke="#1565C0" stroke-width="0" stroke-dasharray="2,2"/>
-  <text x="28" y="17" font-size="7" fill="#1565C0" font-family="sans-serif">d</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img">
+<defs>
+  <linearGradient id="steel" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#d8e0e7"/><stop offset=".42" stop-color="#8997a4"/>
+    <stop offset="1" stop-color="#46525e"/>
+  </linearGradient>
+  <linearGradient id="dark" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#82909c"/><stop offset="1" stop-color="#303a44"/>
+  </linearGradient>
+</defs>
+<path d="M18 43 40 16c4-5 13-1 12 5L30 49" fill="url(#dark)" stroke="#9eabb6" stroke-width="1.5"/>
+<ellipse cx="23" cy="46" rx="10" ry="8" transform="rotate(-22 23 46)" fill="url(#steel)" stroke="#d9e0e5" stroke-width="1.5"/>
 </svg>

@@ -86,6 +86,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
   return (
     <div style={st.panel}>
       <div style={st.head}>
+        <img src={`/icons/${state.profile.icon}.svg`} alt={state.profile.name} width={32} height={32} style={{ flexShrink: 0 }} />
         {!isMobile && (
           <span style={st.headTitle}>
             <span style={st.headMetalSlot}><AnimatedText text={state.metalGroup} /></span>

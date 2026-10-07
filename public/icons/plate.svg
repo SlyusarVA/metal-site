@@ -1,16 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40">
-  <defs>
-    <pattern id="h" patternUnits="userSpaceOnUse" width="3" height="3" patternTransform="rotate(45)">
-      <line x1="0" y1="0" x2="0" y2="3" stroke="#90A4AE" stroke-width="0.6"/>
-    </pattern>
-  </defs>
-  <rect x="4" y="11" width="32" height="18" fill="url(#h)" stroke="#455A64" stroke-width="1.5"/>
-  <line x1="4" y1="33" x2="36" y2="33" stroke="#1565C0" stroke-width="1"/>
-  <line x1="4" y1="31" x2="4" y2="35" stroke="#1565C0" stroke-width="1"/>
-  <line x1="36" y1="31" x2="36" y2="35" stroke="#1565C0" stroke-width="1"/>
-  <text x="17" y="39" font-size="6" fill="#1565C0" font-family="sans-serif">a</text>
-  <line x1="38" y1="11" x2="38" y2="29" stroke="#1565C0" stroke-width="1"/>
-  <line x1="36" y1="11" x2="40" y2="11" stroke="#1565C0" stroke-width="1"/>
-  <line x1="36" y1="29" x2="40" y2="29" stroke="#1565C0" stroke-width="1"/>
-  <text x="32" y="22" font-size="6" fill="#1565C0" font-family="sans-serif">t</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img">
+<defs>
+  <linearGradient id="steel" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#d8e0e7"/><stop offset=".42" stop-color="#8997a4"/>
+    <stop offset="1" stop-color="#46525e"/>
+  </linearGradient>
+  <linearGradient id="dark" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#82909c"/><stop offset="1" stop-color="#303a44"/>
+  </linearGradient>
+</defs>
+<path d="M12 39 38 14l15 8-26 27z" fill="url(#steel)" stroke="#c8d0d6" stroke-width="1.4"/>
+<path d="m12 39 1 6 14 7v-3" fill="#4c5965" stroke="#8795a0" stroke-width="1.2"/>
 </svg>
