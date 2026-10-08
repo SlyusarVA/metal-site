@@ -5,7 +5,7 @@ import { getWeightTolerance } from '@/data/gost'
 import { ProfileKey } from '@/data/profiles'
 import { parseQuickInput } from '@/lib/quickInputParser'
 import ProfileIcon from './ProfileIcon'
-import { isRectangular, profileGroupKey, rectangularProfiles } from '@/data/profileNavigation'
+import { isRectangular, profileGroupKey, rectangularName, rectangularProfiles } from '@/data/profileNavigation'
 import { getAllowedProfiles } from '@/data/materials'
 import GostTags from './GostTags'
 import GostSearchBar from './GostSearchBar'
@@ -45,7 +45,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
   const resultMass = state.result?.target === 'mass' ? state.result.value : null
   const resultLength = state.result?.target === 'length' ? state.result.value : null
   const displayResult = mode === 'length' ? resultLength : resultMass
-  const tolerance = getWeightTolerance(state.profileKey, Object.fromEntries(Object.entries(state.params).filter(([, v]) => v !== null) as [string, number][]))
+  const tolerance = getWeightTolerance(state.profileKey, Object.fromEntries(Object.entries(state.params).filter(([, v]) => v !== null) as [string, number][]), state.metalGroup)
   const massMin = mode === 'mass' && resultMass != null && tolerance ? resultMass * (1 - tolerance.minus) : null
   const massMax = mode === 'mass' && resultMass != null && tolerance ? resultMass * (1 + tolerance.plus) : null
   const gridCols = isMobile ? 'repeat(2,minmax(0,1fr))' : 'repeat(auto-fill,minmax(140px,1fr))'
@@ -91,15 +91,15 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
   return (
     <div style={st.panel}>
       <div style={st.head}>
-        <ProfileIcon icon={state.profile.icon} size={32} />
+        <ProfileIcon icon={isRectangular(state.profileKey) ? 'plate' : state.profile.icon} size={32} />
         {!isMobile && (
           <span style={st.headTitle}>
             <span style={st.headMetalSlot}><AnimatedText text={state.metalGroup} /></span>
             <span style={st.headSeparator}> · </span>
-            <span style={st.headProfileSlot}><AnimatedText text={state.profile.name} /></span>
+            <span style={st.headProfileSlot}><AnimatedText text={isRectangular(state.profileKey) ? rectangularName : state.profile.name} /></span>
           </span>
         )}
-        <GostTags profile={state.profile} density={state.density} onGostClick={onGostOpen} />
+        <GostTags metalGroup={state.metalGroup} profile={state.profile} density={state.density} onGostClick={onGostOpen} />
       </div>
       <div style={st.search}><GostSearchBar onResult={onGostResult} onClear={onGostClear} /></div>
       {needsSortament && <div style={st.warn}>Выберите сортамент</div>}
@@ -118,7 +118,12 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
           <FieldSelect id="calc-mobile-metal" name="mobile-metal" label="Металл" value={state.metalGroup} onChange={setGroup} options={metalGroups.map(x => ({ value: x, label: x }))} />
           <FieldSelect id="calc-mobile-profile" name="mobile-profile" label="Сортамент" value={navigationKey} onChange={v => selectProfile(v as ProfileKey)} options={profiles.map(x => ({ value: x.key, label: x.name }))} />
         </div>}
-        {isRectangular(state.profileKey) && <FieldSelect id="calc-rectangular-kind" name="rectangular-kind" label="Вид проката: лист / плита / полоса" value={state.profileKey} onChange={v => selectProfile(v as ProfileKey)} options={rectangularOptions.map(p => ({ value: p.key, label: p.name }))} />}
+        {isRectangular(state.profileKey) && <div>
+          <Label>Вид плоского проката</Label>
+          <div role="group" aria-label="Вид плоского проката" style={{ ...st.tabs, gridTemplateColumns: 'repeat(auto-fit,minmax(70px,1fr))' }}>
+            {rectangularOptions.map(p => <button key={p.key} type="button" aria-pressed={state.profileKey === p.key} onClick={() => selectProfile(p.key)} style={{ ...st.tab, minHeight: 36, border: 'none', borderRadius: 999, cursor: 'pointer', background: state.profileKey === p.key ? 'var(--primary)' : 'transparent', color: state.profileKey === p.key ? '#fff' : 'var(--on-surface-variant)' }}>{p.name}</button>)}
+          </div>
+        </div>}
         <div style={st.markRow}><span id="calc-grade-label" style={st.inlineLabel}>Марка</span><select id="calc-grade" name="grade" aria-labelledby="calc-grade-label" value={state.grade} onChange={e => selectMetal(state.metalGroup, e.target.value)} style={st.select}>{grades.map(x => <option key={x.grade}>{x.grade}</option>)}</select></div>
         <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 8 }}>
           {state.profile.params.map(p => <div key={p.key}><Label>{p.label}</Label><UnitInput id={`calc-param-${p.key}`} name={`param-${p.key}`} label={p.label} value={state.params[p.key] ?? ''} unit={p.unit} onChange={v => setParam(p.key, v)} /></div>)}
@@ -186,14 +191,13 @@ function ModeTabs({ mode, onSelect, isVolume }: { mode: CalcMode; onSelect: (mod
   }, [mode])
 
   return (
-    <div ref={barRef} className="t-tabs" role="tablist" aria-label="Режим расчёта" style={st.tabs}>
+    <div ref={barRef} className="t-tabs" role="tablist" aria-label="Режим расчёта" style={{ ...st.tabs, gridTemplateColumns: `repeat(${isVolume ? 2 : 3},minmax(0,1fr))` }}>
       <span ref={pillRef} className="t-tabs-pill" aria-hidden="true" />
-      {(['mass', 'length', 'quick'] as const).map(item => (
+      {(['mass', 'length', 'quick'] as const).filter(item => !isVolume || item !== 'length').map(item => (
         <button
           key={item}
           type="button"
           role="tab"
-          disabled={isVolume && item === 'length'}
           aria-selected={mode === item}
           className="t-tab"
           onClick={() => onSelect(item)}
@@ -286,10 +290,10 @@ function ErrorMessage({ error }: { error: { message: string } }) {
 
 const st: Record<string, React.CSSProperties> = {
   panel: { flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'var(--surface-variant)' },
-  head: { flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'nowrap', padding: '10px 14px', background: 'var(--surface)', borderBottom: '1px solid var(--outline-variant)', overflow: 'hidden' },
+  head: { flexShrink: 0, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '10px 14px', background: 'var(--surface)', borderBottom: '1px solid var(--outline-variant)', overflow: 'hidden' },
   headTitle: { fontSize: 'var(--text-base)', fontWeight: 600, color: 'var(--on-surface)', display: 'inline-flex', alignItems: 'baseline', whiteSpace: 'nowrap', flexShrink: 0 },
   headMetalSlot: { display: 'inline-block', width: 112, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
-  headProfileSlot: { display: 'inline-block', width: 118, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  headProfileSlot: { display: 'inline-block', width: 145, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
   headSeparator: { color: 'var(--on-surface-variant)', flexShrink: 0 },
   search: { flexShrink: 0, padding: '7px 14px', background: 'var(--surface)', borderBottom: '1px solid var(--outline-variant)' },
   warn: { flexShrink: 0, padding: '7px 14px', color: 'var(--warning)', background: 'var(--warning-container)' },

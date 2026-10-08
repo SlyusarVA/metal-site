@@ -28,6 +28,10 @@ export interface CalcResult {
  * Для isVolume (лист/плита): mass = density × volume(мм³) × qty
  */
 export function calcMass(input: CalcInput): CalcResult | null {
+  // Legacy sheet/plate links and records store length as params.a in millimetres.
+  if ((input.profileKey === 'sheet' || input.profileKey === 'plate') && input.length == null && input.params.a != null) {
+    input = { ...input, length: input.params.a / 1000 }
+  }
   const profile = profileMap.get(input.profileKey)
   if (!profile || validateDimensions(input.profileKey, input.params)) return null
   if (!Number.isSafeInteger(input.quantity) || input.quantity <= 0) return null

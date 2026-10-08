@@ -1,7 +1,7 @@
 import { MetalProfile, ProfileKey, profiles } from './profiles'
 
-export const rectangularKeys: ProfileKey[] = ['sheet', 'plate', 'flat']
-export const rectangularName = 'Лист / плита / полоса'
+export const rectangularKeys: ProfileKey[] = ['sheet', 'plate', 'flat', 'strip']
+export const rectangularName = 'Плоский прокат'
 export const isRectangular = (key: ProfileKey) => rectangularKeys.includes(key)
 export const profileGroupKey = (key: ProfileKey): ProfileKey => isRectangular(key) ? 'sheet' : key
 
@@ -12,7 +12,7 @@ export function groupProfiles(items: MetalProfile[], allowed: ProfileKey[] | nul
     const group = profileGroupKey(p.key)
     if (seen.has(group)) return []
     seen.add(group)
-    return [{ ...p, name: isRectangular(p.key) ? rectangularName : p.name }]
+    return [{ ...p, name: isRectangular(p.key) ? rectangularName : p.name, icon: isRectangular(p.key) ? 'plate' : p.icon }]
   })
 }
 
@@ -25,5 +25,5 @@ export function expandProfileOrder(order: ProfileKey[]): ProfileKey[] {
 }
 
 export function rectangularProfiles(allowed: ProfileKey[] | null): MetalProfile[] {
-  return profiles.filter(p => isRectangular(p.key) && (!allowed || allowed.includes(p.key)))
+  return rectangularKeys.filter(key => !allowed || allowed.includes(key)).map(key => profiles.find(p => p.key === key)!)
 }

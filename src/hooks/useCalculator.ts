@@ -6,6 +6,7 @@ import { materials, getMetalGroups, getGradesForGroup, isNonFerrous } from '@/da
 import { calcMass, calcLength } from '@/lib/calculations'
 import { createRecord, persistRecord, HistoryRecord } from '@/lib/history'
 
+import { isRectangular } from '@/data/profileNavigation'
 import { validateDimensions } from '@/lib/validation'
 
 // ── Константы полей ────────────────────────────────────────────────────────────
@@ -138,16 +139,17 @@ export function useCalculator() {
   const selectProfile = useCallback((key: ProfileKey) => {
     setState(s => {
       const profile = profiles.find(p => p.key === key)!
+      const keepDimensions = isRectangular(s.profileKey) && isRectangular(key)
       const params: Record<string, number | null> = {}
-      for (const p of profile.params) params[p.key] = p.defaultValue
+      for (const p of profile.params) params[p.key] = keepDimensions ? s.params[p.key] ?? null : p.defaultValue
       return {
         ...s,
         profileKey: key,
         profile,
         params,
-        length: null,
-        mass: null,
-        quantity: 1,
+        length: keepDimensions ? s.length : null,
+        mass: keepDimensions ? s.mass : null,
+        quantity: keepDimensions ? s.quantity : 1,
         result: null,
         prevResult: null,
         error: null,
@@ -211,7 +213,8 @@ export function useCalculator() {
   const setParam = useCallback((key: string, value: number | null) => {
     setState(s => ({
       ...s,
-      params: { ...s.params, [key]: value },
+      params: (key === 'a' && (s.profileKey === 'sheet' || s.profileKey === 'plate')) ? s.params : { ...s.params, [key]: value },
+      length: key === 'a' && (s.profileKey === 'sheet' || s.profileKey === 'plate') ? (value == null ? null : value / 1000) : s.length,
       result: null,
       error: null,
       unchanged: false,
@@ -352,7 +355,7 @@ export function useCalculator() {
         grade: record.grade,
         density: mat?.density ?? s.density,
         params,
-        length: record.length > 0 ? record.length : null,
+        length: (record.profileKey === 'sheet' || record.profileKey === 'plate') && record.params.a != null ? record.params.a / 1000 : record.length > 0 ? record.length : null,
         mass: null,
         quantity: record.quantity,
         result: null,

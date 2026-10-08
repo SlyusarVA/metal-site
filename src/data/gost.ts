@@ -1,7 +1,8 @@
 // Конвертировано из gost_reference.dart
 // Допуски по массе берутся из поля tolerances каждого ГОСТа
 
-import { ProfileKey } from './profiles'
+import { ProfileKey, profileMap } from './profiles'
+import { getProfileGostCodes } from './profileStandards'
 
 export interface GostReference {
   code: string
@@ -32,8 +33,11 @@ export interface WeightTolerance {
  */
 export function getWeightTolerance(
   profileKey: ProfileKey,
-  _params: Record<string, number>
+  _params: Record<string, number>,
+  metalGroup: string
 ): WeightTolerance | null {
+  const standard = profileMap.get(profileKey)?.gost
+  if (!standard || !getProfileGostCodes(profileKey, metalGroup).includes(standard)) return null
   switch (profileKey) {
     // ГОСТ 2590-2006 Круг: ±2.5% на партию
     case 'round':
@@ -47,9 +51,9 @@ export function getWeightTolerance(
     case 'hexagon':
       return { plus: 0.025, minus: 0.025, label: '±2.5% (ГОСТ 2879-2006)' }
 
-    // ГОСТ 2060-2006 Пруток (цветной металл): ±1% на партию
+    // A universal mass percentage has not been verified for brass rods.
     case 'rod':
-      return { plus: 0.01, minus: 0.01, label: '±1% (ГОСТ 2060-2006)' }
+      return null
 
     // ГОСТ 8732-78 Труба кр.: ±7.5% на партию
     case 'pipe':
@@ -429,24 +433,13 @@ export const gostReferences: GostReference[] = [
 
   {
     code: 'ГОСТ 2060-2006',
-    title: 'Прутки из меди и медных сплавов. Технические условия.',
-    scope: 'Распространяется на прессованные и тянутые прутки из меди и медных сплавов (латунь, бронза).',
-    keyParams: [
-      'Диаметр: 3–180 мм (круглое сечение)',
-      'Марки: М1, М2, Л63, ЛС59-1, БрАМц9-2 и др.',
-      'Состояния: мягкое (М), полутвёрдое (П), твёрдое (Т)',
-    ],
-    tolerances: [
-      'Допуск на диаметр: ±0.5–2% в зависимости от диаметра и состояния',
-      'Отклонение по массе: ±1% (цветной металл)',
-      'Кривизна: не более 3 мм на 1 м',
-    ],
-    critical: [
-      'Твёрдое состояние (Т) — нагартованное, хрупкое при изгибе',
-      'Для электрических применений использовать только М1 или М00',
-    ],
-    marking: 'Маркировка на бирке: марка, размер, состояние.',
-    fullTextUrl: 'https://docs.cntd.ru/document/1200048768',
+    title: 'Прутки латунные. Технические условия.',
+    scope: 'Тянутые и прессованные латунные прутки: круглое, квадратное и шестигранное сечения.',
+    keyParams: ['Способ изготовления: тянутые или прессованные', 'Форма сечения: круглая, квадратная или шестигранная'],
+    tolerances: ['Численные допуски необходимо уточнять по полному тексту стандарта и условиям поставки.'],
+    critical: ['Не распространяется на прутки для обработки резанием на автоматах.', 'Не применяется к алюминию, меди или бронзе.'],
+    marking: 'Требования к маркировке приведены в полном тексте стандарта.',
+    fullTextUrl: 'https://protect.gost.ru/gost/details/bb7bc9c0-f59c-46cb-9c3d-7591ace51482',
   },
 
   {

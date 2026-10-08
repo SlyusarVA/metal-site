@@ -39,7 +39,7 @@ const GROUP_ALIASES: Record<string, string[]> = {
 const PROFILE_ALIASES: Record<ProfileKey, string[]> = {
   round: ['круг', 'круглый прокат'],
   rod: ['пруток', 'прут'],
-  sheet: ['лист'],
+  sheet: ['лист', 'плоский прокат'],
   pipe: ['труба кр', 'труба круглая', 'труба'],
   pipe_prof: ['профильная труба', 'труба проф', 'проф труба'],
   strip: ['лента'],

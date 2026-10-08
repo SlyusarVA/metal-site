@@ -135,10 +135,10 @@ test('corrupt history and denied writes cannot break calculations', () => {
   assert.equal(a.writes(), 0)
 })
 
-test('volume profiles return mass even if length was previously selected', () => {
+test('sheet supports inverse length in the common flat-product form', () => {
   const a = app(); let c = a.render()
-  c.selectProfile('sheet'); c.calculate('length'); c = a.render()
-  assert.equal(c.state.result.target, 'mass'); assert.equal(c.state.result.massOne, 31.4)
+  c.selectProfile('sheet'); c.setMass(62.8); c.calculate('length'); c = a.render()
+  assert.equal(c.state.result.target, 'length'); assert.equal(c.state.result.value, 2)
 })
 
 test('rectangular navigation groups once and keeps material restrictions', () => {
@@ -146,10 +146,10 @@ test('rectangular navigation groups once and keeps material restrictions', () =>
   const { profiles } = a.load('src/data/profiles')
   const { groupProfiles, profileGroupKey, rectangularProfiles } = a.load('src/data/profileNavigation')
   const grouped = groupProfiles(profiles)
-  assert.equal(grouped.length, profiles.length - 2)
+  assert.equal(grouped.length, profiles.length - 3)
   assert.equal(grouped.filter(p => profileGroupKey(p.key) === 'sheet').length, 1)
   assert.ok(grouped.some(p => p.key === 'square'))
-  assert.ok(grouped.some(p => p.key === 'strip'))
+  assert.ok(!grouped.some(p => p.key === 'strip'))
   assert.deepEqual(groupProfiles(profiles, ['plate', 'square']).map(p => p.key), ['plate', 'square'])
   assert.deepEqual(rectangularProfiles(['sheet', 'plate']).map(p => p.key), ['sheet', 'plate'])
   assert.deepEqual(groupProfiles(profiles, ['wire']).map(p => p.key), ['wire'])
@@ -158,7 +158,7 @@ test('rectangular navigation groups once and keeps material restrictions', () =>
 test('custom order keeps the first rectangular position and all calculation IDs', () => {
   const { groupedProfileOrder, expandProfileOrder } = app().load('src/data/profileNavigation')
   assert.deepEqual(groupedProfileOrder(['round', 'flat', 'square', 'plate', 'sheet']), ['round', 'sheet', 'square'])
-  assert.deepEqual(expandProfileOrder(['round', 'sheet', 'square']), ['round', 'sheet', 'plate', 'flat', 'square'])
+  assert.deepEqual(expandProfileOrder(['round', 'sheet', 'square']), ['round', 'sheet', 'plate', 'flat', 'strip', 'square'])
 })
 
 test('grouped products keep equivalent mass, individual standards and legacy history', () => {
@@ -176,4 +176,45 @@ test('grouped products keep equivalent mass, individual standards and legacy his
   assert.equal(new Set(records.map(r => profileMap.get(r.profileKey).gost)).size, 3)
   a.storage.set('metal_calc_history', JSON.stringify(records))
   assert.deepEqual(loadHistory(), records)
+})
+
+test('all flat products support the same mass and inverse length with quantity', () => {
+  const { calcMass, calcLength } = app().load('src/lib/calculations')
+  for (const profileKey of ['sheet', 'plate', 'flat', 'strip']) {
+    const input = { ...base, profileKey, params: { b: 1000, t: 4 }, quantity: 3 }
+    assert.equal(calcMass({ ...input, length: 2 }).mass, 188.4)
+    assert.equal(calcLength(188.4, input), 2)
+  }
+})
+
+test('legacy sheet dimension and saved history restore length in metres', () => {
+  const a = app(); let c = a.render()
+  c.selectProfile('sheet'); c.setParam('a', 2000); c.calculate('mass'); c = a.render()
+  assert.equal(c.state.length, 2); assert.equal(c.state.result.value, 62.8)
+  c.restoreFromHistory({ profileKey: 'sheet', metalGroup: 'Сталь', grade: '20', params: { a: 3000, b: 1000, t: 4 }, length: 0, quantity: 1 })
+  c.calculate('mass'); c = a.render()
+  assert.equal(c.state.length, 3); assert.equal(c.state.result.value, 94.2)
+})
+
+test('changing a legacy flat-product alias keeps user dimensions and quantity', () => {
+  const a = app(); let c = a.render()
+  c.selectProfile('sheet'); c.setParam('b', 500); c.setParam('t', 2); c.setLength(3); c.setQuantity(2)
+  c.selectProfile('strip'); c.calculate('mass'); c = a.render()
+  assert.equal(c.state.params.b, 500); assert.equal(c.state.params.t, 2)
+  assert.equal(c.state.quantity, 2); assert.equal(c.state.result.value, 47.1)
+})
+
+test('standard and tolerance depend on material as well as product shape', () => {
+  const a = app()
+  const { getProfileGostCodes } = a.load('src/data/profileStandards')
+  const { getWeightTolerance } = a.load('src/data/gost')
+  for (const metal of ['Алюминий', 'Медь', 'Бронза']) {
+    assert.ok(!getProfileGostCodes('rod', metal).includes('ГОСТ 2060-2006'))
+    assert.equal(getWeightTolerance('rod', { d: 25 }, metal), null)
+  }
+  assert.deepEqual(getProfileGostCodes('rod', 'Латунь'), ['ГОСТ 2060-2006'])
+  assert.equal(getWeightTolerance('rod', { d: 25 }, 'Латунь'), null)
+  assert.deepEqual(getProfileGostCodes('plate', 'Сталь'), ['ГОСТ 19903-2015'])
+  assert.deepEqual(getProfileGostCodes('plate', 'Алюминий'), ['ГОСТ 17232-99'])
+  assert.equal(getWeightTolerance('strip', { b: 20, t: 1 }, 'Алюминий'), null)
 })

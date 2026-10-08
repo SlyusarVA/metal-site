@@ -15,10 +15,6 @@ import GostPanel from './GostPanel'
 import ThemeToggle from '../ThemeToggle'
 import AccentSchemeToggle from '../AccentSchemeToggle'
 
-const SORTAMENT_HEADER_HEIGHT = 31
-const SORTAMENT_ROW_HEIGHT = 40
-const SORTAMENT_SAFE_GAP = 16
-const DESKTOP_OUTER_RESERVED_HEIGHT = 70
 
 export default function CalculatorLayout() {
   const router = useRouter()
@@ -26,6 +22,8 @@ export default function CalculatorLayout() {
   const calc = useCalculator()
   const { state, selectProfile, selectMetal, setParam, setLength, setMass, setQuantity } = calc
   const { settings } = useSettings()
+  const [metalHeight, setMetalHeight] = useState(0)
+  const [sortamentHeight, setSortamentHeight] = useState(720)
   const [showSettings, setShowSettings] = useState(false)
   const [showGost, setShowGost] = useState(false)
   const [selectedGostCode, setSelectedGostCode] = useState<string | null>(null)
@@ -59,6 +57,11 @@ export default function CalculatorLayout() {
     if (Number.isFinite(mass) && mass > 0) setMass(mass)
     if (Number.isFinite(qty) && qty > 0) setQuantity(qty)
 
+    // Legacy flat-sheet URLs encode length in millimetres as a.
+    if ((profile === 'sheet' || profile === 'plate') && searchParams.has('a')) {
+      const legacyLength = Number(searchParams.get('a')) / 1000
+      if (Number.isFinite(legacyLength) && legacyLength > 0) setLength(legacyLength)
+    }
     for (const profileParam of profiles.flatMap(item => item.params)) {
       const raw = searchParams.get(profileParam.key)
       if (raw == null) continue
@@ -74,20 +77,7 @@ export default function CalculatorLayout() {
     .map(key => profiles.find(p => p.key === key))
     .filter(Boolean) as typeof profiles
 
-  const maxSortamentRows = Math.max(
-    1,
-    ...orderedMetals.map(group => {
-      const allowed = getAllowedProfiles(group)
-      return groupProfiles(orderedProfiles, allowed).length
-    })
-  )
-
-  const desktopCalculatorHeight =
-    SORTAMENT_HEADER_HEIGHT +
-    maxSortamentRows * SORTAMENT_ROW_HEIGHT +
-    SORTAMENT_SAFE_GAP
-
-  const desktopShellStyle = getDesktopShellStyle(desktopCalculatorHeight)
+  const desktopShellStyle = getDesktopShellStyle(Math.max(sortamentHeight, metalHeight))
 
   const getGradesOrdered = (group: string) => {
     const raw = getGradesForGroup(group)
@@ -146,6 +136,7 @@ export default function CalculatorLayout() {
         <div style={desktopShellStyle}>
           <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
             <MetalNav
+              onContentHeight={setMetalHeight}
               groups={orderedMetals}
               selected={state.metalGroup}
               highlighted={highlightedMetals}
@@ -155,6 +146,7 @@ export default function CalculatorLayout() {
               }}
             />
             <SortamentNav
+              onContentHeight={setSortamentHeight}
               profiles={orderedProfiles}
               selected={state.profileKey}
               highlighted={highlightedProfiles}
@@ -212,9 +204,9 @@ function getDesktopShellStyle(targetHeight: number): React.CSSProperties {
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
-    height: `min(${targetHeight}px, calc(100dvh - ${DESKTOP_OUTER_RESERVED_HEIGHT}px))`,
+    height: targetHeight,
     minHeight: 0,
-    flexShrink: 0,
+    flexShrink: 1,
   }
 }
 

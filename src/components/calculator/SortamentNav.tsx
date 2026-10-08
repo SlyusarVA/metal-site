@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { MetalProfile, ProfileKey } from '@/data/profiles'
 import ProfileIcon from './ProfileIcon'
 import { groupProfiles, profileGroupKey } from '@/data/profileNavigation'
@@ -11,14 +12,27 @@ interface Props {
   highlighted?: ProfileKey[]
   onSelect: (key: ProfileKey) => void
   metalGroup: string
+  onContentHeight?: (height: number) => void
   mobileOpen?: boolean
   onMobileClose?: () => void
 }
 
 export default function SortamentNav({
   profiles, selected, highlighted = [], onSelect, metalGroup,
-  mobileOpen, onMobileClose,
+  mobileOpen, onMobileClose, onContentHeight,
 }: Props) {
+
+  const headerRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!onContentHeight || !headerRef.current || !listRef.current) return
+    const measure = () => onContentHeight(Math.ceil(headerRef.current!.getBoundingClientRect().height + listRef.current!.getBoundingClientRect().height) + 2)
+    const observer = new ResizeObserver(measure)
+    observer.observe(headerRef.current)
+    observer.observe(listRef.current)
+    measure()
+    return () => observer.disconnect()
+  }, [onContentHeight])
 
   const allowed = getAllowedProfiles(metalGroup)
   const visibleProfiles = groupProfiles(profiles, allowed)
@@ -87,7 +101,7 @@ export default function SortamentNav({
       display: 'flex',
       flexDirection: 'column',
     }}>
-      <div style={{
+      <div ref={headerRef} style={{
         fontSize: 11, fontWeight: 800, letterSpacing: '.08em',
         color: 'var(--on-surface-variant)',
         padding: '12px 16px 6px', textTransform: 'uppercase',
@@ -96,7 +110,7 @@ export default function SortamentNav({
         Сортамент
       </div>
       <div className="ui-scroll-area" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-        {renderList()}
+        <div ref={listRef}>{renderList()}</div>
       </div>
     </div>
   )

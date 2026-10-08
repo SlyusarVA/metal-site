@@ -1,24 +1,37 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
+
 interface Props {
   groups: string[]
   selected: string
   highlighted?: string[]
   onSelect: (group: string) => void
+  onContentHeight?: (height: number) => void
   mobileOpen?: boolean
   onMobileClose?: () => void
 }
 
-export default function MetalNav({ groups, selected, highlighted = [], onSelect, mobileOpen, onMobileClose }: Props) {
+export default function MetalNav({ groups, selected, highlighted = [], onSelect, mobileOpen, onMobileClose, onContentHeight }: Props) {
+  const contentRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!onContentHeight || !contentRef.current) return
+    const measure = () => onContentHeight(Math.ceil(contentRef.current!.getBoundingClientRect().height) + 2)
+    const observer = new ResizeObserver(measure)
+    observer.observe(contentRef.current)
+    measure()
+    return () => observer.disconnect()
+  }, [onContentHeight])
   const content = (
     <div style={{
       width: 158,
       flexShrink: 0,
       background: 'var(--surface)',
       borderRight: '1px solid var(--outline-variant)',
-      overflow: 'hidden',
+      overflowY: 'auto',
       height: '100%',
     }}>
+      <div ref={contentRef}>
       <div style={{
         fontSize: 11, fontWeight: 800, letterSpacing: '.08em',
         color: 'var(--on-surface-variant)',
@@ -72,6 +85,7 @@ export default function MetalNav({ groups, selected, highlighted = [], onSelect,
           </button>
         )
       })}
+      </div>
     </div>
   )
 

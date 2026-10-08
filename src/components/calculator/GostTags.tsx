@@ -1,22 +1,25 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { getProfileGostCodes } from '@/data/profileStandards'
 import { MetalProfile } from '@/data/profiles'
 
 interface Props {
   profile: MetalProfile
+  metalGroup: string
   density: number
   onGostClick: (code: string) => void
 }
 
-export default function GostTags({ profile, density, onGostClick }: Props) {
-  const gostCodes = profile.gost ? [profile.gost] : []
+export default function GostTags({ profile, metalGroup, density, onGostClick }: Props) {
+  const gostCodes = getProfileGostCodes(profile.key, metalGroup)
 
   return (
-    <div style={{ display: 'flex', flexWrap: 'nowrap', gap: 6, alignItems: 'center', flexShrink: 0 }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', minWidth: 0 }}>
       {gostCodes.map((code, index) => (
         <button
           key={`gost-${index}`}
+          title={code}
           onClick={() => onGostClick(code)}
           style={{
             background: 'var(--surface-container)',
