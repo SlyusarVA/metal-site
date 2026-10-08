@@ -6,6 +6,8 @@ import { materials, getMetalGroups, getGradesForGroup, isNonFerrous } from '@/da
 import { calcMass, calcLength } from '@/lib/calculations'
 import { createRecord, persistRecord, HistoryRecord } from '@/lib/history'
 
+import { BrassOptions, defaultBrassOptions, isBrassBar, brassAvailabilityError } from '@/data/brassTolerance'
+import { defaultSheetOptions, sheetBasis, SheetOptions, SheetBasis } from '@/data/aluminumSheet'
 import { isRectangular } from '@/data/profileNavigation'
 import { validateDimensions } from '@/lib/validation'
 
@@ -35,6 +37,7 @@ export const GOST_WEIGHT_TOLERANCE: Record<string, number> = {
 export type CalcTarget = 'mass' | 'length' | null
 
 export interface CalcResult {
+  sheetBasis?: SheetBasis
   target: CalcTarget
   value: number
   linearMass: number | null   // кг/м или кг/шт для листа
@@ -54,6 +57,8 @@ export interface Snackbar {
 
 // ── Состояние калькулятора ─────────────────────────────────────────────────────
 export interface CalculatorState {
+  brassOptions: BrassOptions
+  sheetOptions: SheetOptions
   // Выбор
   profileKey: ProfileKey
   profile: MetalProfile
@@ -92,6 +97,8 @@ function makeInitialState(): CalculatorState {
   }
 
   return {
+    brassOptions: { ...defaultBrassOptions },
+    sheetOptions: { ...defaultSheetOptions },
     profileKey: profile.key,
     profile,
     metalGroup: grade.group,
@@ -144,6 +151,7 @@ export function useCalculator() {
       for (const p of profile.params) params[p.key] = keepDimensions ? s.params[p.key] ?? null : p.defaultValue
       return {
         ...s,
+        brassOptions: key !== 'rod' && s.brassOptions.accuracy === 'high' ? { ...s.brassOptions, accuracy: 'normal' } : s.brassOptions,
         profileKey: key,
         profile,
         params,
@@ -208,6 +216,13 @@ export function useCalculator() {
       }
     })
   }, [showSnackbar])
+
+  const setBrassOptions = useCallback((patch: Partial<BrassOptions>) => {
+    setState(s => ({ ...s, brassOptions: { ...s.brassOptions, ...patch, ...(patch.manufacturing === 'pressed' && s.brassOptions.accuracy === 'high' ? { accuracy: 'normal' as const } : {}) }, result: null, error: null }))
+  }, [])
+  const setSheetOptions = useCallback((patch: Partial<SheetOptions>) => {
+    setState(s => ({ ...s, sheetOptions: { ...s.sheetOptions, ...patch }, result: null, error: null }))
+  }, [])
 
   // ── Изменение размерного поля ─────────────────────────────────────────────
   const setParam = useCallback((key: string, value: number | null) => {
@@ -292,11 +307,19 @@ export function useCalculator() {
       for (const p of s.profile.params) params[p.key] = s.params[p.key] ?? NaN
       const dimensionError = validateDimensions(s.profileKey, params)
       if (dimensionError) return { ...s, result: null, error: { message: dimensionError, missingFields: [] } }
+      if (isBrassBar(s.profileKey, s.metalGroup)) {
+        const issue = brassAvailabilityError(s.profileKey, s.profileKey === 'square' ? params.a : params.d, s.brassOptions)
+        if (issue) return { ...s, result: null, error: { message: issue, missingFields: [] } }
+      }
+      if (s.profileKey === 'sheet' && s.metalGroup === 'Алюминий') {
+        const basis = sheetBasis(s.grade, params.t, params.b, s.sheetOptions)
+        if (typeof basis === 'string') return { ...s, result: null, error: { message: basis, missingFields: [] } }
+      }
       const hasLength = s.length != null && Number.isFinite(s.length) && s.length > 0
       const hasMass = s.mass != null && Number.isFinite(s.mass) && s.mass > 0
       const target = s.profile.isVolume ? 'mass' : requestedTarget ??
         (hasLength && !hasMass ? 'mass' : hasMass && !hasLength ? 'length' : null)
-      const input = { profileKey: s.profileKey, params, metalGroup: s.metalGroup, grade: s.grade, quantity: s.quantity }
+      const input = { sheetOptions: s.sheetOptions, profileKey: s.profileKey, params, metalGroup: s.metalGroup, grade: s.grade, quantity: s.quantity }
       if (target === 'mass' && (s.profile.isVolume || hasLength)) {
         const result = calcMass({ ...input, length: s.length })
         if (result) return buildFinalState(s, target, result.mass, result, params)
@@ -355,6 +378,8 @@ export function useCalculator() {
         grade: record.grade,
         density: mat?.density ?? s.density,
         params,
+        brassOptions: record.brassOptions ?? { ...defaultBrassOptions },
+        sheetOptions: record.sheetOptions ?? { ...defaultSheetOptions },
         length: (record.profileKey === 'sheet' || record.profileKey === 'plate') && record.params.a != null ? record.params.a / 1000 : record.length > 0 ? record.length : null,
         mass: null,
         quantity: record.quantity,
@@ -371,6 +396,8 @@ export function useCalculator() {
     // Действия
     selectProfile,
     selectMetal,
+    setBrassOptions,
+    setSheetOptions,
     setParam,
     setLength,
     setMass,
@@ -398,6 +425,7 @@ function buildFinalState(
   params: Record<string, number>,
 ): CalculatorState {
   const calcResult: CalcResult = {
+    sheetBasis: massResult?.sheetBasis,
     target,
     value,
     linearMass: massResult?.linearDensity ?? null,
@@ -405,6 +433,8 @@ function buildFinalState(
   }
 
   const recordData = {
+    brassOptions: isBrassBar(s.profileKey, s.metalGroup) ? s.brassOptions : undefined,
+    sheetOptions: s.profileKey === 'sheet' && s.metalGroup === 'Алюминий' ? s.sheetOptions : undefined,
     profileKey: s.profileKey, profileName: s.profile.name,
     metalGroup: s.metalGroup, grade: s.grade, params, quantity: s.quantity,
     length: s.profile.isVolume ? 0 : target === 'length' ? value : s.length ?? 0,
@@ -415,6 +445,8 @@ function buildFinalState(
   const previous = s.history[0]
   const same = !!previous && previous.profileKey === recordData.profileKey &&
     previous.metalGroup === recordData.metalGroup && previous.grade === recordData.grade &&
+    JSON.stringify(previous.brassOptions) === JSON.stringify(recordData.brassOptions) &&
+    JSON.stringify(previous.sheetOptions) === JSON.stringify(recordData.sheetOptions) &&
     previous.quantity === recordData.quantity && previous.length === recordData.length &&
     previous.mass === recordData.mass &&
     s.profile.params.every(p => previous.params[p.key] === params[p.key])

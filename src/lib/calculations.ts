@@ -3,9 +3,11 @@
 
 import { profileMap, ProfileKey } from '../data/profiles'
 import { getDensity } from '../data/materials'
+import { sheetBasis, defaultSheetOptions, SheetOptions, SheetBasis } from '../data/aluminumSheet'
 import { validateDimensions } from './validation'
 
 export interface CalcInput {
+  sheetOptions?: SheetOptions
   profileKey: ProfileKey
   params: Record<string, number>   // размеры в мм (или кг/м для рельса)
   metalGroup: string
@@ -15,6 +17,7 @@ export interface CalcInput {
 }
 
 export interface CalcResult {
+  sheetBasis?: SheetBasis
   mass: number           // кг (для всего количества)
   massOne: number        // кг (за 1 штуку)
   linearDensity: number  // кг/м — погонный вес
@@ -37,10 +40,12 @@ export function calcMass(input: CalcInput): CalcResult | null {
   if (!Number.isSafeInteger(input.quantity) || input.quantity <= 0) return null
   if (!profile.isVolume && (input.length == null || !Number.isFinite(input.length) || input.length <= 0)) return null
 
-  const density = getDensity(input.metalGroup, input.grade)   // кг/м³
+  const basis = input.metalGroup === 'Алюминий' && input.profileKey === 'sheet' ? sheetBasis(input.grade, input.params.t, input.params.b, input.sheetOptions ?? defaultSheetOptions) : undefined
+  if (typeof basis === 'string') return null
+  const density = basis?.density ?? getDensity(input.metalGroup, input.grade)   // кг/м³
   const densityMm3 = density * 1e-9                           // кг/мм³
 
-  const area = profile.sectionArea(input.params)              // мм² или мм³
+  const area = basis ? basis.meanThickness * basis.meanWidth : profile.sectionArea(input.params)              // мм² или мм³
 
   let massOne: number
 
@@ -57,6 +62,7 @@ export function calcMass(input: CalcInput): CalcResult | null {
   if (![density, mass, massOne].every(v => Number.isFinite(v) && v > 0) || !Number.isFinite(linearDensity)) return null
 
   return {
+    sheetBasis: basis,
     mass: round(mass, 4),
     massOne: round(massOne, 4),
     linearDensity: round(linearDensity, 4),
@@ -74,14 +80,16 @@ export function calcLength(
   input: Omit<CalcInput, 'length'>
 ): number | null {
   const profile = profileMap.get(input.profileKey)
-  if (!profile || profile.isVolume) return null  // для листа обратный расчёт не применим
+  if (!profile || profile.isVolume) return null
   if (!Number.isFinite(massKg) || massKg <= 0) return null
   if (!Number.isSafeInteger(input.quantity) || input.quantity <= 0) return null
   if (validateDimensions(input.profileKey, input.params)) return null
 
-  const density = getDensity(input.metalGroup, input.grade)
+  const basis = input.metalGroup === 'Алюминий' && input.profileKey === 'sheet' ? sheetBasis(input.grade, input.params.t, input.params.b, input.sheetOptions ?? defaultSheetOptions) : undefined
+  if (typeof basis === 'string') return null
+  const density = basis?.density ?? getDensity(input.metalGroup, input.grade)
   const densityMm3 = density * 1e-9
-  const area = profile.sectionArea(input.params)
+  const area = basis ? basis.meanThickness * basis.meanWidth : profile.sectionArea(input.params)
 
   if (area <= 0 || densityMm3 <= 0) return null
 

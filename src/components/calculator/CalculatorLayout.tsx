@@ -22,6 +22,7 @@ export default function CalculatorLayout() {
   const calc = useCalculator()
   const { state, selectProfile, selectMetal, setParam, setLength, setMass, setQuantity } = calc
   const { settings } = useSettings()
+  const [calcHeight, setCalcHeight] = useState(0)
   const [metalHeight, setMetalHeight] = useState(0)
   const [sortamentHeight, setSortamentHeight] = useState(720)
   const [showSettings, setShowSettings] = useState(false)
@@ -77,7 +78,7 @@ export default function CalculatorLayout() {
     .map(key => profiles.find(p => p.key === key))
     .filter(Boolean) as typeof profiles
 
-  const desktopShellStyle = getDesktopShellStyle(Math.max(sortamentHeight, metalHeight))
+  const desktopShellStyle = getDesktopShellStyle(Math.max(sortamentHeight, metalHeight, calcHeight))
 
   const getGradesOrdered = (group: string) => {
     const raw = getGradesForGroup(group)
@@ -153,7 +154,7 @@ export default function CalculatorLayout() {
               metalGroup={state.metalGroup}
               onSelect={(key) => { selectProfile(key); setNeedsSortament(false) }}
             />
-            <CalcPanel {...commonProps} />
+            <CalcPanel {...commonProps} onContentHeight={setCalcHeight} />
           </div>
         </div>
 

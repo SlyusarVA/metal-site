@@ -6,6 +6,8 @@ import { ProfileKey } from '@/data/profiles'
 import { parseQuickInput } from '@/lib/quickInputParser'
 import ProfileIcon from './ProfileIcon'
 import { isRectangular, profileGroupKey, rectangularName, rectangularProfiles } from '@/data/profileNavigation'
+import { isBrassBar } from '@/data/brassTolerance'
+import { sheetBasis, sheetDensity } from '@/data/aluminumSheet'
 import { getAllowedProfiles } from '@/data/materials'
 import GostTags from './GostTags'
 import GostSearchBar from './GostSearchBar'
@@ -21,6 +23,7 @@ interface Props {
   needsSortament?: boolean
   onGostClear: () => void
   onGostOpen: (code: string) => void
+  onContentHeight?: (height: number) => void
   isMobile?: boolean
   metalGroups?: string[]
   profiles?: ProfileOption[]
@@ -32,9 +35,28 @@ const modes: Record<CalcMode, { label: string; hint: string }> = {
   quick: { label: 'Быстрый ввод', hint: 'Введите металл, марку, сортамент, размеры и массу одной строкой.' },
 }
 
-export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostClear, onGostOpen, needsSortament, isMobile = false, metalGroups = [], profiles = [] }: Props) {
+export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostClear, onGostOpen, needsSortament, onContentHeight, isMobile = false, metalGroups = [], profiles = [] }: Props) {
+  const panelRef = useRef<HTMLDivElement>(null)
+  const workRef = useRef<HTMLDivElement>(null)
+  const workContentRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!onContentHeight || !panelRef.current || !workContentRef.current) return
+    const measure = () => {
+      if (!panelRef.current || !workContentRef.current) return
+      const height = Array.from(panelRef.current.children).reduce((sum, child) => sum + (child === workRef.current ? workContentRef.current!.getBoundingClientRect().height + 24 : child.getBoundingClientRect().height), 0)
+      onContentHeight(Math.ceil(height) + 2)
+    }
+    const observer = new ResizeObserver(measure)
+    Array.from(panelRef.current.children).forEach(child => observer.observe(child))
+    observer.observe(workContentRef.current)
+    measure()
+    return () => observer.disconnect()
+  }, [onContentHeight])
   const { state, selectMetal, selectProfile, setParam, setLength, setMass, setQuantity, incrementQty, decrementQty, calculate } = calc
   const [selectedMode, setMode] = useState<CalcMode>('mass')
+  const isBrass = isBrassBar(state.profileKey, state.metalGroup)
+  const isAluminumSheet = state.profileKey === 'sheet' && state.metalGroup === 'Алюминий'
+  const basis = isAluminumSheet ? sheetBasis(state.grade, state.params.t ?? NaN, state.params.b ?? NaN, state.sheetOptions) : null
   const mode = state.profile.isVolume && selectedMode === 'length' ? 'mass' : selectedMode
   const [quickInput, setQuickInput] = useState('Сталь 20 круг 16 масса 120 кг')
   const [quickStatus, setQuickStatus] = useState<QuickStatus | null>(null)
@@ -45,7 +67,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
   const resultMass = state.result?.target === 'mass' ? state.result.value : null
   const resultLength = state.result?.target === 'length' ? state.result.value : null
   const displayResult = mode === 'length' ? resultLength : resultMass
-  const tolerance = getWeightTolerance(state.profileKey, Object.fromEntries(Object.entries(state.params).filter(([, v]) => v !== null) as [string, number][]), state.metalGroup)
+  const tolerance = getWeightTolerance(state.profileKey, Object.fromEntries(Object.entries(state.params).filter(([, v]) => v !== null) as [string, number][]), state.metalGroup, state.brassOptions)
   const massMin = mode === 'mass' && resultMass != null && tolerance ? resultMass * (1 - tolerance.minus) : null
   const massMax = mode === 'mass' && resultMass != null && tolerance ? resultMass * (1 + tolerance.plus) : null
   const gridCols = isMobile ? 'repeat(2,minmax(0,1fr))' : 'repeat(auto-fill,minmax(140px,1fr))'
@@ -89,7 +111,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
   }
 
   return (
-    <div style={st.panel}>
+    <div ref={panelRef} style={st.panel}>
       <div style={st.head}>
         <ProfileIcon icon={isRectangular(state.profileKey) ? 'plate' : state.profile.icon} size={32} />
         {!isMobile && (
@@ -99,11 +121,12 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
             <span style={st.headProfileSlot}><AnimatedText text={isRectangular(state.profileKey) ? rectangularName : state.profile.name} /></span>
           </span>
         )}
-        <GostTags metalGroup={state.metalGroup} profile={state.profile} density={state.density} onGostClick={onGostOpen} />
+        <GostTags metalGroup={state.metalGroup} profile={state.profile} density={isAluminumSheet ? sheetDensity(state.grade) : state.density} onGostClick={onGostOpen} />
       </div>
       <div style={st.search}><GostSearchBar onResult={onGostResult} onClear={onGostClear} /></div>
       {needsSortament && <div style={st.warn}>Выберите сортамент</div>}
-      <div className="ui-scroll-area" style={st.work}>
+      <div ref={workRef} className="ui-scroll-area" style={st.work}>
+        <div ref={workContentRef} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         <section style={st.card}>
           <div style={st.cardTitle}>Калькулятор металла</div>
           <ModeTabs mode={mode} onSelect={switchMode} isVolume={!!state.profile.isVolume} />
@@ -125,6 +148,24 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
           </div>
         </div>}
         <div style={st.markRow}><span id="calc-grade-label" style={st.inlineLabel}>Марка</span><select id="calc-grade" name="grade" aria-labelledby="calc-grade-label" value={state.grade} onChange={e => selectMetal(state.metalGroup, e.target.value)} style={st.select}>{grades.map(x => <option key={x.grade}>{x.grade}</option>)}</select></div>
+        {isBrass && <section style={st.card}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 8 }}>
+            <FieldSelect id="brass-manufacturing" name="brass-manufacturing" label="Изготовление прутка" value={state.brassOptions.manufacturing} onChange={v => calc.setBrassOptions({ manufacturing: v as 'drawn' | 'pressed' })} options={[{ value: 'drawn', label: 'Тянутый' }, { value: 'pressed', label: 'Прессованный' }]} />
+            <FieldSelect id="brass-accuracy" name="brass-accuracy" label="Точность размера" value={state.brassOptions.accuracy} onChange={v => calc.setBrassOptions({ accuracy: v as 'high' | 'increased' | 'normal' })} options={[{ value: 'normal', label: 'Нормальная' }, { value: 'increased', label: 'Повышенная' }, ...(state.profileKey === 'rod' && state.brassOptions.manufacturing === 'drawn' ? [{ value: 'high', label: 'Высокая' }] : [])]} />
+          </div>
+          <div style={st.hint}>{tolerance ? 'Диапазон массы рассчитан по допуску размера сечения при неизменных длине и плотности. Это не отдельный нормативный допуск массы.' : 'Для выбранного размера, изготовления или точности нет подтверждённого табличного допуска. Рассчитывается только номинальная масса.'}</div>
+        </section>}
+        {isAluminumSheet && <section style={st.card} aria-label="Расчёт по ГОСТ 21631-2023">
+          <div style={st.cardTitle}>ГОСТ 21631-2023</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 8 }}>
+            <FieldSelect id="sheet-thickness-accuracy" name="sheet-thickness-accuracy" label="Точность толщины" value={state.sheetOptions.thicknessAccuracy} onChange={v => calc.setSheetOptions({ thicknessAccuracy: v as 'normal' | 'high' })} options={[{ value: 'normal', label: 'Нормальная' }, { value: 'high', label: 'Повышенная' }]} />
+            <FieldSelect id="sheet-width-accuracy" name="sheet-width-accuracy" label="Точность ширины" value={state.sheetOptions.widthAccuracy} onChange={v => calc.setSheetOptions({ widthAccuracy: v as 'normal' | 'high' })} options={[{ value: 'normal', label: 'Нормальная' }, { value: 'high', label: 'Повышенная' }]} />
+            <FieldSelect id="sheet-condition" name="sheet-condition" label="Состояние материала" value={state.sheetOptions.condition} onChange={v => calc.setSheetOptions({ condition: v as 'annealed' | 'untreated' | 'other' })} options={[{ value: 'annealed', label: 'Отожжённое' }, { value: 'untreated', label: 'Без термообработки' }, { value: 'other', label: 'Другое состояние' }]} />
+          </div>
+          <label style={st.hint}><input type="checkbox" checked={state.sheetOptions.symmetric} onChange={e => calc.setSheetOptions({ symmetric: e.target.checked })} /> Симметричный допуск толщины согласован с поставщиком</label>
+          <div style={st.hint}>Расчёт по п. 4.1.1: обрезанные кромки, стандартные отклонения таблиц 1 и 3, плотность таблицы Б.1. Специальные условия поставки и допустимость сортамента по таблице 2 требуют отдельной проверки.</div>
+          {typeof basis === 'string' ? <div role="status" style={st.warn}>{basis}</div> : basis && <div style={st.hint}>Толщина: {basis.thicknessMin.toFixed(3)}–{basis.thicknessMax.toFixed(3)} мм; ширина: {basis.widthMin}–{basis.widthMax} мм. Для массы: {basis.meanThickness.toFixed(3)} × {basis.meanWidth} мм, ρ = {basis.density} кг/м³.</div>}
+        </section>}
         <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 8 }}>
           {state.profile.params.map(p => <div key={p.key}><Label>{p.label}</Label><UnitInput id={`calc-param-${p.key}`} name={`param-${p.key}`} label={p.label} value={state.params[p.key] ?? ''} unit={p.unit} onChange={v => setParam(p.key, v)} /></div>)}
           {!state.profile.isVolume && <div><Label>{mode === 'length' ? 'Масса' : 'Длина L'}</Label><UnitInput id={mode === 'length' ? 'calc-mass' : 'calc-length'} name={mode === 'length' ? 'mass' : 'length'} label={mode === 'length' ? 'Масса' : 'Длина L'} value={mode === 'length' ? state.mass ?? '' : state.length ?? ''} unit={mode === 'length' ? 'кг.' : 'м.'} onChange={setSource} /></div>}
@@ -133,6 +174,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
         <button type="button" onClick={() => calculate(mode === 'length' ? 'length' : 'mass')} style={st.action}>Рассчитать</button>
         {state.error && <ErrorMessage error={state.error} />}
         {state.snackbar && <div style={st.note}>{state.snackbar.message}</div>}
+      </div>
       </div>
       <div style={st.result}>
         <div>

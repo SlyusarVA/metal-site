@@ -1,6 +1,7 @@
 // Конвертировано из gost_reference.dart
 // Допуски по массе берутся из поля tolerances каждого ГОСТа
 
+import { BrassOptions, brassMassRange, isBrassBar } from './brassTolerance'
 import { ProfileKey, profileMap } from './profiles'
 import { getProfileGostCodes } from './profileStandards'
 
@@ -34,8 +35,10 @@ export interface WeightTolerance {
 export function getWeightTolerance(
   profileKey: ProfileKey,
   _params: Record<string, number>,
-  metalGroup: string
+  metalGroup: string,
+  brassOptions?: BrassOptions
 ): WeightTolerance | null {
+  if (isBrassBar(profileKey, metalGroup)) return brassOptions ? brassMassRange(profileKey, profileKey === 'square' ? _params.a : _params.d, brassOptions) : null
   const standard = profileMap.get(profileKey)?.gost
   if (!standard || !getProfileGostCodes(profileKey, metalGroup).includes(standard)) return null
   switch (profileKey) {
@@ -119,6 +122,15 @@ export function getWeightTolerance(
 
 // ── Полный справочник ГОСТ ────────────────────────────────────────────────────
 export const gostReferences: GostReference[] = [
+  {
+    code: 'ГОСТ 21631-2023', title: 'Листы из алюминия и алюминиевых сплавов. Технические условия.',
+    scope: 'Алюминиевые листы общего и специального назначения. Расчёт массы по п. 4.1.1.',
+    keyParams: ['Таблица 1: отклонения толщины', 'Таблица 3: отклонения ширины', 'Таблица Б.1: плотности сплавов'],
+    tolerances: ['Теоретическая масса вычисляется по средним предельным размерам толщины и ширины.'],
+    critical: ['Калькулятор использует стандартные отклонения для обрезанных кромок. Специальные условия поставки требуют отдельной проверки.'],
+    marking: 'Марка, состояние, размеры и точность изготовления указываются в заказе.',
+    fullTextUrl: 'https://23met.ru/gost_files/gost-21631-2023.pdf',
+  },
 
   // ── СОРТАМЕНТ ───────────────────────────────────────────────────────────────
 

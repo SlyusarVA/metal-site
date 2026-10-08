@@ -29,3 +29,6 @@ pnpm-debug.log*
 Thumbs.db
 .vscode/
 .idea/
+
+# Local standard research (raw PDF and page images)
+/local-reference/21631/
