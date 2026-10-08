@@ -192,7 +192,7 @@ function ModeTabs({ mode, onSelect, isVolume }: { mode: CalcMode; onSelect: (mod
 
   return (
     <div ref={barRef} className="t-tabs" role="tablist" aria-label="Режим расчёта" style={{ ...st.tabs, gridTemplateColumns: `repeat(${isVolume ? 2 : 3},minmax(0,1fr))` }}>
-      <span ref={pillRef} className="t-tabs-pill" aria-hidden="true" />
+      <span ref={pillRef} className="t-tabs-pill" aria-hidden="true" style={{ height: 'calc(100% - 6px)' }} />
       {(['mass', 'length', 'quick'] as const).filter(item => !isVolume || item !== 'length').map(item => (
         <button
           key={item}
@@ -201,7 +201,7 @@ function ModeTabs({ mode, onSelect, isVolume }: { mode: CalcMode; onSelect: (mod
           aria-selected={mode === item}
           className="t-tab"
           onClick={() => onSelect(item)}
-          style={st.tab}
+          style={{ ...st.tab, height: 'auto', minHeight: 44 }}
         >
           {modes[item].label}
         </button>
