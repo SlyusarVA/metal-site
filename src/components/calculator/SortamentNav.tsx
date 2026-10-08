@@ -1,6 +1,8 @@
 'use client'
 
 import { MetalProfile, ProfileKey } from '@/data/profiles'
+import ProfileIcon from './ProfileIcon'
+import { groupProfiles, profileGroupKey } from '@/data/profileNavigation'
 import { getAllowedProfiles } from '@/data/materials'
 
 interface Props {
@@ -19,14 +21,12 @@ export default function SortamentNav({
 }: Props) {
 
   const allowed = getAllowedProfiles(metalGroup)
-  const visibleProfiles = allowed
-    ? profiles.filter(p => allowed.includes(p.key))
-    : profiles
+  const visibleProfiles = groupProfiles(profiles, allowed)
 
-  const renderList = (fontSize = 15, padding = '7px 14px', iconSize = 24, minHeight = 40) =>
+  const renderList = (fontSize = 15, padding = '7px 14px', iconSize = 28, minHeight = 40) =>
     visibleProfiles.map(p => {
-      const isActive = p.key === selected
-      const isHighlighted = highlighted.includes(p.key)
+      const isActive = profileGroupKey(p.key) === profileGroupKey(selected)
+      const isHighlighted = highlighted.some(key => profileGroupKey(key) === profileGroupKey(p.key))
 
       let bg = 'none'
       let borderColor = 'transparent'
@@ -45,7 +45,7 @@ export default function SortamentNav({
         <button
           key={p.key}
           className="nav-item"
-          onClick={() => { onSelect(p.key); onMobileClose?.() }}
+          onClick={() => { onSelect(isActive ? selected : p.key); onMobileClose?.() }}
           style={{
             display: 'flex', alignItems: 'center', gap: 12,
             width: '100%', textAlign: 'left',
@@ -67,13 +67,8 @@ export default function SortamentNav({
               (e.currentTarget as HTMLElement).style.background = 'none'
           }}
         >
-          <img
-            src={`/icons/${p.icon}.svg`}
-            alt=""
-            width={iconSize} height={iconSize}
-            style={{ flexShrink: 0 }}
-          />
-          <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
+          <ProfileIcon icon={p.icon} size={iconSize} />
+          <span style={{ flex: 1, whiteSpace: 'normal' }}>{p.name}</span>
           {isHighlighted && !isActive && (
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#F9A825', flexShrink: 0 }} />
           )}
@@ -127,7 +122,7 @@ export default function SortamentNav({
         }}>
           Сортамент
         </div>
-        {renderList(15, '12px 14px', 24, 44)}
+        {renderList(15, '12px 14px', 28, 44)}
       </div>
     </>
   )

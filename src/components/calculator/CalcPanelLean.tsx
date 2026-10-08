@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from 'react'
 import { getWeightTolerance } from '@/data/gost'
 import { ProfileKey } from '@/data/profiles'
 import { parseQuickInput } from '@/lib/quickInputParser'
+import ProfileIcon from './ProfileIcon'
+import { isRectangular, profileGroupKey, rectangularProfiles } from '@/data/profileNavigation'
+import { getAllowedProfiles } from '@/data/materials'
 import GostTags from './GostTags'
 import GostSearchBar from './GostSearchBar'
 
@@ -37,6 +40,8 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
   const [quickStatus, setQuickStatus] = useState<QuickStatus | null>(null)
   const [quickChips, setQuickChips] = useState(['Сталь', '20', 'Круг', 'Ø16', '120 кг'])
   const grades = getGrades(state.metalGroup)
+  const rectangularOptions = rectangularProfiles(getAllowedProfiles(state.metalGroup))
+  const navigationKey = profiles.find(p => profileGroupKey(p.key) === profileGroupKey(state.profileKey))?.key ?? state.profileKey
   const resultMass = state.result?.target === 'mass' ? state.result.value : null
   const resultLength = state.result?.target === 'length' ? state.result.value : null
   const displayResult = mode === 'length' ? resultLength : resultMass
@@ -86,7 +91,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
   return (
     <div style={st.panel}>
       <div style={st.head}>
-        <img src={`/icons/${state.profile.icon}.svg`} alt={state.profile.name} width={32} height={32} style={{ flexShrink: 0 }} />
+        <ProfileIcon icon={state.profile.icon} size={32} />
         {!isMobile && (
           <span style={st.headTitle}>
             <span style={st.headMetalSlot}><AnimatedText text={state.metalGroup} /></span>
@@ -111,8 +116,9 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
         {quickStatus && <div role="status" style={status(quickStatus.kind)}>{quickStatus.message}</div>}
         {isMobile && <div style={st.mobilePickers}>
           <FieldSelect id="calc-mobile-metal" name="mobile-metal" label="Металл" value={state.metalGroup} onChange={setGroup} options={metalGroups.map(x => ({ value: x, label: x }))} />
-          <FieldSelect id="calc-mobile-profile" name="mobile-profile" label="Сортамент" value={state.profileKey} onChange={v => selectProfile(v as ProfileKey)} options={profiles.map(x => ({ value: x.key, label: x.name }))} />
+          <FieldSelect id="calc-mobile-profile" name="mobile-profile" label="Сортамент" value={navigationKey} onChange={v => selectProfile(v as ProfileKey)} options={profiles.map(x => ({ value: x.key, label: x.name }))} />
         </div>}
+        {isRectangular(state.profileKey) && <FieldSelect id="calc-rectangular-kind" name="rectangular-kind" label="Вид проката: лист / плита / полоса" value={state.profileKey} onChange={v => selectProfile(v as ProfileKey)} options={rectangularOptions.map(p => ({ value: p.key, label: p.name }))} />}
         <div style={st.markRow}><span id="calc-grade-label" style={st.inlineLabel}>Марка</span><select id="calc-grade" name="grade" aria-labelledby="calc-grade-label" value={state.grade} onChange={e => selectMetal(state.metalGroup, e.target.value)} style={st.select}>{grades.map(x => <option key={x.grade}>{x.grade}</option>)}</select></div>
         <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 8 }}>
           {state.profile.params.map(p => <div key={p.key}><Label>{p.label}</Label><UnitInput id={`calc-param-${p.key}`} name={`param-${p.key}`} label={p.label} value={state.params[p.key] ?? ''} unit={p.unit} onChange={v => setParam(p.key, v)} /></div>)}

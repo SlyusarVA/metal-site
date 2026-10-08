@@ -140,3 +140,40 @@ test('volume profiles return mass even if length was previously selected', () =>
   c.selectProfile('sheet'); c.calculate('length'); c = a.render()
   assert.equal(c.state.result.target, 'mass'); assert.equal(c.state.result.massOne, 31.4)
 })
+
+test('rectangular navigation groups once and keeps material restrictions', () => {
+  const a = app()
+  const { profiles } = a.load('src/data/profiles')
+  const { groupProfiles, profileGroupKey, rectangularProfiles } = a.load('src/data/profileNavigation')
+  const grouped = groupProfiles(profiles)
+  assert.equal(grouped.length, profiles.length - 2)
+  assert.equal(grouped.filter(p => profileGroupKey(p.key) === 'sheet').length, 1)
+  assert.ok(grouped.some(p => p.key === 'square'))
+  assert.ok(grouped.some(p => p.key === 'strip'))
+  assert.deepEqual(groupProfiles(profiles, ['plate', 'square']).map(p => p.key), ['plate', 'square'])
+  assert.deepEqual(rectangularProfiles(['sheet', 'plate']).map(p => p.key), ['sheet', 'plate'])
+  assert.deepEqual(groupProfiles(profiles, ['wire']).map(p => p.key), ['wire'])
+})
+
+test('custom order keeps the first rectangular position and all calculation IDs', () => {
+  const { groupedProfileOrder, expandProfileOrder } = app().load('src/data/profileNavigation')
+  assert.deepEqual(groupedProfileOrder(['round', 'flat', 'square', 'plate', 'sheet']), ['round', 'sheet', 'square'])
+  assert.deepEqual(expandProfileOrder(['round', 'sheet', 'square']), ['round', 'sheet', 'plate', 'flat', 'square'])
+})
+
+test('grouped products keep equivalent mass, individual standards and legacy history', () => {
+  const a = app()
+  const { calcMass } = a.load('src/lib/calculations')
+  const { profileMap } = a.load('src/data/profiles')
+  const { loadHistory } = a.load('src/lib/history')
+  const records = ['sheet', 'plate', 'flat'].map(profileKey => {
+    const params = profileKey === 'flat' ? { b: 1000, t: 4 } : { a: 2000, b: 1000, t: 4 }
+    const result = calcMass({ ...base, profileKey, params, length: 2 })
+    assert.equal(result.mass, 62.8)
+    return { id: profileKey, timestamp: 1, profileKey, profileName: profileMap.get(profileKey).name,
+      metalGroup: 'Сталь', grade: '20', params, quantity: 1, length: 2, mass: 62.8, massOne: 62.8, linearDensity: 31.4 }
+  })
+  assert.equal(new Set(records.map(r => profileMap.get(r.profileKey).gost)).size, 3)
+  a.storage.set('metal_calc_history', JSON.stringify(records))
+  assert.deepEqual(loadHistory(), records)
+})

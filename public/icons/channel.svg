@@ -1,13 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img">
-<defs>
-  <linearGradient id="steel" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#d8e0e7"/><stop offset=".42" stop-color="#8997a4"/>
-    <stop offset="1" stop-color="#46525e"/>
-  </linearGradient>
-  <linearGradient id="dark" x1="0" y1="0" x2="1" y2="1">
-    <stop offset="0" stop-color="#82909c"/><stop offset="1" stop-color="#303a44"/>
-  </linearGradient>
-</defs>
-<path d="M14 14h36v9H25v18h25v9H14z" fill="url(#steel)" stroke="#b8c2ca" stroke-width="1.4"/>
-<path d="M25 23 14 14m11 27L14 50" stroke="#53616d" stroke-width="1.2"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none"><g stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6v20h18v-5H13V11h13V6z"/></g></svg>

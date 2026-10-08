@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { groupProfiles } from '@/data/profileNavigation'
 import { profiles, ProfileKey } from '@/data/profiles'
 import { getAllowedProfiles, getGradesForGroup } from '@/data/materials'
 import { useCalculator } from '@/hooks/useCalculator'
@@ -77,7 +78,7 @@ export default function CalculatorLayout() {
     1,
     ...orderedMetals.map(group => {
       const allowed = getAllowedProfiles(group)
-      return allowed ? allowed.length : orderedProfiles.length
+      return groupProfiles(orderedProfiles, allowed).length
     })
   )
 
@@ -180,7 +181,7 @@ export default function CalculatorLayout() {
         <button onClick={() => setShowSettings(true)} aria-label="Открыть настройки" style={mobileIconBtnStyle}><SettingsIcon /></button>
       </nav>
       <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-        <CalcPanel {...commonProps} isMobile metalGroups={orderedMetals} profiles={orderedProfiles.map(p => ({ key: p.key, name: p.name }))} />
+        <CalcPanel {...commonProps} isMobile metalGroups={orderedMetals} profiles={groupProfiles(orderedProfiles, getAllowedProfiles(state.metalGroup)).map(p => ({ key: p.key, name: p.name }))} />
       </div>
       {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
       {showGost && <GostPanel initialCode={selectedGostCode} onClose={() => setShowGost(false)} />}
