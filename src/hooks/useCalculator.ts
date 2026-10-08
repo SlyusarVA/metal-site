@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { profiles, ProfileKey, autocorrectProfile, MetalProfile } from '@/data/profiles'
 import { materials, getMetalGroups, getGradesForGroup, isNonFerrous } from '@/data/materials'
 import { calcMass, calcLength } from '@/lib/calculations'
@@ -120,7 +120,6 @@ function makeInitialState(): CalculatorState {
 // ── Главный хук ───────────────────────────────────────────────────────────────
 export function useCalculator() {
   const [state, setState] = useState<CalculatorState>(makeInitialState)
-  const snackbarTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const newestRecord = state.history[0]
   useEffect(() => {
@@ -128,19 +127,6 @@ export function useCalculator() {
       setState(s => ({ ...s, snackbar: { message: 'Расчёт выполнен, но историю не удалось сохранить в браузере.', id: Date.now() } }))
     }
   }, [newestRecord])
-
-  useEffect(() => () => {
-    if (snackbarTimerRef.current) clearTimeout(snackbarTimerRef.current)
-  }, [])
-
-  // ── Показать снэкбар ───────────────────────────────────────────────────────
-  const showSnackbar = useCallback((message: string) => {
-    if (snackbarTimerRef.current) clearTimeout(snackbarTimerRef.current)
-    setState(s => ({ ...s, snackbar: { message, id: Date.now() } }))
-    snackbarTimerRef.current = setTimeout(() => {
-      setState(s => ({ ...s, snackbar: null }))
-    }, 3000)
-  }, [])
 
   // ── Выбор профиля ─────────────────────────────────────────────────────────
   const selectProfile = useCallback((key: ProfileKey) => {
@@ -177,13 +163,9 @@ export function useCalculator() {
 
       if (correctedKey !== s.profileKey) {
         // Нужна автокоррекция профиля
-        const oldProfile = profiles.find(p => p.key === s.profileKey)!
         const newProfile = profiles.find(p => p.key === correctedKey)!
         const params: Record<string, number | null> = {}
         for (const p of newProfile.params) params[p.key] = p.defaultValue
-
-        // Показываем снэкбар отдельно (не внутри setState)
-        setTimeout(() => showSnackbar(`Сортамент изменён: ${oldProfile.name} → ${newProfile.name}`), 0)
 
         return {
           ...s,
@@ -215,7 +197,7 @@ export function useCalculator() {
         unchanged: false,
       }
     })
-  }, [showSnackbar])
+  }, [])
 
   const setBrassOptions = useCallback((patch: Partial<BrassOptions>) => {
     setState(s => ({ ...s, brassOptions: { ...s.brassOptions, ...patch, ...(patch.manufacturing === 'pressed' && s.brassOptions.accuracy === 'high' ? { accuracy: 'normal' as const } : {}) }, result: null, error: null }))
