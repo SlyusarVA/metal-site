@@ -260,8 +260,8 @@ test('GOST sheet hook saves calculation basis and rejects unsupported grades exp
 
 test('brass mass interval is derived from the squared dimensional ratio', () => {
   const a=app(); const {brassMassRange,brassDimensionTolerance,defaultBrassOptions}=a.load('src/data/brassTolerance')
-  assert.equal(defaultBrassOptions.manufacturing, 'pressed')
-  assert.equal(brassDimensionTolerance('rod',20,defaultBrassOptions),.42)
+  assert.equal(defaultBrassOptions.manufacturing, 'drawn')
+  assert.equal(brassDimensionTolerance('rod',20,defaultBrassOptions),.30)
   const o={...defaultBrassOptions,manufacturing:'drawn'}
   const r=brassMassRange('rod',20,o)
   assert.ok(Math.abs(r.minus-.029775)<1e-12); assert.ok(Math.abs(r.plus-.030225)<1e-12)

@@ -180,9 +180,10 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
           <FieldSelect id="calc-mobile-metal" name="mobile-metal" label="Металл" value={state.metalGroup} onChange={setGroup} options={metalGroups.map(x => ({ value: x, label: x }))} />
           <FieldSelect id="calc-mobile-profile" name="mobile-profile" label="Сортамент" value={navigationKey} onChange={v => selectProfile(v as ProfileKey)} options={profiles.map(x => ({ value: x.key, label: x.name }))} />
         </div>}
-        <div style={{ display: 'grid', gridTemplateColumns: isRectangular(state.profileKey) && !isMobile ? 'minmax(0, 440px) minmax(180px, 1fr)' : 'minmax(0, 1fr)', alignItems: 'center', gap: 8 }}>
-          <div style={{ ...st.markRow, maxWidth: isMobile ? 'none' : 440 }}><span id="calc-grade-label" style={st.inlineLabel}>Марка</span><select id="calc-grade" name="grade" aria-labelledby="calc-grade-label" value={state.grade} onChange={e => selectMetal(state.metalGroup, e.target.value)} style={{ ...st.select, height: isRectangular(state.profileKey) ? 44 : 34 }}>{grades.map(x => <option key={x.grade}>{x.grade}</option>)}</select></div>
-          {isRectangular(state.profileKey) && <FlatGostMenu profile={state.profile} metalGroup={state.metalGroup} onSelect={selectProfile} useGost={state.flatUseGost} onGostClick={onGostOpen} />}
+        <div style={{ display: 'grid', gridTemplateColumns: isRectangular(state.profileKey) && !isMobile ? '48px repeat(2, minmax(0, 1fr))' : '48px minmax(0, 1fr)', maxWidth: !isRectangular(state.profileKey) && !isMobile ? 440 : undefined, alignItems: 'center', gap: 8 }}>
+          <span id="calc-grade-label" style={st.inlineLabel}>Марка</span>
+          <select id="calc-grade" name="grade" aria-labelledby="calc-grade-label" value={state.grade} onChange={e => selectMetal(state.metalGroup, e.target.value)} style={{ ...st.select, height: 44 }}>{grades.map(x => <option key={x.grade}>{x.grade}</option>)}</select>
+          {isRectangular(state.profileKey) && <div style={{ gridColumn: isMobile ? 2 : 3, minWidth: 0 }}><FlatGostMenu profile={state.profile} metalGroup={state.metalGroup} onSelect={selectProfile} useGost={state.flatUseGost} onGostClick={onGostOpen} /></div>}
         </div>
         {isBrass && <section style={{ ...st.card, position: 'relative' }}>
           <BrassOptionsHelp />
@@ -430,8 +431,7 @@ const st: Record<string, React.CSSProperties> = {
   chips: { display: 'flex', gap: 6, flexWrap: 'wrap', fontSize: 'var(--text-xs)', color: 'var(--on-surface-variant)' },
   chip: { border: '1px solid var(--outline-variant)', borderRadius: 999, padding: '2px 8px', background: 'var(--surface-container)' },
   mobilePickers: { display: 'grid', gridTemplateColumns: 'repeat(2,minmax(0,1fr))', gap: 8 },
-  markRow: { display: 'flex', alignItems: 'center', gap: 8, maxWidth: 440 },
-  inlineLabel: { minWidth: 48, fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--on-surface-variant)' },
+  inlineLabel: { fontSize: 14, fontWeight: 600, color: 'var(--on-surface-variant)' },
   label: { marginBottom: 3, fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '.06em' },
   select: { flex: 1, minWidth: 0, height: 34, padding: '0 9px', border: '1px solid var(--outline)', borderRadius: 7, background: 'var(--surface)', color: 'var(--on-surface)' },
   mobileSelect: { height: 44, padding: '0 9px', border: '1px solid var(--outline)', borderRadius: 7, background: 'var(--surface)', color: 'var(--on-surface)' },

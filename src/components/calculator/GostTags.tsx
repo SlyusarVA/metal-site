@@ -98,9 +98,9 @@ export function FlatGostMenu({ profile, metalGroup, onSelect, onGostClick, useGo
     return () => { document.removeEventListener('pointerdown', outside); window.removeEventListener('resize', resize) }
   }, [open])
   return <>
-    <button ref={trigger} type="button" aria-label="Выбрать ГОСТ плоского проката" aria-haspopup="menu" aria-expanded={open} aria-controls={open ? menuId : undefined} title={current?.code ? current.title + ' — ' + current.code : current?.title} onClick={() => open ? close() : show()} onKeyDown={e => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); show() } }} style={{ width: '100%', height: 44, boxSizing: 'border-box', lineHeight: 1.2, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-sm)', minHeight: 44, padding: '6px 12px', fontSize: 12, fontWeight: 600, color: 'var(--primary)', cursor: 'pointer', fontFamily: 'Manrope, sans-serif', background: 'var(--primary-container)', borderColor: 'var(--primary)' }}>
+    <button ref={trigger} type="button" aria-label="Выбрать ГОСТ плоского проката" aria-haspopup="menu" aria-expanded={open} aria-controls={open ? menuId : undefined} title={current?.code ? current.title + ' — ' + current.code : current?.title} onClick={() => open ? close() : show()} onKeyDown={e => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); show() } }} style={{ width: '100%', height: 44, boxSizing: 'border-box', lineHeight: 1.2, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-sm)', minHeight: 44, padding: '4px 12px', fontSize: 14, fontWeight: 600, color: 'var(--primary)', cursor: 'pointer', fontFamily: 'Manrope, sans-serif', background: 'var(--primary-container)', borderColor: 'var(--primary)' }}>
       <span style={{ display: 'block' }}>{choices.length === 1 && choices[0].code ? 'ГОСТ' : 'Выбрать ГОСТ'} <span aria-hidden="true">⌄</span></span>
-      <span style={{ display: 'block', fontSize: 11, fontWeight: 400 }}>{current?.code ?? 'По размерам'}</span>
+      <span style={{ display: 'block', fontSize: 12, fontWeight: 400 }}>{current?.code ?? 'По размерам'}</span>
     </button>
     {open && createPortal(<section ref={menu} id={menuId} role="menu" aria-label="ГОСТ плоского проката" onKeyDown={e => {
       if (e.key === 'Escape') { e.preventDefault(); close(true) }

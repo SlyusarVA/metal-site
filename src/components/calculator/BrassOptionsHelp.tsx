@@ -25,7 +25,7 @@ export default function BrassOptionsHelp() {
           <p style={{ padding: 10, background: 'var(--surface-container)', borderRadius: 'var(--radius-sm)', marginTop: 0 }}>Пруток <b style={{ color: 'var(--primary)' }}>Д</b>КР<b style={{ color: 'var(--primary)' }}>Н</b>Т 12 НД ЛС63-3 ГОСТ 2060-2006<br /><span style={{ color: 'var(--on-surface-variant)' }}>Д · КР · Н · Т → тянутый · круглый · нормальная точность · твёрдый.</span></p>
           <p style={{ padding: 10, background: 'var(--surface-container)', borderRadius: 'var(--radius-sm)' }}>Пруток <b style={{ color: 'var(--primary)' }}>Г</b>КВ<b style={{ color: 'var(--primary)' }}>Н</b>Х 24 НД ЛЖС58-1-1 ГОСТ 2060-2006<br /><span style={{ color: 'var(--on-surface-variant)' }}>Г · КВ · Н · Х → прессованный · квадратный · нормальная точность · состояние не указано.</span></p>
           <p>У тянутого прутка обычно меньше отклонение размера. Поэтому изготовление меняет диапазон массы. Высокая точность доступна для тянутых круглых прутков.</p>
-          <p>По умолчанию: <b>прессованный, нормальная точность</b>. Если в наименовании параметров нет, уточните их у поставщика; это исходный выбор калькулятора.</p>
+          <p>По умолчанию: <b>тянутый, нормальная точность</b>. Если в наименовании параметров нет, уточните их у поставщика; это исходный выбор калькулятора.</p>
           <a href="https://files.stroyinf.ru/Data2/1/4293843/4293843785.htm" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)' }}>ГОСТ 2060-2006, пункт 4.6 · обозначения, таблицы 1 и 2 · допуски</a>
         </div>
       </div>
