@@ -9,10 +9,9 @@ import { getWeightTolerance } from '@/data/gost'
 import { ProfileKey } from '@/data/profiles'
 import { parseQuickInput } from '@/lib/quickInputParser'
 import ProfileIcon from './ProfileIcon'
-import { isRectangular, profileGroupKey, rectangularName, rectangularProfiles } from '@/data/profileNavigation'
+import { isRectangular, profileGroupKey, rectangularName } from '@/data/profileNavigation'
 import { isBrassBar } from '@/data/brassTolerance'
 import { sheetBasis, sheetDensity } from '@/data/aluminumSheet'
-import { getAllowedProfiles } from '@/data/materials'
 import GostTags from './GostTags'
 import GostSearchBar from './GostSearchBar'
 
@@ -76,7 +75,6 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
   const [quickStatus, setQuickStatus] = useState<QuickStatus | null>(null)
   const [quickChips, setQuickChips] = useState(['Сталь', '20', 'Круг', 'Ø16', '120 кг'])
   const grades = getGrades(state.metalGroup)
-  const rectangularOptions = rectangularProfiles(getAllowedProfiles(state.metalGroup))
   const navigationKey = profiles.find(p => profileGroupKey(p.key) === profileGroupKey(state.profileKey))?.key ?? state.profileKey
   const resultMass = state.result?.target === 'mass' ? state.result.value : null
   const resultLength = state.result?.target === 'length' ? state.result.value : null
@@ -135,7 +133,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
             <span style={st.headProfileSlot}><AnimatedText text={isRectangular(state.profileKey) ? rectangularName : state.profile.name} /></span>
           </span>
         )}
-        <GostTags metalGroup={state.metalGroup} profile={state.profile} densityText={isAluminumTape ? (tapeCoefficient(state.grade) == null ? 'k: нет в Б.1' : `k = ${tapeCoefficient(state.grade)!.toFixed(3)}`) : isAluminumPlate ? (plateCoefficient(state.grade) == null ? "k: нет в Б.1" : `k = ${plateCoefficient(state.grade)!.toFixed(3)}`) : undefined} density={isAluminumSheet ? sheetDensity(state.grade) : state.density} onGostClick={onGostOpen} />
+        <GostTags metalGroup={state.metalGroup} profile={state.profile} densityText={isAluminumTape ? (tapeCoefficient(state.grade) == null ? 'k: нет в Б.1' : `k = ${tapeCoefficient(state.grade)!.toFixed(3)}`) : isAluminumPlate ? (plateCoefficient(state.grade) == null ? "k: нет в Б.1" : `k = ${plateCoefficient(state.grade)!.toFixed(3)}`) : undefined} density={isAluminumSheet ? sheetDensity(state.grade) : state.density} onGostClick={onGostOpen} onProfileSelect={selectProfile} />
       </div>
       <div style={st.search}><GostSearchBar onResult={onGostResult} onClear={onGostClear} /></div>
       {needsSortament && <div style={st.warn}>Выберите сортамент</div>}
@@ -154,12 +152,6 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
         {isMobile && <div style={st.mobilePickers}>
           <FieldSelect id="calc-mobile-metal" name="mobile-metal" label="Металл" value={state.metalGroup} onChange={setGroup} options={metalGroups.map(x => ({ value: x, label: x }))} />
           <FieldSelect id="calc-mobile-profile" name="mobile-profile" label="Сортамент" value={navigationKey} onChange={v => selectProfile(v as ProfileKey)} options={profiles.map(x => ({ value: x.key, label: x.name }))} />
-        </div>}
-        {isRectangular(state.profileKey) && <div>
-          <Label>Вид плоского проката</Label>
-          <div role="group" aria-label="Вид плоского проката" style={{ ...st.tabs, gridTemplateColumns: 'repeat(auto-fit,minmax(70px,1fr))' }}>
-            {rectangularOptions.map(p => <button key={p.key} type="button" aria-pressed={state.profileKey === p.key} onClick={() => selectProfile(p.key)} style={{ ...st.tab, minHeight: 36, border: 'none', borderRadius: 999, cursor: 'pointer', background: state.profileKey === p.key ? 'var(--primary)' : 'transparent', color: state.profileKey === p.key ? '#fff' : 'var(--on-surface-variant)' }}>{p.name}</button>)}
-          </div>
         </div>}
         <div style={st.markRow}><span id="calc-grade-label" style={st.inlineLabel}>Марка</span><select id="calc-grade" name="grade" aria-labelledby="calc-grade-label" value={state.grade} onChange={e => selectMetal(state.metalGroup, e.target.value)} style={st.select}>{grades.map(x => <option key={x.grade}>{x.grade}</option>)}</select></div>
         {isBrass && <section style={st.card}>

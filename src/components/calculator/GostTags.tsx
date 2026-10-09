@@ -1,23 +1,27 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { getFlatStandardChoices } from '@/data/flatStandards'
+import { isRectangular } from '@/data/profileNavigation'
 import { getProfileGostCodes } from '@/data/profileStandards'
-import { MetalProfile } from '@/data/profiles'
+import { MetalProfile, ProfileKey } from '@/data/profiles'
 
 interface Props {
   profile: MetalProfile
   metalGroup: string
   densityText?: string
   density: number | null
+  onProfileSelect?: (key: ProfileKey) => void
   onGostClick: (code: string) => void
 }
 
-export default function GostTags({ profile, metalGroup, density, densityText, onGostClick }: Props) {
+export default function GostTags({ profile, metalGroup, density, densityText, onGostClick, onProfileSelect }: Props) {
   const gostCodes = getProfileGostCodes(profile.key, metalGroup)
 
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', minWidth: 0 }}>
-      {gostCodes.map((code, index) => (
+      {isRectangular(profile.key) && onProfileSelect ? <FlatGostMenu profile={profile} metalGroup={metalGroup} onSelect={onProfileSelect} onGostClick={onGostClick} /> : gostCodes.map((code, index) => (
         <button
           key={`gost-${index}`}
           title={code}
@@ -62,6 +66,57 @@ export default function GostTags({ profile, metalGroup, density, densityText, on
       </span>
     </div>
   )
+}
+
+function FlatGostMenu({ profile, metalGroup, onSelect, onGostClick }: { profile: MetalProfile; metalGroup: string; onSelect: (key: ProfileKey) => void; onGostClick: (code: string) => void }) {
+  const choices = getFlatStandardChoices(metalGroup)
+  const current = choices.find(c => c.profileKeys.includes(profile.key))
+  const [open, setOpen] = useState(false)
+  const [position, setPosition] = useState({ left: 12, top: 40, width: 520, maxHeight: 400 })
+  const trigger = useRef<HTMLButtonElement>(null)
+  const menu = useRef<HTMLElement>(null)
+  const menuId = useId()
+  function close(focus = false) { setOpen(false); if (focus) trigger.current?.focus() }
+  function show() {
+    const rect = trigger.current?.getBoundingClientRect()
+    if (!rect) return
+    const width = Math.min(520, window.innerWidth - 24)
+    const top = Math.min(rect.bottom + 6, Math.max(12, window.innerHeight - 240))
+    setPosition({ left: Math.max(12, Math.min(rect.left, window.innerWidth - width - 12)), top, width, maxHeight: window.innerHeight - top - 12 })
+    setOpen(true)
+  }
+  useEffect(() => { setOpen(false) }, [profile.key, metalGroup])
+  useEffect(() => {
+    if (!open) return
+    menu.current?.querySelector<HTMLButtonElement>('[aria-checked="true"]')?.focus()
+    const outside = (event: PointerEvent) => { if (!menu.current?.contains(event.target as Node) && !trigger.current?.contains(event.target as Node)) setOpen(false) }
+    const resize = () => setOpen(false)
+    document.addEventListener('pointerdown', outside)
+    window.addEventListener('resize', resize)
+    return () => { document.removeEventListener('pointerdown', outside); window.removeEventListener('resize', resize) }
+  }, [open])
+  return <>
+    <button ref={trigger} type="button" aria-label="Выбрать ГОСТ плоского проката" aria-haspopup="menu" aria-expanded={open} aria-controls={open ? menuId : undefined} title={current?.code ? current.title + ' — ' + current.code : current?.title} onClick={() => open ? close() : show()} onKeyDown={e => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); show() } }} style={{ background: 'var(--surface-container)', border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-full)', padding: '3px 12px', fontSize: 11, fontWeight: 600, color: 'var(--primary)', cursor: 'pointer', fontFamily: 'Manrope, sans-serif' }}>
+      {current?.code ?? 'Выбрать ГОСТ'} <span aria-hidden="true">⌄</span>
+    </button>
+    {open && createPortal(<section ref={menu} id={menuId} role="menu" aria-label="ГОСТ плоского проката" onKeyDown={e => {
+      if (e.key === 'Escape') { e.preventDefault(); close(true) }
+      if (e.key === 'Tab') close(true)
+      if (['ArrowDown','ArrowUp','Home','End'].includes(e.key)) {
+        e.preventDefault()
+        const items = Array.from(menu.current?.querySelectorAll<HTMLButtonElement>('[role^="menuitem"]') ?? [])
+        const index = items.indexOf(document.activeElement as HTMLButtonElement)
+        const next = e.key === 'Home' ? 0 : e.key === 'End' ? items.length - 1 : (index + (e.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length
+        items[next]?.focus()
+      }
+    }} style={{ position: 'fixed', ...position, overflowY: 'auto', zIndex: 1000, boxSizing: 'border-box', padding: 6, border: '1px solid var(--outline)', borderRadius: 10, background: 'var(--surface)', color: 'var(--on-surface)', boxShadow: '0 8px 28px #0005' }}>
+      {choices.map(choice => <button key={choice.code ?? 'dimensions'} type="button" role="menuitemradio" aria-checked={choice === current} tabIndex={-1} onClick={() => { if (!choice.profileKeys.includes(profile.key)) onSelect(choice.profileKey); close(true) }} style={{ display: 'flex', width: '100%', gap: 8, alignItems: 'flex-start', padding: '10px 12px', border: 0, borderRadius: 7, textAlign: 'left', font: 'inherit', fontSize: 13, cursor: 'pointer', color: choice === current ? 'var(--primary)' : 'var(--on-surface)', background: choice === current ? 'var(--primary-container)' : 'transparent' }}>
+        <span aria-hidden="true" style={{ width: 14, flexShrink: 0 }}>{choice === current ? '✓' : ''}</span>
+        <span style={{ minWidth: 0, whiteSpace: 'normal' }}>{choice.title}{choice.code && <strong style={{ display: 'block', marginTop: 3 }}>{choice.code}</strong>}</span>
+      </button>)}
+      {current?.code && <button type="button" role="menuitem" tabIndex={-1} onClick={() => { close(true); onGostClick(current.code!) }} style={{ display: 'block', width: '100%', marginTop: 4, padding: '10px 12px', border: 0, borderTop: '1px solid var(--outline-variant)', textAlign: 'left', font: 'inherit', fontSize: 12, cursor: 'pointer', color: 'var(--on-surface-variant)', background: 'transparent' }}>Открыть справку: {current.code}</button>}
+    </section>, document.body)}
+  </>
 }
 
 function AnimatedText({ text }: { text: string }) {

@@ -368,3 +368,15 @@ test('GOST tape options persist, restore and distinguish history records', () =>
  c.restoreFromHistory(normal);c=a.render();assert.equal(c.state.tapeOptions.accuracy,'normal');c.calculate('mass');c=a.render();assert.equal(c.state.result.value,normal.mass)
  c.selectMetal('Алюминий','6061');c.calculate('mass');c=a.render();assert.equal(c.state.result,null);assert.match(c.state.error.message,/Б.1/)
 })
+
+test('flat standard menu is material-specific and preserves one choice per standard', () => {
+ const {getFlatStandardChoices:choices}=app().load('src/data/flatStandards')
+ const aluminum=choices('Алюминий')
+ assert.deepEqual(aluminum.filter(x=>x.code).map(x=>x.code),['ГОСТ 21631-2023','ГОСТ 17232-2023','ГОСТ 13726-2023'])
+ assert.equal(aluminum.find(x=>x.code==='ГОСТ 17232-2023').profileKey,'plate')
+ assert.match(aluminum.find(x=>x.code==='ГОСТ 13726-2023').title,/Ленты из алюминия и алюминиевых сплавов. Технические условия/)
+ assert.equal(aluminum.find(x=>!x.code).profileKey,'flat')
+ const steel=choices('Сталь');assert.deepEqual(steel.map(x=>x.code),['ГОСТ 19903-2015','ГОСТ 103-2006','ГОСТ 503-81'])
+ assert.deepEqual(steel[0].profileKeys,['sheet','plate'])
+ assert.ok(!choices('Медь').some(x=>x.code==='ГОСТ 2060-2006'))
+})
