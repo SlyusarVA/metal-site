@@ -78,7 +78,10 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
   const navigationKey = profiles.find(p => profileGroupKey(p.key) === profileGroupKey(state.profileKey))?.key ?? state.profileKey
   const resultMass = state.result?.target === 'mass' ? state.result.value : null
   const resultLength = state.result?.target === 'length' ? state.result.value : null
-  const displayResult = mode === 'length' ? resultLength : resultMass
+  const lengthScale = isRectangular(state.profileKey) ? 1000 : 1
+  const lengthUnit = isRectangular(state.profileKey) ? 'мм' : 'м'
+  const displayLength = state.length == null ? '' : Number((state.length * lengthScale).toFixed(6))
+  const displayResult = mode === 'length' && resultLength != null ? resultLength * lengthScale : mode === 'length' ? null : resultMass
   const tolerance = isRectangular(state.profileKey) && !state.flatUseGost ? null : getWeightTolerance(state.profileKey, Object.fromEntries(Object.entries(state.params).filter(([, v]) => v !== null) as [string, number][]), state.metalGroup, state.brassOptions)
   const massMin = mode === 'mass' && resultMass != null && tolerance ? resultMass * (1 - tolerance.minus) : null
   const massMax = mode === 'mass' && resultMass != null && tolerance ? resultMass * (1 + tolerance.plus) : null
@@ -94,7 +97,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
   function setSource(value: number | null) {
     if (mode !== 'length') {
       setMass(null)
-      setLength(value)
+      setLength(value == null ? null : value / lengthScale)
     } else {
       setLength(null)
       setMass(value)
@@ -164,7 +167,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
 
         <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 8 }}>
           {state.profile.params.map(p => <div key={p.key}><Label>{p.label}</Label><UnitInput id={`calc-param-${p.key}`} name={`param-${p.key}`} label={p.label} value={state.params[p.key] ?? ''} unit={p.unit} onChange={v => setParam(p.key, v)} /></div>)}
-          {!state.profile.isVolume && <div><Label>{mode === 'length' ? 'Масса' : 'Длина L'}</Label><UnitInput id={mode === 'length' ? 'calc-mass' : 'calc-length'} name={mode === 'length' ? 'mass' : 'length'} label={mode === 'length' ? 'Масса' : 'Длина L'} value={mode === 'length' ? state.mass ?? '' : state.length ?? ''} unit={mode === 'length' ? 'кг.' : 'м.'} onChange={setSource} /></div>}
+          {!state.profile.isVolume && <div><Label>{mode === 'length' ? 'Масса' : 'Длина L'}</Label><UnitInput id={mode === 'length' ? 'calc-mass' : 'calc-length'} name={mode === 'length' ? 'mass' : 'length'} label={mode === 'length' ? 'Масса' : 'Длина L'} value={mode === 'length' ? state.mass ?? '' : displayLength} unit={mode === 'length' ? 'кг.' : lengthUnit} onChange={setSource} /></div>}
           <div><Label>Количество</Label><div style={st.qty}><button type="button" aria-label="Уменьшить количество" onClick={decrementQty} style={st.qtyBtn}>−</button><input id="calc-quantity" name="quantity" aria-label="Количество" type="number" min={1} step={1} value={state.quantity} onChange={e => setQuantity(e.target.value ? Number(e.target.value) : 1)} style={st.qtyInput} /><button type="button" aria-label="Увеличить количество" onClick={incrementQty} style={st.qtyBtn}>+</button></div></div>
         </div>
         <button type="button" onClick={() => { setCalculationAttempted(true); calculate(mode === 'length' ? 'length' : 'mass') }} style={st.action}>Рассчитать</button>
@@ -173,7 +176,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
       <div style={{ ...st.result, marginInline: -14 }}>
         <div>
           <div style={st.resultLabel}>{mode === 'length' ? 'Длина' : 'Вес'}</div>
-          <span style={st.resultValue}><AnimatedNumber value={displayResult} digits={3} /></span> <span style={st.unitText}>{mode === 'length' ? 'м' : 'кг'}</span>
+          <span style={st.resultValue}><AnimatedNumber value={displayResult} digits={3} /></span> <span style={st.unitText}>{mode === 'length' ? lengthUnit : 'кг'}</span>
           {massMin != null && massMax != null && <div style={st.tol}><AnimatedNumber value={massMin} digits={2} /> ··· <AnimatedNumber value={massMax} digits={2} /> кг</div>}
         </div>
         {state.result?.linearMass != null && state.result.linearMass > 0 && <div style={{ marginInlineStart: 18 }}><div style={st.resultLabel}>{state.profile.isVolume ? 'Масса штуки' : 'Погонный вес'}</div><b><AnimatedNumber value={state.result.linearMass} digits={4} /></b> <span style={st.unitText}>{state.profile.isVolume ? 'кг/шт' : 'кг/м'}</span></div>}
