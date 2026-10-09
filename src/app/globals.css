@@ -394,3 +394,5 @@ button { -webkit-tap-highlight-color: transparent; }
   }
   .ui-gost-details { padding: 16px !important; }
 }
+
+.ui-settings-shell { max-block-size: none; }
