@@ -12,7 +12,7 @@ import ProfileIcon from './ProfileIcon'
 import { isRectangular, profileGroupKey, rectangularName, usesMillimetreLength } from '@/data/profileNavigation'
 import { isBrassBar } from '@/data/brassTolerance'
 import { sheetBasis, sheetDensity } from '@/data/aluminumSheet'
-import GostTags from './GostTags'
+import GostTags, { FlatGostMenu } from './GostTags'
 import BrassOptionsHelp from './BrassOptionsHelp'
 import GostSearchBar from './GostSearchBar'
 
@@ -150,7 +150,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
             <span style={st.headProfileSlot}><AnimatedText text={isRectangular(state.profileKey) ? rectangularName : state.profile.name} /></span>
           </span>
         )}
-        <GostTags metalGroup={state.metalGroup} profile={state.profile} densityText={isAluminumTape ? (tapeCoefficient(state.grade) == null ? 'k: нет в Б.1' : `k = ${tapeCoefficient(state.grade)!.toFixed(3)}`) : isAluminumPlate ? (plateCoefficient(state.grade) == null ? "k: нет в Б.1" : `k = ${plateCoefficient(state.grade)!.toFixed(3)}`) : undefined} density={isAluminumSheet ? sheetDensity(state.grade) : state.density} onGostClick={onGostOpen} onProfileSelect={selectProfile} flatUseGost={state.flatUseGost} />
+        <GostTags metalGroup={state.metalGroup} profile={state.profile} densityText={isAluminumTape ? (tapeCoefficient(state.grade) == null ? 'k: нет в Б.1' : `k = ${tapeCoefficient(state.grade)!.toFixed(3)}`) : isAluminumPlate ? (plateCoefficient(state.grade) == null ? "k: нет в Б.1" : `k = ${plateCoefficient(state.grade)!.toFixed(3)}`) : undefined} density={isAluminumSheet ? sheetDensity(state.grade) : state.density} onGostClick={onGostOpen} onProfileSelect={selectProfile} flatUseGost={state.flatUseGost} showGost={!isRectangular(state.profileKey)} />
       </div>
       <div style={st.search}><GostSearchBar onResult={onGostResult} onClear={onGostClear} /></div>
       {needsSortament && <div style={st.warn}>Выберите сортамент</div>}
@@ -170,7 +170,10 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
           <FieldSelect id="calc-mobile-metal" name="mobile-metal" label="Металл" value={state.metalGroup} onChange={setGroup} options={metalGroups.map(x => ({ value: x, label: x }))} />
           <FieldSelect id="calc-mobile-profile" name="mobile-profile" label="Сортамент" value={navigationKey} onChange={v => selectProfile(v as ProfileKey)} options={profiles.map(x => ({ value: x.key, label: x.name }))} />
         </div>}
-        <div style={st.markRow}><span id="calc-grade-label" style={st.inlineLabel}>Марка</span><select id="calc-grade" name="grade" aria-labelledby="calc-grade-label" value={state.grade} onChange={e => selectMetal(state.metalGroup, e.target.value)} style={st.select}>{grades.map(x => <option key={x.grade}>{x.grade}</option>)}</select></div>
+        <div style={{ display: 'grid', gridTemplateColumns: isRectangular(state.profileKey) && !isMobile ? 'minmax(0, 440px) minmax(180px, 1fr)' : 'minmax(0, 1fr)', alignItems: 'center', gap: 8 }}>
+          <div style={{ ...st.markRow, maxWidth: isMobile ? 'none' : 440 }}><span id="calc-grade-label" style={st.inlineLabel}>Марка</span><select id="calc-grade" name="grade" aria-labelledby="calc-grade-label" value={state.grade} onChange={e => selectMetal(state.metalGroup, e.target.value)} style={{ ...st.select, height: isRectangular(state.profileKey) ? 44 : 34 }}>{grades.map(x => <option key={x.grade}>{x.grade}</option>)}</select></div>
+          {isRectangular(state.profileKey) && <FlatGostMenu profile={state.profile} metalGroup={state.metalGroup} onSelect={selectProfile} useGost={state.flatUseGost} onGostClick={onGostOpen} />}
+        </div>
         {isBrass && <section style={{ ...st.card, position: 'relative' }}>
           <BrassOptionsHelp />
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 8 }}>

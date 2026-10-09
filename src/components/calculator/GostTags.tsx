@@ -13,16 +13,17 @@ interface Props {
   densityText?: string
   density: number | null
   flatUseGost?: boolean
+  showGost?: boolean
   onProfileSelect?: (key: ProfileKey, useGost: boolean) => void
   onGostClick: (code: string) => void
 }
 
-export default function GostTags({ profile, metalGroup, density, densityText, onGostClick, onProfileSelect, flatUseGost = false }: Props) {
+export default function GostTags({ profile, metalGroup, density, densityText, onGostClick, onProfileSelect, flatUseGost = false, showGost = true }: Props) {
   const gostCodes = getProfileGostCodes(profile.key, metalGroup)
 
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', minWidth: 0 }}>
-      {isRectangular(profile.key) && onProfileSelect ? <FlatGostMenu profile={profile} metalGroup={metalGroup} onSelect={onProfileSelect} useGost={flatUseGost} onGostClick={onGostClick} /> : gostCodes.map((code, index) => (
+      {showGost && (isRectangular(profile.key) && onProfileSelect ? <FlatGostMenu profile={profile} metalGroup={metalGroup} onSelect={onProfileSelect} useGost={flatUseGost} onGostClick={onGostClick} /> : gostCodes.map((code, index) => (
         <button
           key={`gost-${index}`}
           title={code}
@@ -49,7 +50,7 @@ export default function GostTags({ profile, metalGroup, density, densityText, on
         >
           <AnimatedText text={code} />
         </button>
-      ))}
+      )))}
       <span style={{
         background: 'var(--surface-container)',
         border: '1px solid var(--outline-variant)',
@@ -69,7 +70,7 @@ export default function GostTags({ profile, metalGroup, density, densityText, on
   )
 }
 
-function FlatGostMenu({ profile, metalGroup, onSelect, onGostClick, useGost }: { profile: MetalProfile; metalGroup: string; useGost: boolean; onSelect: (key: ProfileKey, useGost: boolean) => void; onGostClick: (code: string) => void }) {
+export function FlatGostMenu({ profile, metalGroup, onSelect, onGostClick, useGost }: { profile: MetalProfile; metalGroup: string; useGost: boolean; onSelect: (key: ProfileKey, useGost: boolean) => void; onGostClick: (code: string) => void }) {
   const choices = getFlatStandardChoices(metalGroup)
   const current = choices.find(c => useGost ? c.code != null && c.profileKeys.includes(profile.key) : c.code === null)
   const [open, setOpen] = useState(false)
@@ -97,7 +98,7 @@ function FlatGostMenu({ profile, metalGroup, onSelect, onGostClick, useGost }: {
     return () => { document.removeEventListener('pointerdown', outside); window.removeEventListener('resize', resize) }
   }, [open])
   return <>
-    <button ref={trigger} type="button" aria-label="Выбрать ГОСТ плоского проката" aria-haspopup="menu" aria-expanded={open} aria-controls={open ? menuId : undefined} title={current?.code ? current.title + ' — ' + current.code : current?.title} onClick={() => open ? close() : show()} onKeyDown={e => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); show() } }} style={{ border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-sm)', minHeight: 44, padding: '6px 12px', fontSize: 12, fontWeight: 600, color: 'var(--primary)', cursor: 'pointer', fontFamily: 'Manrope, sans-serif', background: 'var(--primary-container)', borderColor: 'var(--primary)' }}>
+    <button ref={trigger} type="button" aria-label="Выбрать ГОСТ плоского проката" aria-haspopup="menu" aria-expanded={open} aria-controls={open ? menuId : undefined} title={current?.code ? current.title + ' — ' + current.code : current?.title} onClick={() => open ? close() : show()} onKeyDown={e => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); show() } }} style={{ width: '100%', height: 44, boxSizing: 'border-box', lineHeight: 1.2, border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-sm)', minHeight: 44, padding: '6px 12px', fontSize: 12, fontWeight: 600, color: 'var(--primary)', cursor: 'pointer', fontFamily: 'Manrope, sans-serif', background: 'var(--primary-container)', borderColor: 'var(--primary)' }}>
       <span style={{ display: 'block' }}>Выбрать ГОСТ <span aria-hidden="true">⌄</span></span>
       <span style={{ display: 'block', fontSize: 11, fontWeight: 400 }}>{current?.code ?? 'По размерам'}</span>
     </button>
