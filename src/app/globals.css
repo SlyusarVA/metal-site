@@ -377,3 +377,20 @@ button { -webkit-tap-highlight-color: transparent; }
   background: transparent;
   backdrop-filter: none;
 }
+
+@media (max-width: 767px) {
+  .ui-settings-shell {
+    height: calc(100dvh - 18px) !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .ui-gost-body { flex-direction: column; }
+  .ui-gost-sidebar {
+    width: 100% !important;
+    height: 180px;
+    border-right: none !important;
+    border-bottom: 1px solid var(--outline-variant);
+  }
+  .ui-gost-details { padding: 16px !important; }
+}

@@ -50,7 +50,8 @@ export default function AccentSchemeToggle() {
       : ease('--avatar-ease-in', 'cubic-bezier(0.22, 1, 0.36, 1)')
 
     root.querySelectorAll<HTMLElement>('.t-avatar').forEach((el, i) => {
-      el.style.transitionTimingFunction = tf
+      // Hover easing applies only to transform, preserving the palette reveal speed.
+      el.style.transitionTimingFunction = `var(--motion-standard), var(--motion-decelerate), var(--motion-decelerate), ${tf}`
       if (activeIdx == null) {
         el.style.setProperty('--shift', '0px')
         el.style.setProperty('--scale-active', '1')

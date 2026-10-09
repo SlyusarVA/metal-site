@@ -61,8 +61,8 @@ export default function SettingsPanel({ onClose }: Props) {
   }
 
   return (
-    <AppDialog title="Настройки" onClose={onClose} width={540} height={520}>
-      <div className="ui-dialog-shell" style={{ height: '100%' }}>
+    <AppDialog title="Настройки" onClose={onClose} width={540} height="min(900px, calc(100dvh - 64px))">
+      <div className="ui-dialog-shell ui-settings-shell" style={{ height: '100%' }}>
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '18px 20px 0', flexShrink: 0,
