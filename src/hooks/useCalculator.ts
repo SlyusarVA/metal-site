@@ -41,6 +41,7 @@ export const GOST_WEIGHT_TOLERANCE: Record<string, number> = {
 export type CalcTarget = 'mass' | 'length' | null
 
 export interface CalcResult {
+  massRange?: { min: number; max: number }
   tapeBasis?: TapeBasis
   plateBasis?: PlateBasis
   sheetBasis?: SheetBasis
@@ -447,6 +448,7 @@ function buildFinalState(
   params: Record<string, number>,
 ): CalculatorState {
   const calcResult: CalcResult = {
+    massRange: massResult?.massRange,
     tapeBasis: massResult?.tapeBasis,
     plateBasis: massResult?.plateBasis,
     sheetBasis: massResult?.sheetBasis,

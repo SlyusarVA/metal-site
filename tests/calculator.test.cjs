@@ -400,3 +400,17 @@ test('flat products and wire display length in mm; other profiles retain metres'
  for(const p of profiles)assert.equal(usesMm(p.key),mm.has(p.key),p.key)
  for(const key of ['angle_equal','angle_unequal','rail','channel','shpunt'])assert.equal(usesMm(key),false)
 })
+
+test('GOST flat mass range uses the dimensional endpoints, fixed length and alloy density once', () => {
+ const {calcMass}=app().load('src/lib/calculations')
+ const input={profileKey:'plate',metalGroup:'Алюминий',grade:'Д16Т',params:{t:12,b:1000},quantity:1,length:3,flatUseGost:true}
+ const r=calcMass(input);assert.equal(r.mass,105.1445);assert.deepEqual(r.massRange,{min:95.9652,max:114.741})
+ assert.deepEqual(calcMass({...input,quantity:3}).massRange,{min:287.8956,max:344.223})
+ assert.equal(calcMass({...input,flatUseGost:false}).massRange,undefined)
+ const normal=calcMass({...input,params:{t:20,b:1500}}),high=calcMass({...input,params:{t:20,b:1500},plateOptions:{accuracy:'high'}})
+ assert.equal(normal.mass,high.mass);assert.ok(high.massRange.min>normal.massRange.min);assert.ok(high.massRange.max<normal.massRange.max)
+ const sheet=calcMass({...input,profileKey:'sheet',params:{t:4,b:1000}})
+ assert.deepEqual(sheet.massRange,{min:30.747,max:33.5059});assert.ok(sheet.massRange.min<sheet.mass&&sheet.mass<sheet.massRange.max)
+ const tape=calcMass({...input,profileKey:'strip',params:{t:1,b:600},grade:'АМг5',length:10})
+ assert.deepEqual(tape.massRange,{min:14.265,max:15.956});assert.ok(tape.massRange.min<tape.mass&&tape.mass<tape.massRange.max)
+})

@@ -83,9 +83,22 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
   const displayLength = state.length == null ? '' : Number((state.length * lengthScale).toFixed(6))
   const displayResult = mode === 'length' && resultLength != null ? resultLength * lengthScale : mode === 'length' ? null : resultMass
   const tolerance = isRectangular(state.profileKey) && !state.flatUseGost ? null : getWeightTolerance(state.profileKey, Object.fromEntries(Object.entries(state.params).filter(([, v]) => v !== null) as [string, number][]), state.metalGroup, state.brassOptions)
-  const massMin = mode === 'mass' && resultMass != null && tolerance ? resultMass * (1 - tolerance.minus) : null
-  const massMax = mode === 'mass' && resultMass != null && tolerance ? resultMass * (1 + tolerance.plus) : null
+  const dimensionalRange = mode === 'mass' ? state.result?.massRange : undefined
+  const massMin = dimensionalRange?.min ?? (mode === 'mass' && resultMass != null && tolerance ? resultMass * (1 - tolerance.minus) : null)
+  const massMax = dimensionalRange?.max ?? (mode === 'mass' && resultMass != null && tolerance ? resultMass * (1 + tolerance.plus) : null)
   const gridCols = isMobile ? 'repeat(2,minmax(0,1fr))' : 'repeat(auto-fill,minmax(140px,1fr))'
+
+  useEffect(() => {
+    if (mode === 'quick') return
+    const source = mode === 'length' ? state.mass : state.length
+    if (!state.profile.isVolume && (source == null || !Number.isFinite(source) || source <= 0)) return
+    if (state.profile.params.some(p => state.params[p.key] == null)) return
+    const timer = window.setTimeout(() => {
+      setCalculationAttempted(true)
+      calculate(mode === 'length' ? 'length' : 'mass')
+    }, 200)
+    return () => window.clearTimeout(timer)
+  }, [calculate, mode, state.profile, state.params, state.length, state.mass, state.quantity, state.metalGroup, state.grade, state.flatUseGost, state.sheetOptions, state.plateOptions, state.tapeOptions, state.brassOptions])
 
   function switchMode(next: CalcMode) {
     setMode(next)
@@ -177,10 +190,11 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
         <div>
           <div style={st.resultLabel}>{mode === 'length' ? 'Длина' : 'Вес'}</div>
           <span style={st.resultValue}><AnimatedNumber value={displayResult} digits={3} /></span> <span style={st.unitText}>{mode === 'length' ? lengthUnit : 'кг'}</span>
-          {massMin != null && massMax != null && <div style={st.tol}><AnimatedNumber value={massMin} digits={2} /> ··· <AnimatedNumber value={massMax} digits={2} /> кг</div>}
+          {massMin != null && massMax != null && !dimensionalRange && <div style={st.tol}><AnimatedNumber value={massMin} digits={2} /> ··· <AnimatedNumber value={massMax} digits={2} /> кг</div>}
         </div>
         {state.result?.linearMass != null && state.result.linearMass > 0 && <div style={{ marginInlineStart: 18 }}><div style={st.resultLabel}>{state.profile.isVolume ? 'Масса штуки' : 'Погонный вес'}</div><b><AnimatedNumber value={state.result.linearMass} digits={4} /></b> <span style={st.unitText}>{state.profile.isVolume ? 'кг/шт' : 'кг/м'}</span></div>}
         {tolerance && mode === 'mass' && <span style={st.pill}>{tolerance.label}</span>}
+        {dimensionalRange && <div aria-label="Диапазон веса по предельным размерам" style={{ ...st.tol, flexBasis: '100%', fontSize: 'var(--text-sm)' }}>Мин–макс: <AnimatedNumber value={dimensionalRange.min} digits={3} /> – <AnimatedNumber value={dimensionalRange.max} digits={3} /> кг <span style={{ color: 'var(--on-surface-variant)' }}>· по допускам размеров</span></div>}
       </div>
       {(isAluminumSheet || isAluminumPlate || isAluminumTape) && (calculationAttempted || state.result != null) && <div>
         <button type="button" aria-expanded={exactOpen} aria-controls={isAluminumTape ? "tape-exact-settings" : isAluminumPlate ? "plate-exact-settings" : "sheet-exact-settings"} onClick={() => setExactOpen(open => !open)} style={st.exactToggle}>
@@ -410,7 +424,7 @@ const st: Record<string, React.CSSProperties> = {
   error: { padding: '7px 10px', borderRadius: 6, border: '1px solid var(--error)', background: 'var(--error-container)', color: 'var(--error)', fontSize: 'var(--text-xs)' },
   errorMsg: { margin: 0 },
   note: { padding: '7px 10px', borderRadius: 6, background: 'var(--surface-container)', color: 'var(--on-surface)', fontSize: 'var(--text-xs)' },
-  result: { flexShrink: 0, display: 'flex', alignItems: 'flex-start', padding: '10px 14px', borderTop: '1px solid var(--outline-variant)', background: 'var(--surface)' },
+  result: { flexShrink: 0, display: 'flex', flexWrap: 'wrap', rowGap: 4, alignItems: 'flex-start', padding: '10px 14px', borderTop: '1px solid var(--outline-variant)', background: 'var(--surface)' },
   exactToggle: { display: 'flex', alignItems: 'center', gap: 8, minHeight: 40, padding: '4px 0', border: 'none', background: 'transparent', color: 'var(--primary)', font: 'inherit', fontWeight: 600, cursor: 'pointer' },
   resultLabel: { fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '.06em' },
   resultValue: { fontSize: 'var(--text-xl)', fontWeight: 700, color: 'var(--on-surface)' },

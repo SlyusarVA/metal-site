@@ -22,6 +22,7 @@ export interface CalcInput {
 }
 
 export interface CalcResult {
+  massRange?: { min: number; max: number }
   tapeBasis?: TapeBasis
   plateBasis?: PlateBasis
   sheetBasis?: SheetBasis
@@ -64,11 +65,17 @@ export function calcMass(input: CalcInput): CalcResult | null {
     massOne = basis ? basis.linearMass * input.length! : densityMm3 * area * lengthMm
   }
 
+  const massRange = basis && input.length != null ? {
+    min: round(basis.thicknessMin * basis.widthMin * density * input.length * input.quantity * 1e-6, 4),
+    max: round(basis.thicknessMax * basis.widthMax * density * input.length * input.quantity * 1e-6, 4),
+  } : undefined
   const mass = massOne * input.quantity
   const linearDensity = profile.isVolume ? 0 : basis?.linearMass ?? densityMm3 * area * 1000 // кг/м
   if (![density, mass, massOne].every(v => Number.isFinite(v) && v > 0) || !Number.isFinite(linearDensity)) return null
 
+  if (massRange && ![massRange.min, massRange.max].every(v => Number.isFinite(v) && v > 0)) return null
   return {
+    massRange,
     tapeBasis: input.profileKey === 'strip' ? basis as TapeBasis | undefined : undefined,
     plateBasis: input.profileKey === 'plate' ? basis as PlateBasis | undefined : undefined,
     sheetBasis: input.profileKey === 'sheet' ? basis as SheetBasis | undefined : undefined,
