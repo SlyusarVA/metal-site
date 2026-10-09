@@ -86,7 +86,7 @@ export const profiles: MetalProfile[] = [
 
   // Плита — 130 выдач
   {
-    key: 'plate', name: 'Плита', gost: 'ГОСТ 17232-99', icon: 'plate',
+    key: 'plate', name: 'Плита', gost: 'ГОСТ 17232-2023', icon: 'plate',
     params: [
       { key: 'b', label: 'Ширина b',    unit: 'мм', defaultValue: 1000 },
       { key: 't', label: 'Толщина t', unit: 'мм', defaultValue: 20 },

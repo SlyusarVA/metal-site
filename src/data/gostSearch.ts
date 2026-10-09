@@ -34,7 +34,7 @@ export const gostMappings: GostMapping[] = [
   { code: 'ГОСТ 8645-68',      metalGroups: ['Сталь'],                     profileKeys: ['pipe_prof'],      hint: 'Труба стальная профильная' },
   { code: 'ГОСТ 103-2006',     metalGroups: ['Сталь'],                     profileKeys: ['flat'],           hint: 'Полоса стальная горячекатаная' },
   { code: 'ГОСТ 19903-2015',   metalGroups: ['Сталь', 'Нержавейка'],       profileKeys: ['sheet', 'plate'], hint: 'Лист горячекатаный стальной' },
-  { code: 'ГОСТ 17232-99',     metalGroups: ['Алюминий'],                  profileKeys: ['plate'],          hint: 'Плита из алюминия и алюминиевых сплавов' },
+  { code: 'ГОСТ 17232-2023',     metalGroups: ['Алюминий'],                  profileKeys: ['plate'],          hint: 'Плита из алюминия и алюминиевых сплавов' },
   { code: 'ГОСТ 34028-2016',   metalGroups: ['Сталь'],                     profileKeys: ['armature'],       hint: 'Арматура для железобетонных конструкций' },
   { code: 'ГОСТ 4781-85',      metalGroups: ['Сталь'],                     profileKeys: ['shpunt'],         hint: 'Шпунт Ларсена металлический' },
   { code: 'ГОСТ Р 51685-2013', metalGroups: ['Сталь'],                     profileKeys: ['rail'],           hint: 'Рельсы железнодорожные' },

@@ -7,11 +7,12 @@ import { MetalProfile } from '@/data/profiles'
 interface Props {
   profile: MetalProfile
   metalGroup: string
+  densityText?: string
   density: number | null
   onGostClick: (code: string) => void
 }
 
-export default function GostTags({ profile, metalGroup, density, onGostClick }: Props) {
+export default function GostTags({ profile, metalGroup, density, densityText, onGostClick }: Props) {
   const gostCodes = getProfileGostCodes(profile.key, metalGroup)
 
   return (
@@ -57,7 +58,7 @@ export default function GostTags({ profile, metalGroup, density, onGostClick }: 
         overflow: 'hidden',
         flexShrink: 0,
       }}>
-        <AnimatedText text={density == null ? 'ρ: нет в Б.1' : `ρ = ${density} кг/м³`} />
+        <AnimatedText text={densityText ?? (density == null ? 'ρ: нет в Б.1' : `ρ = ${density} кг/м³`)} />
       </span>
     </div>
   )

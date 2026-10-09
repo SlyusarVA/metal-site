@@ -1,5 +1,7 @@
 'use client'
 
+import { plateBasis, plateCoefficient } from '@/data/aluminumPlate'
+
 import { useEffect, useRef, useState } from 'react'
 import { getWeightTolerance } from '@/data/gost'
 import { ProfileKey } from '@/data/profiles'
@@ -62,6 +64,8 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
   }, [state.profileKey, state.metalGroup, state.grade])
   const isBrass = isBrassBar(state.profileKey, state.metalGroup)
   const isAluminumSheet = state.profileKey === 'sheet' && state.metalGroup === 'Алюминий'
+  const isAluminumPlate = state.profileKey === 'plate' && state.metalGroup === 'Алюминий'
+  const plate = isAluminumPlate ? plateBasis(state.grade, state.params.t ?? NaN, state.params.b ?? NaN, state.plateOptions) : null
   const basis = isAluminumSheet ? sheetBasis(state.grade, state.params.t ?? NaN, state.params.b ?? NaN, state.sheetOptions) : null
   const mode = state.profile.isVolume && selectedMode === 'length' ? 'mass' : selectedMode
   const [quickInput, setQuickInput] = useState('Сталь 20 круг 16 масса 120 кг')
@@ -127,7 +131,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
             <span style={st.headProfileSlot}><AnimatedText text={isRectangular(state.profileKey) ? rectangularName : state.profile.name} /></span>
           </span>
         )}
-        <GostTags metalGroup={state.metalGroup} profile={state.profile} density={isAluminumSheet ? sheetDensity(state.grade) : state.density} onGostClick={onGostOpen} />
+        <GostTags metalGroup={state.metalGroup} profile={state.profile} densityText={isAluminumPlate ? (plateCoefficient(state.grade) == null ? "k: нет в Б.1" : `k = ${plateCoefficient(state.grade)!.toFixed(3)}`) : undefined} density={isAluminumSheet ? sheetDensity(state.grade) : state.density} onGostClick={onGostOpen} />
       </div>
       <div style={st.search}><GostSearchBar onResult={onGostResult} onClear={onGostClear} /></div>
       {needsSortament && <div style={st.warn}>Выберите сортамент</div>}
@@ -179,11 +183,11 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
         {state.result?.linearMass != null && state.result.linearMass > 0 && <div style={{ marginInlineStart: 18 }}><div style={st.resultLabel}>{state.profile.isVolume ? 'Масса штуки' : 'Погонный вес'}</div><b><AnimatedNumber value={state.result.linearMass} digits={4} /></b> <span style={st.unitText}>{state.profile.isVolume ? 'кг/шт' : 'кг/м'}</span></div>}
         {tolerance && mode === 'mass' && <span style={st.pill}>{tolerance.label}</span>}
       </div>
-      {isAluminumSheet && (calculationAttempted || state.result != null) && <div>
-        <button type="button" aria-expanded={exactOpen} aria-controls="sheet-exact-settings" onClick={() => setExactOpen(open => !open)} style={st.exactToggle}>
+      {(isAluminumSheet || isAluminumPlate) && (calculationAttempted || state.result != null) && <div>
+        <button type="button" aria-expanded={exactOpen} aria-controls={isAluminumPlate ? "plate-exact-settings" : "sheet-exact-settings"} onClick={() => setExactOpen(open => !open)} style={st.exactToggle}>
           <span aria-hidden="true" style={{ display: 'inline-block', transform: exactOpen ? 'rotate(180deg)' : undefined }}>⌄</span> Точный расчёт
         </button>
-        {exactOpen && <section id="sheet-exact-settings" style={st.card} aria-label="Расчёт по ГОСТ 21631-2023">
+        {exactOpen && isAluminumSheet && <section id="sheet-exact-settings" style={st.card} aria-label="Расчёт по ГОСТ 21631-2023">
           <div style={st.cardTitle}>ГОСТ 21631-2023</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 8 }}>
             <FieldSelect id="sheet-thickness-accuracy" name="sheet-thickness-accuracy" label="Точность толщины" value={state.sheetOptions.thicknessAccuracy} onChange={v => calc.setSheetOptions({ thicknessAccuracy: v as 'normal' | 'high' })} options={[{ value: 'normal', label: 'Нормальная' }, { value: 'high', label: 'Повышенная' }]} />
@@ -193,6 +197,16 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
           <label style={st.hint}><input type="checkbox" checked={state.sheetOptions.symmetric} onChange={e => calc.setSheetOptions({ symmetric: e.target.checked })} /> Симметричный допуск толщины согласован с поставщиком</label>
           <div style={st.hint}>Расчёт по п. 4.1.1: обрезанные кромки, стандартные отклонения таблиц 1 и 3, плотность таблицы Б.1. Специальные условия поставки и допустимость сортамента по таблице 2 требуют отдельной проверки.</div>
           {typeof basis === 'string' ? <div role="status" style={st.warn}>{basis}</div> : basis && <div style={st.hint}>Толщина: {basis.thicknessMin.toFixed(3)}–{basis.thicknessMax.toFixed(3)} мм; ширина: {basis.widthMin}–{basis.widthMax} мм. Для массы: {basis.meanThickness.toFixed(3)} × {basis.meanWidth} мм, ρ = {basis.density} кг/м³.</div>}
+        </section>}
+        {exactOpen && isAluminumPlate && <section id="plate-exact-settings" style={st.card} aria-label="Расчёт по ГОСТ 17232-2023">
+          <div style={st.cardTitle}>ГОСТ 17232-2023</div>
+          <FieldSelect id="plate-accuracy" name="plate-accuracy" label="Точность толщины" value={state.plateOptions.accuracy} onChange={v => calc.setPlateOptions({ accuracy: v as 'normal' | 'high' })} options={[{ value: 'normal', label: 'Нормальная — базовое исполнение' }, { value: 'high', label: 'Повышенная' }]} />
+          {typeof plate === 'string' ? <div role="status" style={st.warn}>{plate}</div> : plate && <>
+            <div style={st.hint}>{plate.method === 'table' ? 'Масса по таблице А.1' : 'В таблице А.1 этих размеров нет: расчёт по средним предельным размерам'} · коэффициент Б.1: {plate.coefficient.toFixed(3)}. Базовая масса: {plate.referenceMass.toFixed(3)} кг/м × {plate.coefficient.toFixed(3)} = {plate.linearMass.toFixed(4)} кг/м.</div>
+            <div style={st.hint}>Толщина: {plate.thicknessMin.toFixed(2)}–{plate.thicknessMax.toFixed(2)} мм; ширина: {plate.widthMin}–{plate.widthMax} мм. Допуск толщины симметричный: точность меняет границы размера, а не табличную массу.</div>
+            {plate.warning && <div role="status" style={st.warn}>{plate.warning}</div>}
+          </>}
+          <div style={st.hint}>Расчёт на введённую длину. Допуски длины и специальные условия поставки не включены; для резаных заготовок размеры уточняются по заказу.</div>
         </section>}
       </div>}
       </div>

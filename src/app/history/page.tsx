@@ -173,6 +173,7 @@ export default function HistoryPage() {
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--on-surface-variant)' }}>
                   {r.brassOptions && <div>ГОСТ 2060-2006 · {r.brassOptions.manufacturing === 'drawn' ? 'тянутый' : 'прессованный'} · точность: {r.brassOptions.accuracy === 'high' ? 'высокая' : r.brassOptions.accuracy === 'increased' ? 'повышенная' : 'нормальная'}</div>}
+                  {r.plateOptions && <div>ГОСТ 17232-2023 · точность толщины: {r.plateOptions.accuracy === 'high' ? 'повышенная' : 'нормальная'}</div>}
                   {r.sheetOptions && <div>ГОСТ 21631-2023 · толщина: {r.sheetOptions.thicknessAccuracy === 'high' ? 'повышенная' : 'нормальная'} точность · ширина: {r.sheetOptions.widthAccuracy === 'high' ? 'повышенная' : 'нормальная'} точность · {r.sheetOptions.condition === 'annealed' ? 'отожжённое' : r.sheetOptions.condition === 'untreated' ? 'без термообработки' : 'другое состояние'}{r.sheetOptions.symmetric ? ' · симметричное поле' : ''}</div>}
                   {formatTimestamp(r.timestamp)}
                 </div>

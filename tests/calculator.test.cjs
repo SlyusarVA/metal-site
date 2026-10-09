@@ -215,7 +215,7 @@ test('standard and tolerance depend on material as well as product shape', () =>
   assert.deepEqual(getProfileGostCodes('rod', 'Латунь'), ['ГОСТ 2060-2006'])
   assert.equal(getWeightTolerance('rod', { d: 25 }, 'Латунь'), null)
   assert.deepEqual(getProfileGostCodes('plate', 'Сталь'), ['ГОСТ 19903-2015'])
-  assert.deepEqual(getProfileGostCodes('plate', 'Алюминий'), ['ГОСТ 17232-99'])
+  assert.deepEqual(getProfileGostCodes('plate', 'Алюминий'), ['ГОСТ 17232-2023'])
   assert.equal(getWeightTolerance('strip', { b: 20, t: 1 }, 'Алюминий'), null)
 })
 
@@ -290,3 +290,40 @@ test('pressed brass table includes boundaries and rejects unavailable products',
   let c=a.render(); c.selectMetal('Латунь','Л63'); c.selectProfile('square'); c.setParam('a',10);c.setLength(1);c.setBrassOptions(o);c.calculate('mass');c=a.render()
   assert.equal(c.state.result,null);assert.match(c.state.error.message,/не предусматривает/)
 })
+
+test('GOST plate mass uses published A.1 once and the B.1 alloy coefficient in both directions', () => {
+ const a=app(),{calcMass,calcLength}=a.load('src/lib/calculations')
+ const input={profileKey:'plate',params:{t:20,b:1200},metalGroup:'Алюминий',grade:'Д16Т',quantity:3,length:2}
+ const r=calcMass(input)
+ assert.equal(r.plateBasis.referenceMass,71.25);assert.equal(r.plateBasis.coefficient,.976)
+ assert.equal(r.linearDensity,69.54);assert.equal(r.mass,417.24);assert.equal(calcLength(r.mass,input),2)
+ assert.equal(calcMass({...input,grade:'В95'}).linearDensity,71.25)
+ assert.ok(Math.abs(calcMass({...input,grade:'АД31'}).linearDensity-67.47375)<.0001)
+ assert.equal(calcMass({...input,plateOptions:{accuracy:'high'}}).mass,r.mass)
+ const dimensions=calcMass({...input,params:{t:20,b:1000}})
+ assert.equal(dimensions.plateBasis.method,'dimensions');assert.equal(dimensions.linearDensity,58.4136)
+})
+test('GOST plate size limits, accuracy boundaries and unsupported grades are explicit', () => {
+ const {plateBasis:b,plateCoefficient:k,plateReferenceMass:r}=app().load('src/data/aluminumPlate')
+ assert.match(b('Д16',4,1200),/Лист/);assert.match(b('Д16',10.5,1200),/10,5/)
+ assert.equal(b('Д16',12,1200).thicknessMin,11.5)
+ assert.equal(b('Д16',20,1500,{accuracy:'high'}).thicknessMin,19.3)
+ assert.equal(b('Д16',20.01,1500,{accuracy:'high'}).thicknessMin,19.21)
+ assert.equal(b('Д16',20,1500.01).thicknessMin,19)
+ assert.match(b('Д16',20,2500),/2000/);assert.match(b('АМг6',45,2500),/2000/)
+ assert.equal(b('АМг6',45.01,2500).widthMax,2600)
+ assert.match(b('1565ч',60.01,1200),/60/)
+ for(const grade of ['6061','6082','7075 (В95)','АК4']){assert.equal(k(grade),null);assert.match(b(grade,20,1200),/коэффициента/)}
+ assert.equal(k('Д1'),.982);assert.equal(k('АД31'),.947);assert.equal(k('АМг6'),.926)
+ assert.equal(r(11,1500),49.593);assert.ok(b('В95',11,1500).warning)
+ assert.equal(r(22,1800),115.45);assert.equal(r(20,1250),null)
+})
+test('GOST plate options survive history, distinguish records and keep sheet settings separate', () => {
+ const a=app();let c=a.render();c.selectMetal('Алюминий','Д16Т');c.selectProfile('plate');c.setParam('b',1200);c.setLength(3);c.calculate('mass');c=a.render()
+ assert.equal(c.state.result.value,208.62);assert.ok(c.state.result.plateBasis)
+ const normal=c.state.history[0];assert.deepEqual(normal.plateOptions,{accuracy:'normal'});assert.equal(normal.sheetOptions,undefined)
+ c.setPlateOptions({accuracy:'high'});c.calculate('mass');c=a.render();assert.equal(c.state.history.length,2)
+ c.restoreFromHistory(normal);c=a.render();assert.equal(c.state.plateOptions.accuracy,'normal');c.calculate('mass');c=a.render();assert.equal(c.state.result.value,208.62)
+ c.selectProfile('sheet');c.setParam('t',4);c.calculate('mass');c=a.render();assert.ok(c.state.result.sheetBasis);assert.equal(c.state.result.plateBasis,undefined)
+})
+
