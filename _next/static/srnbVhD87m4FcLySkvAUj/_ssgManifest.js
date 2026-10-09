@@ -1,1 +1,0 @@
-self.__SSG_MANIFEST=new Set(["\u002Fgost\u002F[code]","\u002Fmarki-metallov\u002F[family]","\u002Fmarki-metallov\u002F[family]\u002F[category]","\u002Fmarki-metallov\u002F[family]\u002F[category]\u002F[grade]"]);self.__SSG_MANIFEST_CB&&self.__SSG_MANIFEST_CB()
