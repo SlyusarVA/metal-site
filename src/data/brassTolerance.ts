@@ -1,6 +1,6 @@
 import { ProfileKey } from './profiles'
 export interface BrassOptions { manufacturing: 'drawn' | 'pressed'; accuracy: 'high' | 'increased' | 'normal' }
-export const defaultBrassOptions: BrassOptions = { manufacturing: 'drawn', accuracy: 'normal' }
+export const defaultBrassOptions: BrassOptions = { manufacturing: 'pressed', accuracy: 'normal' }
 export function validBrassOptions(value: unknown): value is BrassOptions {
   const v = value as BrassOptions | null
   return !!v && ['drawn','pressed'].includes(v.manufacturing) && ['high','increased','normal'].includes(v.accuracy)

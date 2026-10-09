@@ -159,7 +159,7 @@ export function useCalculator() {
         length: keepDimensions ? s.length : null,
         mass: keepDimensions ? s.mass : null,
         quantity: keepDimensions ? s.quantity : 1,
-        result: null,
+        result: keepDimensions ? s.result : null,
         prevResult: null,
         error: null,
         unchanged: false,
@@ -208,7 +208,6 @@ export function useCalculator() {
         metalGroup: mat.group,
         grade: mat.grade,
         density: mat.density,
-        result: null,
         prevResult: null,
         error: null,
         unchanged: false,
@@ -217,16 +216,16 @@ export function useCalculator() {
   }, [])
 
   const setBrassOptions = useCallback((patch: Partial<BrassOptions>) => {
-    setState(s => ({ ...s, brassOptions: { ...s.brassOptions, ...patch, ...(patch.manufacturing === 'pressed' && s.brassOptions.accuracy === 'high' ? { accuracy: 'normal' as const } : {}) }, result: null, error: null }))
+    setState(s => ({ ...s, brassOptions: { ...s.brassOptions, ...patch, ...(patch.manufacturing === 'pressed' && s.brassOptions.accuracy === 'high' ? { accuracy: 'normal' as const } : {}) }, error: null }))
   }, [])
   const setTapeOptions = useCallback((patch: Partial<TapeOptions>) => {
-    setState(s => ({ ...s, tapeOptions: { ...s.tapeOptions, ...patch }, result: null, error: null }))
+    setState(s => ({ ...s, tapeOptions: { ...s.tapeOptions, ...patch }, error: null }))
   }, [])
   const setPlateOptions = useCallback((patch: Partial<PlateOptions>) => {
-    setState(s => ({ ...s, plateOptions: { ...s.plateOptions, ...patch }, result: null, error: null }))
+    setState(s => ({ ...s, plateOptions: { ...s.plateOptions, ...patch }, error: null }))
   }, [])
   const setSheetOptions = useCallback((patch: Partial<SheetOptions>) => {
-    setState(s => ({ ...s, sheetOptions: { ...s.sheetOptions, ...patch }, result: null, error: null }))
+    setState(s => ({ ...s, sheetOptions: { ...s.sheetOptions, ...patch }, error: null }))
   }, [])
 
   // ── Изменение размерного поля ─────────────────────────────────────────────
@@ -239,7 +238,6 @@ export function useCalculator() {
       profile: profiles.find(p => p.key === nextKey)!,
       params: (key === 'a' && (s.profileKey === 'sheet' || s.profileKey === 'plate')) ? s.params : { ...s.params, [key]: value },
       length: key === 'a' && (s.profileKey === 'sheet' || s.profileKey === 'plate') ? (value == null ? null : value / 1000) : s.length,
-      result: null,
       error: null,
       unchanged: false,
     }
@@ -251,7 +249,6 @@ export function useCalculator() {
     setState(s => ({
       ...s,
       length: value,
-      result: null,
       error: null,
       unchanged: false,
     }))
@@ -262,7 +259,6 @@ export function useCalculator() {
     setState(s => ({
       ...s,
       mass: value,
-      result: null,
       error: null,
       unchanged: false,
     }))
@@ -274,7 +270,6 @@ export function useCalculator() {
     setState(s => ({
       ...s,
       quantity: normalized,
-      result: null,
       error: null,
       unchanged: false,
     }))
@@ -284,7 +279,6 @@ export function useCalculator() {
     setState(s => ({
       ...s,
       quantity: s.quantity + 1,
-      result: null,
       error: null,
       unchanged: false,
     }))
@@ -294,7 +288,6 @@ export function useCalculator() {
     setState(s => ({
       ...s,
       quantity: Math.max(1, s.quantity - 1),
-      result: null,
       error: null,
       unchanged: false,
     }))
@@ -304,7 +297,6 @@ export function useCalculator() {
     setState(s => ({
       ...s,
       quantity: 1,
-      result: null,
       error: null,
       unchanged: false,
     }))

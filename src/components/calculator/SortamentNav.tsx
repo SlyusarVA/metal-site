@@ -26,13 +26,20 @@ export default function SortamentNav({
   const listRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!onContentHeight || !headerRef.current || !listRef.current) return
-    const measure = () => onContentHeight(Math.ceil(headerRef.current!.getBoundingClientRect().height + listRef.current!.getBoundingClientRect().height) + 2)
+    // Keep the frame at the initial Steel sidebar height, regardless of the active metal.
+    const measure = () => {
+      if (!headerRef.current || !listRef.current) return
+      const row = listRef.current.querySelector('button')
+      if (!row) return
+      const steelRows = groupProfiles(profiles, getAllowedProfiles('Сталь')).length
+      onContentHeight(Math.ceil(headerRef.current!.getBoundingClientRect().height + steelRows * row.getBoundingClientRect().height) + 2)
+    }
     const observer = new ResizeObserver(measure)
     observer.observe(headerRef.current)
     observer.observe(listRef.current)
     measure()
     return () => observer.disconnect()
-  }, [onContentHeight])
+  }, [onContentHeight, profiles])
 
   const allowed = getAllowedProfiles(metalGroup)
   const visibleProfiles = groupProfiles(profiles, allowed)

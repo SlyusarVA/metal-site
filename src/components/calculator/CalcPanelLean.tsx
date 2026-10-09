@@ -13,6 +13,7 @@ import { isRectangular, profileGroupKey, rectangularName, usesMillimetreLength }
 import { isBrassBar } from '@/data/brassTolerance'
 import { sheetBasis, sheetDensity } from '@/data/aluminumSheet'
 import GostTags from './GostTags'
+import BrassOptionsHelp from './BrassOptionsHelp'
 import GostSearchBar from './GostSearchBar'
 
 type CalcMode = 'mass' | 'length' | 'quick'
@@ -170,7 +171,8 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
           <FieldSelect id="calc-mobile-profile" name="mobile-profile" label="Сортамент" value={navigationKey} onChange={v => selectProfile(v as ProfileKey)} options={profiles.map(x => ({ value: x.key, label: x.name }))} />
         </div>}
         <div style={st.markRow}><span id="calc-grade-label" style={st.inlineLabel}>Марка</span><select id="calc-grade" name="grade" aria-labelledby="calc-grade-label" value={state.grade} onChange={e => selectMetal(state.metalGroup, e.target.value)} style={st.select}>{grades.map(x => <option key={x.grade}>{x.grade}</option>)}</select></div>
-        {isBrass && <section style={st.card}>
+        {isBrass && <section style={{ ...st.card, position: 'relative' }}>
+          <BrassOptionsHelp />
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 8 }}>
             <FieldSelect id="brass-manufacturing" name="brass-manufacturing" label="Изготовление прутка" value={state.brassOptions.manufacturing} onChange={v => calc.setBrassOptions({ manufacturing: v as 'drawn' | 'pressed' })} options={[{ value: 'drawn', label: 'Тянутый' }, { value: 'pressed', label: 'Прессованный' }]} />
             <FieldSelect id="brass-accuracy" name="brass-accuracy" label="Точность размера" value={state.brassOptions.accuracy} onChange={v => calc.setBrassOptions({ accuracy: v as 'high' | 'increased' | 'normal' })} options={[{ value: 'normal', label: 'Нормальная' }, { value: 'increased', label: 'Повышенная' }, ...(state.profileKey === 'rod' && state.brassOptions.manufacturing === 'drawn' ? [{ value: 'high', label: 'Высокая' }] : [])]} />

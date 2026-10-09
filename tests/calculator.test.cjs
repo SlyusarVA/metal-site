@@ -259,7 +259,10 @@ test('GOST sheet hook saves calculation basis and rejects unsupported grades exp
 })
 
 test('brass mass interval is derived from the squared dimensional ratio', () => {
-  const a=app(); const {brassMassRange,brassDimensionTolerance,defaultBrassOptions:o}=a.load('src/data/brassTolerance')
+  const a=app(); const {brassMassRange,brassDimensionTolerance,defaultBrassOptions}=a.load('src/data/brassTolerance')
+  assert.equal(defaultBrassOptions.manufacturing, 'pressed')
+  assert.equal(brassDimensionTolerance('rod',20,defaultBrassOptions),.42)
+  const o={...defaultBrassOptions,manufacturing:'drawn'}
   const r=brassMassRange('rod',20,o)
   assert.ok(Math.abs(r.minus-.029775)<1e-12); assert.ok(Math.abs(r.plus-.030225)<1e-12)
   assert.equal(brassDimensionTolerance('rod',3,o),.10)
@@ -413,4 +416,22 @@ test('GOST flat mass range uses the dimensional endpoints, fixed length and allo
  assert.deepEqual(sheet.massRange,{min:30.747,max:33.5059});assert.ok(sheet.massRange.min<sheet.mass&&sheet.mass<sheet.massRange.max)
  const tape=calcMass({...input,profileKey:'strip',params:{t:1,b:600},grade:'АМг5',length:10})
  assert.deepEqual(tape.massRange,{min:14.265,max:15.956});assert.ok(tape.massRange.min<tape.mass&&tape.mass<tape.massRange.max)
+})
+
+
+test('input and standard edits retain the previous result until recalculation; invalid results clear it', () => {
+  const a = app(); let c = a.render()
+  c.setLength(3); c.calculate('mass'); c = a.render()
+  const first = c.state.result
+  c.setParam('d', 25); c = a.render(); assert.equal(c.state.result, first)
+  c.setLength(4); c = a.render(); assert.equal(c.state.result, first)
+  c.incrementQty(); c = a.render(); assert.equal(c.state.result, first)
+  c.calculate('mass'); c = a.render(); assert.notEqual(c.state.result.value, first.value)
+  c.setParam('d', 0); c.calculate('mass'); c = a.render()
+  assert.equal(c.state.result, null); assert.ok(c.state.error)
+  c.selectProfile('sheet'); c.setLength(3); c.calculate('mass'); c = a.render()
+  const flat = c.state.result
+  c.selectProfile('plate', true); c = a.render(); assert.equal(c.state.result, flat)
+  c.setPlateOptions({accuracy: 'high'}); c = a.render(); assert.equal(c.state.result, flat)
+  c.selectProfile('round'); c = a.render(); assert.equal(c.state.result, null)
 })
