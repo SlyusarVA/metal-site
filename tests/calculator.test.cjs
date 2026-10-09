@@ -327,3 +327,44 @@ test('GOST plate options survive history, distinguish records and keep sheet set
  c.selectProfile('sheet');c.setParam('t',4);c.calculate('mass');c=a.render();assert.ok(c.state.result.sheetBasis);assert.equal(c.state.result.plateBasis,undefined)
 })
 
+
+test('GOST tape uses table 2 mean dimensions and B.1 once in mass and inverse length', () => {
+ const a=app(), {calcMass,calcLength}=a.load('src/lib/calculations'),{tapeBasis:b,tapeCoefficient:k,defaultTapeOptions:o}=a.load('src/data/aluminumTape')
+ const input={profileKey:'strip',params:{t:1,b:600},metalGroup:'Алюминий',grade:'АМг5',quantity:2,length:10}
+ const r=calcMass(input)
+ assert.equal(k('АМг5'),.930);assert.equal(k('АМг6'),.926);assert.equal(k('Д16Т'),.976)
+ // A.1: base mass 1.625 kg/m (rounded), here the unrounded dimensional value is 1.6245.
+ assert.equal(r.tapeBasis.referenceMass,1.6245);assert.equal(r.mass,30.2157);assert.equal(calcLength(r.mass,input),10)
+ assert.equal(b('Д16',2,1200).thicknessMin,1.76);assert.equal(b('Д16',2,1200,{...o,accuracy:'high'}).thicknessMin,1.8)
+ assert.equal(b('Д16',2,1200,{...o,accuracy:'symmetric'}).meanThickness,2)
+ assert.equal(b('Д16',5,1200).symmetric,true);assert.equal(b('Д16',5,1200).meanThickness,5)
+ assert.equal(b('АМг6',10.5,2800,{...o,edges:'untrimmed'}).thicknessMax,11.2)
+ assert.equal(b('АМг6',1,600.01).thicknessMin,.85);assert.equal(b('АМг6',1,900).thicknessMin,.85)
+ assert.ok(Math.abs(b('АМг6',.2,900).thicknessMin-.12)<1e-12);assert.ok(Math.abs(b('АМг6',.2,900.01).thicknessMin-.12)<1e-12)
+ assert.equal(b('Д16',4,1800).thicknessMin,3.63);assert.equal(b('Д16',4,1800.01).thicknessMin,3.63)
+ assert.equal(b('Д16',1,200).widthMax,200.5);assert.equal(b('Д16',1,205).widthMax,206)
+ const {getWeightTolerance}=a.load('src/data/gost');assert.equal(getWeightTolerance('strip',{t:1,b:600},'Алюминий'),null)
+})
+
+test('GOST tape slit tolerances use parent width and require agreed cutting tolerances', () => {
+ const {tapeBasis:b,defaultTapeOptions:o}=app().load('src/data/aluminumTape')
+ const slit={...o,manufacturing:'slit',parentWidth:1200,widthMinus:.3,widthPlus:.7}
+ const r=b('Д16',2,100,slit)
+ assert.equal(r.thicknessWidth,1200);assert.equal(r.thicknessMin,1.76);assert.equal(r.meanWidth,100.2)
+ assert.match(b('Д16',2,100,{...slit,parentWidth:null}),/исходной/)
+ assert.match(b('Д16',2,100,{...slit,widthPlus:null}),/согласованные/)
+ assert.match(b('Д16',2,100,{...slit,widthMinus:101}),/положительными/)
+ assert.equal(b('Д16',2,1200,{...o,edges:'untrimmed'}).widthMax,1280)
+ assert.equal(b('АД0',2,1200,{...o,edges:'untrimmed'}).widthMax,1250)
+ assert.equal(b('Д16',2,2100,{...o,edges:'untrimmed'}).widthMax,2200)
+ for(const [t,w,opt] of [[.19,600,o],[10.6,600,o],[1.25,600,o],[.2,1200,o],[1,2600,o],[6,1200,o],[1,100,{...o,edges:'untrimmed'}],[1,302,o]])assert.equal(typeof b('Д16',t,w,opt),'string')
+ for(const grade of ['6061','6082','7075 (В95)','АД31','АК4'])assert.match(b(grade,1,600),/коэффициента/)
+})
+
+test('GOST tape options persist, restore and distinguish history records', () => {
+ const a=app();let c=a.render();c.selectMetal('Алюминий','Д16');c.selectProfile('strip');c.setParam('t',2);c.setParam('b',1200);c.setLength(3);c.calculate('mass');c=a.render()
+ assert.ok(c.state.result.tapeBasis);const normal=c.state.history[0];assert.equal(normal.tapeOptions.accuracy,'normal');assert.equal(normal.sheetOptions,undefined)
+ c.setTapeOptions({accuracy:'high'});c.calculate('mass');c=a.render();assert.equal(c.state.history.length,2)
+ c.restoreFromHistory(normal);c=a.render();assert.equal(c.state.tapeOptions.accuracy,'normal');c.calculate('mass');c=a.render();assert.equal(c.state.result.value,normal.mass)
+ c.selectMetal('Алюминий','6061');c.calculate('mass');c=a.render();assert.equal(c.state.result,null);assert.match(c.state.error.message,/Б.1/)
+})

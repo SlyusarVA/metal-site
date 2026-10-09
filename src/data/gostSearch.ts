@@ -22,6 +22,7 @@ interface GostMapping {
 }
 
 export const gostMappings: GostMapping[] = [
+  { code: 'ГОСТ 13726-2023', metalGroups: ['Алюминий'], profileKeys: ['strip'], hint: 'Ленты из алюминия и алюминиевых сплавов' },
   { code: 'ГОСТ 21631-2023', metalGroups: ['Алюминий'], profileKeys: ['sheet'], hint: 'Листы из алюминия и алюминиевых сплавов' },
   { code: 'ГОСТ 2590-2006',    metalGroups: ['Сталь'],                     profileKeys: ['round'],          hint: 'Круг стальной горячекатаный' },
   { code: 'ГОСТ 2591-2006',    metalGroups: ['Сталь'],                     profileKeys: ['square'],         hint: 'Квадрат стальной горячекатаный' },

@@ -1,5 +1,7 @@
 'use client'
 
+import { tapeBasis, tapeCoefficient } from '@/data/aluminumTape'
+
 import { plateBasis, plateCoefficient } from '@/data/aluminumPlate'
 
 import { useEffect, useRef, useState } from 'react'
@@ -65,6 +67,8 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
   const isBrass = isBrassBar(state.profileKey, state.metalGroup)
   const isAluminumSheet = state.profileKey === 'sheet' && state.metalGroup === 'Алюминий'
   const isAluminumPlate = state.profileKey === 'plate' && state.metalGroup === 'Алюминий'
+  const isAluminumTape = state.profileKey === 'strip' && state.metalGroup === 'Алюминий'
+  const tape = isAluminumTape ? tapeBasis(state.grade, state.params.t ?? NaN, state.params.b ?? NaN, state.tapeOptions) : null
   const plate = isAluminumPlate ? plateBasis(state.grade, state.params.t ?? NaN, state.params.b ?? NaN, state.plateOptions) : null
   const basis = isAluminumSheet ? sheetBasis(state.grade, state.params.t ?? NaN, state.params.b ?? NaN, state.sheetOptions) : null
   const mode = state.profile.isVolume && selectedMode === 'length' ? 'mass' : selectedMode
@@ -131,7 +135,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
             <span style={st.headProfileSlot}><AnimatedText text={isRectangular(state.profileKey) ? rectangularName : state.profile.name} /></span>
           </span>
         )}
-        <GostTags metalGroup={state.metalGroup} profile={state.profile} densityText={isAluminumPlate ? (plateCoefficient(state.grade) == null ? "k: нет в Б.1" : `k = ${plateCoefficient(state.grade)!.toFixed(3)}`) : undefined} density={isAluminumSheet ? sheetDensity(state.grade) : state.density} onGostClick={onGostOpen} />
+        <GostTags metalGroup={state.metalGroup} profile={state.profile} densityText={isAluminumTape ? (tapeCoefficient(state.grade) == null ? 'k: нет в Б.1' : `k = ${tapeCoefficient(state.grade)!.toFixed(3)}`) : isAluminumPlate ? (plateCoefficient(state.grade) == null ? "k: нет в Б.1" : `k = ${plateCoefficient(state.grade)!.toFixed(3)}`) : undefined} density={isAluminumSheet ? sheetDensity(state.grade) : state.density} onGostClick={onGostOpen} />
       </div>
       <div style={st.search}><GostSearchBar onResult={onGostResult} onClear={onGostClear} /></div>
       {needsSortament && <div style={st.warn}>Выберите сортамент</div>}
@@ -183,8 +187,8 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
         {state.result?.linearMass != null && state.result.linearMass > 0 && <div style={{ marginInlineStart: 18 }}><div style={st.resultLabel}>{state.profile.isVolume ? 'Масса штуки' : 'Погонный вес'}</div><b><AnimatedNumber value={state.result.linearMass} digits={4} /></b> <span style={st.unitText}>{state.profile.isVolume ? 'кг/шт' : 'кг/м'}</span></div>}
         {tolerance && mode === 'mass' && <span style={st.pill}>{tolerance.label}</span>}
       </div>
-      {(isAluminumSheet || isAluminumPlate) && (calculationAttempted || state.result != null) && <div>
-        <button type="button" aria-expanded={exactOpen} aria-controls={isAluminumPlate ? "plate-exact-settings" : "sheet-exact-settings"} onClick={() => setExactOpen(open => !open)} style={st.exactToggle}>
+      {(isAluminumSheet || isAluminumPlate || isAluminumTape) && (calculationAttempted || state.result != null) && <div>
+        <button type="button" aria-expanded={exactOpen} aria-controls={isAluminumTape ? "tape-exact-settings" : isAluminumPlate ? "plate-exact-settings" : "sheet-exact-settings"} onClick={() => setExactOpen(open => !open)} style={st.exactToggle}>
           <span aria-hidden="true" style={{ display: 'inline-block', transform: exactOpen ? 'rotate(180deg)' : undefined }}>⌄</span> Точный расчёт
         </button>
         {exactOpen && isAluminumSheet && <section id="sheet-exact-settings" style={st.card} aria-label="Расчёт по ГОСТ 21631-2023">
@@ -197,6 +201,24 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
           <label style={st.hint}><input type="checkbox" checked={state.sheetOptions.symmetric} onChange={e => calc.setSheetOptions({ symmetric: e.target.checked })} /> Симметричный допуск толщины согласован с поставщиком</label>
           <div style={st.hint}>Расчёт по п. 4.1.1: обрезанные кромки, стандартные отклонения таблиц 1 и 3, плотность таблицы Б.1. Специальные условия поставки и допустимость сортамента по таблице 2 требуют отдельной проверки.</div>
           {typeof basis === 'string' ? <div role="status" style={st.warn}>{basis}</div> : basis && <div style={st.hint}>Толщина: {basis.thicknessMin.toFixed(3)}–{basis.thicknessMax.toFixed(3)} мм; ширина: {basis.widthMin}–{basis.widthMax} мм. Для массы: {basis.meanThickness.toFixed(3)} × {basis.meanWidth} мм, ρ = {basis.density} кг/м³.</div>}
+        </section>}
+        {exactOpen && isAluminumTape && <section id="tape-exact-settings" style={st.card} aria-label="Расчёт по ГОСТ 13726-2023">
+          <div style={st.cardTitle}>ГОСТ 13726-2023</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 8 }}>
+            <FieldSelect id="tape-accuracy" name="tape-accuracy" label="Толщина" value={state.tapeOptions.accuracy} onChange={v => calc.setTapeOptions({ accuracy: v as 'normal' | 'high' | 'symmetric' })} options={[{ value: 'normal', label: 'Базовое исполнение' }, { value: 'high', label: 'Повышенная точность' }, { value: 'symmetric', label: 'Симметричные отклонения' }]} />
+            <FieldSelect id="tape-manufacturing" name="tape-manufacturing" label="Изготовление" value={state.tapeOptions.manufacturing} onChange={v => calc.setTapeOptions({ manufacturing: v as 'rolled' | 'slit' })} options={[{ value: 'rolled', label: 'Прокатка требуемой ширины' }, { value: 'slit', label: 'Продольная резка' }]} />
+            {state.tapeOptions.manufacturing === 'rolled' && <FieldSelect id="tape-edges" name="tape-edges" label="Кромки" value={state.tapeOptions.edges} onChange={v => calc.setTapeOptions({ edges: v as 'trimmed' | 'untrimmed' })} options={[{ value: 'trimmed', label: 'Обрезанные' }, { value: 'untrimmed', label: 'Без обрезки' }]} />}
+          </div>
+          {state.tapeOptions.manufacturing === 'slit' && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 8 }}>
+            <div><Label>Исходная ширина</Label><UnitInput id="tape-parent-width" name="tape-parent-width" label="Исходная ширина" value={state.tapeOptions.parentWidth ?? ''} unit="мм" onChange={v => calc.setTapeOptions({ parentWidth: v })} /></div>
+            <div><Label>Допуск ширины −</Label><UnitInput id="tape-width-minus" name="tape-width-minus" label="Минусовое отклонение ширины" value={state.tapeOptions.widthMinus ?? ''} unit="мм" onChange={v => calc.setTapeOptions({ widthMinus: v })} /></div>
+            <div><Label>Допуск ширины +</Label><UnitInput id="tape-width-plus" name="tape-width-plus" label="Плюсовое отклонение ширины" value={state.tapeOptions.widthPlus ?? ''} unit="мм" onChange={v => calc.setTapeOptions({ widthPlus: v })} /></div>
+          </div>}
+          {typeof tape === 'string' ? <div role="status" style={st.warn}>{tape}</div> : tape && <>
+            <div style={st.hint}>Толщина: {tape.thicknessMin.toFixed(3)}–{tape.thicknessMax.toFixed(3)} мм ({tape.symmetric ? 'симметричные отклонения' : 'минусовой допуск'}); ширина: {tape.widthMin.toFixed(2)}–{tape.widthMax.toFixed(2)} мм.</div>
+            <div style={st.hint}>Средние размеры: {tape.meanThickness.toFixed(3)} × {tape.meanWidth.toFixed(2)} мм · базовая масса {tape.referenceMass.toFixed(4)} кг/м × коэффициент Б.1 {tape.coefficient.toFixed(3)} = {tape.linearMass.toFixed(4)} кг/м.{state.tapeOptions.manufacturing === 'slit' ? ' Допуск толщины взят для исходной ширины ' + tape.thicknessWidth + ' мм.' : ''}</div>
+          </>}
+          <div style={st.hint}>По умолчанию — базовая точность, прокатка и обрезанные кромки. При толщине от 5 мм таблица 2 задаёт только симметричные отклонения. Состояние, плакировку и допустимость поставки по таблице 1 уточните при заказе.</div>
         </section>}
         {exactOpen && isAluminumPlate && <section id="plate-exact-settings" style={st.card} aria-label="Расчёт по ГОСТ 17232-2023">
           <div style={st.cardTitle}>ГОСТ 17232-2023</div>

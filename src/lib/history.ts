@@ -1,3 +1,4 @@
+import { TapeOptions, validTapeOptions } from '../data/aluminumTape'
 import { PlateOptions, validPlateOptions } from '../data/aluminumPlate'
 // История расчётов — localStorage
 import { BrassOptions, validBrassOptions } from '../data/brassTolerance'
@@ -6,6 +7,7 @@ import { ProfileKey, profileMap } from '../data/profiles'
 
 export interface HistoryRecord {
   brassOptions?: BrassOptions
+  tapeOptions?: TapeOptions
   plateOptions?: PlateOptions
   sheetOptions?: SheetOptions
   id: string
@@ -29,7 +31,7 @@ function isRecord(value: unknown): value is HistoryRecord {
   if (!value || typeof value !== 'object') return false
   const r = value as HistoryRecord
   const profile = profileMap.get(r.profileKey)
-  return (r.plateOptions === undefined || validPlateOptions(r.plateOptions)) && (r.brassOptions === undefined || validBrassOptions(r.brassOptions)) && (r.sheetOptions === undefined || validSheetOptions(r.sheetOptions)) && !!profile && typeof r.id === 'string' && typeof r.profileName === 'string' &&
+  return (r.tapeOptions === undefined || validTapeOptions(r.tapeOptions)) && (r.plateOptions === undefined || validPlateOptions(r.plateOptions)) && (r.brassOptions === undefined || validBrassOptions(r.brassOptions)) && (r.sheetOptions === undefined || validSheetOptions(r.sheetOptions)) && !!profile && typeof r.id === 'string' && typeof r.profileName === 'string' &&
     typeof r.metalGroup === 'string' && typeof r.grade === 'string' &&
     Number.isFinite(r.timestamp) && Number.isSafeInteger(r.quantity) && r.quantity > 0 &&
     [r.length, r.mass, r.massOne, r.linearDensity].every(v => Number.isFinite(v) && v >= 0) &&
