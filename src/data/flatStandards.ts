@@ -18,5 +18,7 @@ export function getFlatStandardChoices(metalGroup: string): FlatStandardChoice[]
   }
   // Keep the geometric rectangular calculation accessible where the catalog has no verified standard.
   for (const c of choices) if (!c.code && c.profileKeys.includes('flat')) c.profileKey = 'flat'
-  return choices
+  const profileKeys = rectangularProfiles(getAllowedProfiles(metalGroup)).map(p => p.key)
+  const dimensions: FlatStandardChoice = { code: null, title: 'Расчёт по размерам — без ГОСТа', profileKey: profileKeys.includes('flat') ? 'flat' : profileKeys[0], profileKeys }
+  return [dimensions, ...choices.filter(c => c.code != null)]
 }

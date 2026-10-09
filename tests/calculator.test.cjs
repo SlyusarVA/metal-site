@@ -251,7 +251,7 @@ test('GOST sheet boundary rules, accuracy and special symmetric alloy tolerances
 
 test('GOST sheet hook saves calculation basis and rejects unsupported grades explicitly', () => {
   const a = app(); let c = a.render()
-  c.selectProfile('sheet'); c.selectMetal('Алюминий','Д16'); c.setLength(2)
+  c.selectMetal('Алюминий','Д16'); c.selectProfile('sheet',true); c.setLength(2)
   c.setSheetOptions({thicknessAccuracy:'high'}); c.calculate('mass'); c = a.render()
   assert.ok(c.state.result.sheetBasis); assert.equal(c.state.history[0].sheetOptions.thicknessAccuracy,'high')
   c.selectMetal('Алюминий','6061'); c.calculate('mass'); c = a.render()
@@ -319,12 +319,12 @@ test('GOST plate size limits, accuracy boundaries and unsupported grades are exp
  assert.equal(r(22,1800),115.45);assert.equal(r(20,1250),null)
 })
 test('GOST plate options survive history, distinguish records and keep sheet settings separate', () => {
- const a=app();let c=a.render();c.selectMetal('Алюминий','Д16Т');c.selectProfile('plate');c.setParam('b',1200);c.setLength(3);c.calculate('mass');c=a.render()
+ const a=app();let c=a.render();c.selectMetal('Алюминий','Д16Т');c.selectProfile('plate',true);c.setParam('b',1200);c.setLength(3);c.calculate('mass');c=a.render()
  assert.equal(c.state.result.value,208.62);assert.ok(c.state.result.plateBasis)
  const normal=c.state.history[0];assert.deepEqual(normal.plateOptions,{accuracy:'normal'});assert.equal(normal.sheetOptions,undefined)
  c.setPlateOptions({accuracy:'high'});c.calculate('mass');c=a.render();assert.equal(c.state.history.length,2)
  c.restoreFromHistory(normal);c=a.render();assert.equal(c.state.plateOptions.accuracy,'normal');c.calculate('mass');c=a.render();assert.equal(c.state.result.value,208.62)
- c.selectProfile('sheet');c.setParam('t',4);c.calculate('mass');c=a.render();assert.ok(c.state.result.sheetBasis);assert.equal(c.state.result.plateBasis,undefined)
+ c.selectProfile('sheet',true);c.setParam('t',4);c.calculate('mass');c=a.render();assert.ok(c.state.result.sheetBasis);assert.equal(c.state.result.plateBasis,undefined)
 })
 
 
@@ -362,7 +362,7 @@ test('GOST tape slit tolerances use parent width and require agreed cutting tole
 })
 
 test('GOST tape options persist, restore and distinguish history records', () => {
- const a=app();let c=a.render();c.selectMetal('Алюминий','Д16');c.selectProfile('strip');c.setParam('t',2);c.setParam('b',1200);c.setLength(3);c.calculate('mass');c=a.render()
+ const a=app();let c=a.render();c.selectMetal('Алюминий','Д16');c.selectProfile('strip',true);c.setParam('t',2);c.setParam('b',1200);c.setLength(3);c.calculate('mass');c=a.render()
  assert.ok(c.state.result.tapeBasis);const normal=c.state.history[0];assert.equal(normal.tapeOptions.accuracy,'normal');assert.equal(normal.sheetOptions,undefined)
  c.setTapeOptions({accuracy:'high'});c.calculate('mass');c=a.render();assert.equal(c.state.history.length,2)
  c.restoreFromHistory(normal);c=a.render();assert.equal(c.state.tapeOptions.accuracy,'normal');c.calculate('mass');c=a.render();assert.equal(c.state.result.value,normal.mass)
@@ -376,7 +376,20 @@ test('flat standard menu is material-specific and preserves one choice per stand
  assert.equal(aluminum.find(x=>x.code==='ГОСТ 17232-2023').profileKey,'plate')
  assert.match(aluminum.find(x=>x.code==='ГОСТ 13726-2023').title,/Ленты из алюминия и алюминиевых сплавов. Технические условия/)
  assert.equal(aluminum.find(x=>!x.code).profileKey,'flat')
- const steel=choices('Сталь');assert.deepEqual(steel.map(x=>x.code),['ГОСТ 19903-2015','ГОСТ 103-2006','ГОСТ 503-81'])
- assert.deepEqual(steel[0].profileKeys,['sheet','plate'])
+ const steel=choices('Сталь');assert.deepEqual(steel.filter(x=>x.code).map(x=>x.code),['ГОСТ 19903-2015','ГОСТ 103-2006','ГОСТ 503-81'])
+ assert.deepEqual(steel[1].profileKeys,['sheet','plate'])
  assert.ok(!choices('Медь').some(x=>x.code==='ГОСТ 2060-2006'))
+})
+
+test('flat calculations default to dimensions and thickness only changes an explicitly selected sheet or plate standard', () => {
+ const a=app();let c=a.render();c.selectMetal('Алюминий','Д16Т');c.selectProfile('sheet');c.setParam('t',20);c.setParam('b',1000);c.setLength(3);c.calculate('mass');c=a.render()
+ assert.equal(c.state.flatUseGost,false);assert.equal(c.state.profileKey,'sheet');assert.equal(c.state.result.value,166.8);assert.equal(c.state.result.sheetBasis,undefined)
+ const geometric=c.state.history[0];assert.equal(geometric.flatUseGost,false)
+ c.selectProfile('sheet',true);c.setParam('t',20);c=a.render();assert.equal(c.state.profileKey,'plate');assert.equal(c.state.flatUseGost,true);assert.equal(c.state.length,3)
+ c.calculate('mass');c=a.render();assert.equal(c.state.result.value,175.2408);assert.ok(c.state.result.plateBasis)
+ c.setParam('t',10.5);c=a.render();assert.equal(c.state.profileKey,'sheet');c.setParam('t',10.5001);c=a.render();assert.equal(c.state.profileKey,'plate')
+ c.setParam('t',null);c=a.render();assert.equal(c.state.profileKey,'plate')
+ c.restoreFromHistory(geometric);c=a.render();assert.equal(c.state.flatUseGost,false);c.calculate('mass');c=a.render();assert.equal(c.state.result.value,166.8)
+ c.selectProfile('strip',true);c.setParam('t',20);c=a.render();assert.equal(c.state.profileKey,'strip')
+ c.selectProfile('flat',false);c.setParam('t',4);c.calculate('mass');c=a.render();assert.equal(c.state.flatUseGost,false);assert.equal(c.state.result.plateBasis,undefined)
 })

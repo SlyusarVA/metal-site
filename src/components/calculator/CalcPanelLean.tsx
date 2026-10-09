@@ -64,9 +64,9 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
     setExactOpen(false)
   }, [state.profileKey, state.metalGroup, state.grade])
   const isBrass = isBrassBar(state.profileKey, state.metalGroup)
-  const isAluminumSheet = state.profileKey === 'sheet' && state.metalGroup === 'Алюминий'
-  const isAluminumPlate = state.profileKey === 'plate' && state.metalGroup === 'Алюминий'
-  const isAluminumTape = state.profileKey === 'strip' && state.metalGroup === 'Алюминий'
+  const isAluminumSheet = state.profileKey === 'sheet' && state.metalGroup === 'Алюминий' && state.flatUseGost
+  const isAluminumPlate = state.profileKey === 'plate' && state.metalGroup === 'Алюминий' && state.flatUseGost
+  const isAluminumTape = state.profileKey === 'strip' && state.metalGroup === 'Алюминий' && state.flatUseGost
   const tape = isAluminumTape ? tapeBasis(state.grade, state.params.t ?? NaN, state.params.b ?? NaN, state.tapeOptions) : null
   const plate = isAluminumPlate ? plateBasis(state.grade, state.params.t ?? NaN, state.params.b ?? NaN, state.plateOptions) : null
   const basis = isAluminumSheet ? sheetBasis(state.grade, state.params.t ?? NaN, state.params.b ?? NaN, state.sheetOptions) : null
@@ -79,7 +79,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
   const resultMass = state.result?.target === 'mass' ? state.result.value : null
   const resultLength = state.result?.target === 'length' ? state.result.value : null
   const displayResult = mode === 'length' ? resultLength : resultMass
-  const tolerance = getWeightTolerance(state.profileKey, Object.fromEntries(Object.entries(state.params).filter(([, v]) => v !== null) as [string, number][]), state.metalGroup, state.brassOptions)
+  const tolerance = isRectangular(state.profileKey) && !state.flatUseGost ? null : getWeightTolerance(state.profileKey, Object.fromEntries(Object.entries(state.params).filter(([, v]) => v !== null) as [string, number][]), state.metalGroup, state.brassOptions)
   const massMin = mode === 'mass' && resultMass != null && tolerance ? resultMass * (1 - tolerance.minus) : null
   const massMax = mode === 'mass' && resultMass != null && tolerance ? resultMass * (1 + tolerance.plus) : null
   const gridCols = isMobile ? 'repeat(2,minmax(0,1fr))' : 'repeat(auto-fill,minmax(140px,1fr))'
@@ -133,7 +133,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
             <span style={st.headProfileSlot}><AnimatedText text={isRectangular(state.profileKey) ? rectangularName : state.profile.name} /></span>
           </span>
         )}
-        <GostTags metalGroup={state.metalGroup} profile={state.profile} densityText={isAluminumTape ? (tapeCoefficient(state.grade) == null ? 'k: нет в Б.1' : `k = ${tapeCoefficient(state.grade)!.toFixed(3)}`) : isAluminumPlate ? (plateCoefficient(state.grade) == null ? "k: нет в Б.1" : `k = ${plateCoefficient(state.grade)!.toFixed(3)}`) : undefined} density={isAluminumSheet ? sheetDensity(state.grade) : state.density} onGostClick={onGostOpen} onProfileSelect={selectProfile} />
+        <GostTags metalGroup={state.metalGroup} profile={state.profile} densityText={isAluminumTape ? (tapeCoefficient(state.grade) == null ? 'k: нет в Б.1' : `k = ${tapeCoefficient(state.grade)!.toFixed(3)}`) : isAluminumPlate ? (plateCoefficient(state.grade) == null ? "k: нет в Б.1" : `k = ${plateCoefficient(state.grade)!.toFixed(3)}`) : undefined} density={isAluminumSheet ? sheetDensity(state.grade) : state.density} onGostClick={onGostOpen} onProfileSelect={selectProfile} flatUseGost={state.flatUseGost} />
       </div>
       <div style={st.search}><GostSearchBar onResult={onGostResult} onClear={onGostClear} /></div>
       {needsSortament && <div style={st.warn}>Выберите сортамент</div>}

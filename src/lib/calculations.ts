@@ -9,6 +9,7 @@ import { sheetBasis, defaultSheetOptions, SheetOptions, SheetBasis } from '../da
 import { validateDimensions } from './validation'
 
 export interface CalcInput {
+  flatUseGost?: boolean
   tapeOptions?: TapeOptions
   plateOptions?: PlateOptions
   sheetOptions?: SheetOptions
@@ -46,7 +47,7 @@ export function calcMass(input: CalcInput): CalcResult | null {
   if (!Number.isSafeInteger(input.quantity) || input.quantity <= 0) return null
   if (!profile.isVolume && (input.length == null || !Number.isFinite(input.length) || input.length <= 0)) return null
 
-  const basis = input.metalGroup === 'Алюминий' ? (input.profileKey === 'sheet' ? sheetBasis(input.grade, input.params.t, input.params.b, input.sheetOptions ?? defaultSheetOptions) : input.profileKey === 'plate' ? plateBasis(input.grade, input.params.t, input.params.b, input.plateOptions ?? defaultPlateOptions) : input.profileKey === 'strip' ? tapeBasis(input.grade, input.params.t, input.params.b, input.tapeOptions ?? defaultTapeOptions) : undefined) : undefined
+  const basis = input.flatUseGost !== false && input.metalGroup === 'Алюминий' ? (input.profileKey === 'sheet' ? sheetBasis(input.grade, input.params.t, input.params.b, input.sheetOptions ?? defaultSheetOptions) : input.profileKey === 'plate' ? plateBasis(input.grade, input.params.t, input.params.b, input.plateOptions ?? defaultPlateOptions) : input.profileKey === 'strip' ? tapeBasis(input.grade, input.params.t, input.params.b, input.tapeOptions ?? defaultTapeOptions) : undefined) : undefined
   if (typeof basis === 'string') return null
   const density = basis?.density ?? getDensity(input.metalGroup, input.grade)   // кг/м³
   const densityMm3 = density * 1e-9                           // кг/мм³
@@ -93,7 +94,7 @@ export function calcLength(
   if (!Number.isSafeInteger(input.quantity) || input.quantity <= 0) return null
   if (validateDimensions(input.profileKey, input.params)) return null
 
-  const basis = input.metalGroup === 'Алюминий' ? (input.profileKey === 'sheet' ? sheetBasis(input.grade, input.params.t, input.params.b, input.sheetOptions ?? defaultSheetOptions) : input.profileKey === 'plate' ? plateBasis(input.grade, input.params.t, input.params.b, input.plateOptions ?? defaultPlateOptions) : input.profileKey === 'strip' ? tapeBasis(input.grade, input.params.t, input.params.b, input.tapeOptions ?? defaultTapeOptions) : undefined) : undefined
+  const basis = input.flatUseGost !== false && input.metalGroup === 'Алюминий' ? (input.profileKey === 'sheet' ? sheetBasis(input.grade, input.params.t, input.params.b, input.sheetOptions ?? defaultSheetOptions) : input.profileKey === 'plate' ? plateBasis(input.grade, input.params.t, input.params.b, input.plateOptions ?? defaultPlateOptions) : input.profileKey === 'strip' ? tapeBasis(input.grade, input.params.t, input.params.b, input.tapeOptions ?? defaultTapeOptions) : undefined) : undefined
   if (typeof basis === 'string') return null
   const density = basis?.density ?? getDensity(input.metalGroup, input.grade)
   const densityMm3 = density * 1e-9

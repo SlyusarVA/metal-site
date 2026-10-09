@@ -12,16 +12,17 @@ interface Props {
   metalGroup: string
   densityText?: string
   density: number | null
-  onProfileSelect?: (key: ProfileKey) => void
+  flatUseGost?: boolean
+  onProfileSelect?: (key: ProfileKey, useGost: boolean) => void
   onGostClick: (code: string) => void
 }
 
-export default function GostTags({ profile, metalGroup, density, densityText, onGostClick, onProfileSelect }: Props) {
+export default function GostTags({ profile, metalGroup, density, densityText, onGostClick, onProfileSelect, flatUseGost = false }: Props) {
   const gostCodes = getProfileGostCodes(profile.key, metalGroup)
 
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center', minWidth: 0 }}>
-      {isRectangular(profile.key) && onProfileSelect ? <FlatGostMenu profile={profile} metalGroup={metalGroup} onSelect={onProfileSelect} onGostClick={onGostClick} /> : gostCodes.map((code, index) => (
+      {isRectangular(profile.key) && onProfileSelect ? <FlatGostMenu profile={profile} metalGroup={metalGroup} onSelect={onProfileSelect} useGost={flatUseGost} onGostClick={onGostClick} /> : gostCodes.map((code, index) => (
         <button
           key={`gost-${index}`}
           title={code}
@@ -68,9 +69,9 @@ export default function GostTags({ profile, metalGroup, density, densityText, on
   )
 }
 
-function FlatGostMenu({ profile, metalGroup, onSelect, onGostClick }: { profile: MetalProfile; metalGroup: string; onSelect: (key: ProfileKey) => void; onGostClick: (code: string) => void }) {
+function FlatGostMenu({ profile, metalGroup, onSelect, onGostClick, useGost }: { profile: MetalProfile; metalGroup: string; useGost: boolean; onSelect: (key: ProfileKey, useGost: boolean) => void; onGostClick: (code: string) => void }) {
   const choices = getFlatStandardChoices(metalGroup)
-  const current = choices.find(c => c.profileKeys.includes(profile.key))
+  const current = choices.find(c => useGost ? c.code != null && c.profileKeys.includes(profile.key) : c.code === null)
   const [open, setOpen] = useState(false)
   const [position, setPosition] = useState({ left: 12, top: 40, width: 520, maxHeight: 400 })
   const trigger = useRef<HTMLButtonElement>(null)
@@ -96,8 +97,9 @@ function FlatGostMenu({ profile, metalGroup, onSelect, onGostClick }: { profile:
     return () => { document.removeEventListener('pointerdown', outside); window.removeEventListener('resize', resize) }
   }, [open])
   return <>
-    <button ref={trigger} type="button" aria-label="Выбрать ГОСТ плоского проката" aria-haspopup="menu" aria-expanded={open} aria-controls={open ? menuId : undefined} title={current?.code ? current.title + ' — ' + current.code : current?.title} onClick={() => open ? close() : show()} onKeyDown={e => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); show() } }} style={{ background: 'var(--surface-container)', border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-full)', padding: '3px 12px', fontSize: 11, fontWeight: 600, color: 'var(--primary)', cursor: 'pointer', fontFamily: 'Manrope, sans-serif' }}>
-      {current?.code ?? 'Выбрать ГОСТ'} <span aria-hidden="true">⌄</span>
+    <button ref={trigger} type="button" aria-label="Выбрать ГОСТ плоского проката" aria-haspopup="menu" aria-expanded={open} aria-controls={open ? menuId : undefined} title={current?.code ? current.title + ' — ' + current.code : current?.title} onClick={() => open ? close() : show()} onKeyDown={e => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); show() } }} style={{ border: '1px solid var(--outline-variant)', borderRadius: 'var(--radius-sm)', minHeight: 44, padding: '6px 12px', fontSize: 12, fontWeight: 600, color: 'var(--primary)', cursor: 'pointer', fontFamily: 'Manrope, sans-serif', background: 'var(--primary-container)', borderColor: 'var(--primary)' }}>
+      <span style={{ display: 'block' }}>Выбрать ГОСТ <span aria-hidden="true">⌄</span></span>
+      <span style={{ display: 'block', fontSize: 11, fontWeight: 400 }}>{current?.code ?? 'По размерам'}</span>
     </button>
     {open && createPortal(<section ref={menu} id={menuId} role="menu" aria-label="ГОСТ плоского проката" onKeyDown={e => {
       if (e.key === 'Escape') { e.preventDefault(); close(true) }
@@ -110,7 +112,7 @@ function FlatGostMenu({ profile, metalGroup, onSelect, onGostClick }: { profile:
         items[next]?.focus()
       }
     }} style={{ position: 'fixed', ...position, overflowY: 'auto', zIndex: 1000, boxSizing: 'border-box', padding: 6, border: '1px solid var(--outline)', borderRadius: 10, background: 'var(--surface)', color: 'var(--on-surface)', boxShadow: '0 8px 28px #0005' }}>
-      {choices.map(choice => <button key={choice.code ?? 'dimensions'} type="button" role="menuitemradio" aria-checked={choice === current} tabIndex={-1} onClick={() => { if (!choice.profileKeys.includes(profile.key)) onSelect(choice.profileKey); close(true) }} style={{ display: 'flex', width: '100%', gap: 8, alignItems: 'flex-start', padding: '10px 12px', border: 0, borderRadius: 7, textAlign: 'left', font: 'inherit', fontSize: 13, cursor: 'pointer', color: choice === current ? 'var(--primary)' : 'var(--on-surface)', background: choice === current ? 'var(--primary-container)' : 'transparent' }}>
+      {choices.map(choice => <button key={choice.code ?? 'dimensions'} type="button" role="menuitemradio" aria-checked={choice === current} tabIndex={-1} onClick={() => { onSelect(choice.profileKeys.includes(profile.key) ? profile.key : choice.profileKey, choice.code != null); close(true) }} style={{ display: 'flex', width: '100%', gap: 8, alignItems: 'flex-start', padding: '10px 12px', border: 0, borderRadius: 7, textAlign: 'left', font: 'inherit', fontSize: 13, cursor: 'pointer', color: choice === current ? 'var(--primary)' : 'var(--on-surface)', background: choice === current ? 'var(--primary-container)' : 'transparent' }}>
         <span aria-hidden="true" style={{ width: 14, flexShrink: 0 }}>{choice === current ? '✓' : ''}</span>
         <span style={{ minWidth: 0, whiteSpace: 'normal' }}>{choice.title}{choice.code && <strong style={{ display: 'block', marginTop: 3 }}>{choice.code}</strong>}</span>
       </button>)}
