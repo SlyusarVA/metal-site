@@ -54,6 +54,12 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
   }, [onContentHeight])
   const { state, selectMetal, selectProfile, setParam, setLength, setMass, setQuantity, incrementQty, decrementQty, calculate } = calc
   const [selectedMode, setMode] = useState<CalcMode>('mass')
+  const [calculationAttempted, setCalculationAttempted] = useState(false)
+  const [exactOpen, setExactOpen] = useState(false)
+  useEffect(() => {
+    setCalculationAttempted(false)
+    setExactOpen(false)
+  }, [state.profileKey, state.metalGroup, state.grade])
   const isBrass = isBrassBar(state.profileKey, state.metalGroup)
   const isAluminumSheet = state.profileKey === 'sheet' && state.metalGroup === 'Алюминий'
   const basis = isAluminumSheet ? sheetBasis(state.grade, state.params.t ?? NaN, state.params.b ?? NaN, state.sheetOptions) : null
@@ -155,7 +161,29 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
           </div>
           <div style={st.hint}>{tolerance ? 'Диапазон массы рассчитан по допуску размера сечения при неизменных длине и плотности. Это не отдельный нормативный допуск массы.' : 'Для выбранного размера, изготовления или точности нет подтверждённого табличного допуска. Рассчитывается только номинальная масса.'}</div>
         </section>}
-        {isAluminumSheet && <section style={st.card} aria-label="Расчёт по ГОСТ 21631-2023">
+
+        <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 8 }}>
+          {state.profile.params.map(p => <div key={p.key}><Label>{p.label}</Label><UnitInput id={`calc-param-${p.key}`} name={`param-${p.key}`} label={p.label} value={state.params[p.key] ?? ''} unit={p.unit} onChange={v => setParam(p.key, v)} /></div>)}
+          {!state.profile.isVolume && <div><Label>{mode === 'length' ? 'Масса' : 'Длина L'}</Label><UnitInput id={mode === 'length' ? 'calc-mass' : 'calc-length'} name={mode === 'length' ? 'mass' : 'length'} label={mode === 'length' ? 'Масса' : 'Длина L'} value={mode === 'length' ? state.mass ?? '' : state.length ?? ''} unit={mode === 'length' ? 'кг.' : 'м.'} onChange={setSource} /></div>}
+          <div><Label>Количество</Label><div style={st.qty}><button type="button" aria-label="Уменьшить количество" onClick={decrementQty} style={st.qtyBtn}>−</button><input id="calc-quantity" name="quantity" aria-label="Количество" type="number" min={1} step={1} value={state.quantity} onChange={e => setQuantity(e.target.value ? Number(e.target.value) : 1)} style={st.qtyInput} /><button type="button" aria-label="Увеличить количество" onClick={incrementQty} style={st.qtyBtn}>+</button></div></div>
+        </div>
+        <button type="button" onClick={() => { setCalculationAttempted(true); calculate(mode === 'length' ? 'length' : 'mass') }} style={st.action}>Рассчитать</button>
+        {state.error && <ErrorMessage error={state.error} />}
+        {state.snackbar && <div style={st.note}>{state.snackbar.message}</div>}
+      <div style={{ ...st.result, marginInline: -14 }}>
+        <div>
+          <div style={st.resultLabel}>{mode === 'length' ? 'Длина' : 'Вес'}</div>
+          <span style={st.resultValue}><AnimatedNumber value={displayResult} digits={3} /></span> <span style={st.unitText}>{mode === 'length' ? 'м' : 'кг'}</span>
+          {massMin != null && massMax != null && <div style={st.tol}><AnimatedNumber value={massMin} digits={2} /> ··· <AnimatedNumber value={massMax} digits={2} /> кг</div>}
+        </div>
+        {state.result?.linearMass != null && state.result.linearMass > 0 && <div style={{ marginInlineStart: 18 }}><div style={st.resultLabel}>{state.profile.isVolume ? 'Масса штуки' : 'Погонный вес'}</div><b><AnimatedNumber value={state.result.linearMass} digits={4} /></b> <span style={st.unitText}>{state.profile.isVolume ? 'кг/шт' : 'кг/м'}</span></div>}
+        {tolerance && mode === 'mass' && <span style={st.pill}>{tolerance.label}</span>}
+      </div>
+      {isAluminumSheet && (calculationAttempted || state.result != null) && <div>
+        <button type="button" aria-expanded={exactOpen} aria-controls="sheet-exact-settings" onClick={() => setExactOpen(open => !open)} style={st.exactToggle}>
+          <span aria-hidden="true" style={{ display: 'inline-block', transform: exactOpen ? 'rotate(180deg)' : undefined }}>⌄</span> Точный расчёт
+        </button>
+        {exactOpen && <section id="sheet-exact-settings" style={st.card} aria-label="Расчёт по ГОСТ 21631-2023">
           <div style={st.cardTitle}>ГОСТ 21631-2023</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 8 }}>
             <FieldSelect id="sheet-thickness-accuracy" name="sheet-thickness-accuracy" label="Точность толщины" value={state.sheetOptions.thicknessAccuracy} onChange={v => calc.setSheetOptions({ thicknessAccuracy: v as 'normal' | 'high' })} options={[{ value: 'normal', label: 'Нормальная' }, { value: 'high', label: 'Повышенная' }]} />
@@ -166,24 +194,8 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
           <div style={st.hint}>Расчёт по п. 4.1.1: обрезанные кромки, стандартные отклонения таблиц 1 и 3, плотность таблицы Б.1. Специальные условия поставки и допустимость сортамента по таблице 2 требуют отдельной проверки.</div>
           {typeof basis === 'string' ? <div role="status" style={st.warn}>{basis}</div> : basis && <div style={st.hint}>Толщина: {basis.thicknessMin.toFixed(3)}–{basis.thicknessMax.toFixed(3)} мм; ширина: {basis.widthMin}–{basis.widthMax} мм. Для массы: {basis.meanThickness.toFixed(3)} × {basis.meanWidth} мм, ρ = {basis.density} кг/м³.</div>}
         </section>}
-        <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 8 }}>
-          {state.profile.params.map(p => <div key={p.key}><Label>{p.label}</Label><UnitInput id={`calc-param-${p.key}`} name={`param-${p.key}`} label={p.label} value={state.params[p.key] ?? ''} unit={p.unit} onChange={v => setParam(p.key, v)} /></div>)}
-          {!state.profile.isVolume && <div><Label>{mode === 'length' ? 'Масса' : 'Длина L'}</Label><UnitInput id={mode === 'length' ? 'calc-mass' : 'calc-length'} name={mode === 'length' ? 'mass' : 'length'} label={mode === 'length' ? 'Масса' : 'Длина L'} value={mode === 'length' ? state.mass ?? '' : state.length ?? ''} unit={mode === 'length' ? 'кг.' : 'м.'} onChange={setSource} /></div>}
-          <div><Label>Количество</Label><div style={st.qty}><button type="button" aria-label="Уменьшить количество" onClick={decrementQty} style={st.qtyBtn}>−</button><input id="calc-quantity" name="quantity" aria-label="Количество" type="number" min={1} step={1} value={state.quantity} onChange={e => setQuantity(e.target.value ? Number(e.target.value) : 1)} style={st.qtyInput} /><button type="button" aria-label="Увеличить количество" onClick={incrementQty} style={st.qtyBtn}>+</button></div></div>
-        </div>
-        <button type="button" onClick={() => calculate(mode === 'length' ? 'length' : 'mass')} style={st.action}>Рассчитать</button>
-        {state.error && <ErrorMessage error={state.error} />}
-        {state.snackbar && <div style={st.note}>{state.snackbar.message}</div>}
+      </div>}
       </div>
-      </div>
-      <div style={st.result}>
-        <div>
-          <div style={st.resultLabel}>{mode === 'length' ? 'Длина' : 'Вес'}</div>
-          <span style={st.resultValue}><AnimatedNumber value={displayResult} digits={3} /></span> <span style={st.unitText}>{mode === 'length' ? 'м' : 'кг'}</span>
-          {massMin != null && massMax != null && <div style={st.tol}><AnimatedNumber value={massMin} digits={2} /> ··· <AnimatedNumber value={massMax} digits={2} /> кг</div>}
-        </div>
-        {state.result?.linearMass != null && state.result.linearMass > 0 && <div style={{ marginInlineStart: 18 }}><div style={st.resultLabel}>{state.profile.isVolume ? 'Масса штуки' : 'Погонный вес'}</div><b><AnimatedNumber value={state.result.linearMass} digits={4} /></b> <span style={st.unitText}>{state.profile.isVolume ? 'кг/шт' : 'кг/м'}</span></div>}
-        {tolerance && mode === 'mass' && <span style={st.pill}>{tolerance.label}</span>}
       </div>
     </div>
   )
@@ -368,6 +380,7 @@ const st: Record<string, React.CSSProperties> = {
   errorMsg: { margin: 0 },
   note: { padding: '7px 10px', borderRadius: 6, background: 'var(--surface-container)', color: 'var(--on-surface)', fontSize: 'var(--text-xs)' },
   result: { flexShrink: 0, display: 'flex', alignItems: 'flex-start', padding: '10px 14px', borderTop: '1px solid var(--outline-variant)', background: 'var(--surface)' },
+  exactToggle: { display: 'flex', alignItems: 'center', gap: 8, minHeight: 40, padding: '4px 0', border: 'none', background: 'transparent', color: 'var(--primary)', font: 'inherit', fontWeight: 600, cursor: 'pointer' },
   resultLabel: { fontSize: 'var(--text-xs)', fontWeight: 600, color: 'var(--on-surface-variant)', textTransform: 'uppercase', letterSpacing: '.06em' },
   resultValue: { fontSize: 'var(--text-xl)', fontWeight: 700, color: 'var(--on-surface)' },
   unitText: { fontSize: 'var(--text-sm)', color: 'var(--on-surface-variant)' },
