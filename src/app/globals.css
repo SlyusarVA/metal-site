@@ -355,3 +355,20 @@ button { -webkit-tap-highlight-color: transparent; }
     min-height: 44px;
   }
 }
+
+/* The closed calculator keeps the Steel–Round baseline; its exact panel can grow it. */
+:root {
+  --resize-dur: 300ms;
+  --resize-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.t-resize {
+  transition:
+    width  var(--resize-dur) var(--resize-ease),
+    height var(--resize-dur) var(--resize-ease);
+  will-change: width, height;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-resize { transition: none !important; }
+}

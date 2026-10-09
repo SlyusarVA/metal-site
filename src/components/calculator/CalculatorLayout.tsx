@@ -23,6 +23,7 @@ export default function CalculatorLayout() {
   const { state, selectProfile, selectMetal, setParam, setLength, setMass, setQuantity } = calc
   const { settings } = useSettings()
   const [sortamentHeight, setSortamentHeight] = useState(624)
+  const [expandedHeight, setExpandedHeight] = useState(0)
   const [showSettings, setShowSettings] = useState(false)
   const [showGost, setShowGost] = useState(false)
   const [selectedGostCode, setSelectedGostCode] = useState<string | null>(null)
@@ -76,7 +77,7 @@ export default function CalculatorLayout() {
     .map(key => profiles.find(p => p.key === key))
     .filter(Boolean) as typeof profiles
 
-  const desktopShellStyle = getDesktopShellStyle(sortamentHeight)
+  const desktopShellStyle = getDesktopShellStyle(Math.max(sortamentHeight, expandedHeight))
 
   const getGradesOrdered = (group: string) => {
     const raw = getGradesForGroup(group)
@@ -132,7 +133,7 @@ export default function CalculatorLayout() {
           <ThemeToggle />
         </nav>
 
-        <div style={desktopShellStyle}>
+        <div className="t-resize" style={desktopShellStyle}>
           <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
             <MetalNav
               groups={orderedMetals}
@@ -151,7 +152,7 @@ export default function CalculatorLayout() {
               metalGroup={state.metalGroup}
               onSelect={(key) => { selectProfile(key); setNeedsSortament(false) }}
             />
-            <CalcPanel {...commonProps} />
+            <CalcPanel {...commonProps} onExpandedHeight={setExpandedHeight} />
           </div>
         </div>
 

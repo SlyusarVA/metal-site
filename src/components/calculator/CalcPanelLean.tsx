@@ -29,7 +29,7 @@ interface Props {
   needsSortament?: boolean
   onGostClear: () => void
   onGostOpen: (code: string) => void
-  onContentHeight?: (height: number) => void
+  onExpandedHeight?: (height: number) => void
   isMobile?: boolean
   metalGroups?: string[]
   profiles?: ProfileOption[]
@@ -41,23 +41,10 @@ const modes: Record<CalcMode, { label: string; hint: string }> = {
   quick: { label: 'Быстрый ввод', hint: 'Введите металл, марку, сортамент, размеры и массу одной строкой.' },
 }
 
-export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostClear, onGostOpen, needsSortament, onContentHeight, isMobile = false, metalGroups = [], profiles = [] }: Props) {
+export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostClear, onGostOpen, needsSortament, onExpandedHeight, isMobile = false, metalGroups = [], profiles = [] }: Props) {
   const panelRef = useRef<HTMLDivElement>(null)
   const workRef = useRef<HTMLDivElement>(null)
   const workContentRef = useRef<HTMLDivElement>(null)
-  useEffect(() => {
-    if (!onContentHeight || !panelRef.current || !workContentRef.current) return
-    const measure = () => {
-      if (!panelRef.current || !workContentRef.current) return
-      const height = Array.from(panelRef.current.children).reduce((sum, child) => sum + (child === workRef.current ? workContentRef.current!.getBoundingClientRect().height + 24 : child.getBoundingClientRect().height), 0)
-      onContentHeight(Math.ceil(height) + 2)
-    }
-    const observer = new ResizeObserver(measure)
-    Array.from(panelRef.current.children).forEach(child => observer.observe(child))
-    observer.observe(workContentRef.current)
-    measure()
-    return () => observer.disconnect()
-  }, [onContentHeight])
   const { state, selectMetal, selectProfile, setParam, setLength, setMass, setQuantity, incrementQty, decrementQty, calculate } = calc
   const [selectedMode, setMode] = useState<CalcMode>('mass')
   const [calculationAttempted, setCalculationAttempted] = useState(false)
@@ -72,6 +59,25 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
   const isAluminumSheet = state.profileKey === 'sheet' && state.metalGroup === 'Алюминий' && state.flatUseGost
   const isAluminumPlate = state.profileKey === 'plate' && state.metalGroup === 'Алюминий' && state.flatUseGost
   const isAluminumTape = state.profileKey === 'strip' && state.metalGroup === 'Алюминий' && state.flatUseGost
+  const expanded = exactOpen && (isBrassFlatGost || isAluminumSheet || isAluminumPlate || isAluminumTape)
+  useEffect(() => {
+    if (!onExpandedHeight) return
+    if (!expanded) {
+      onExpandedHeight(0)
+      return
+    }
+    if (!panelRef.current || !workContentRef.current) return
+    const measure = () => {
+      if (!panelRef.current || !workContentRef.current) return
+      const height = Array.from(panelRef.current.children).reduce((sum, child) => sum + (child === workRef.current ? workContentRef.current!.getBoundingClientRect().height + 24 : child.getBoundingClientRect().height), 0)
+      onExpandedHeight(Math.ceil(height) + 2)
+    }
+    const observer = new ResizeObserver(measure)
+    Array.from(panelRef.current.children).forEach(child => observer.observe(child))
+    observer.observe(workContentRef.current)
+    measure()
+    return () => observer.disconnect()
+  }, [onExpandedHeight, expanded])
   const tape = isAluminumTape ? tapeBasis(state.grade, state.params.t ?? NaN, state.params.b ?? NaN, state.tapeOptions) : null
   const plate = isAluminumPlate ? plateBasis(state.grade, state.params.t ?? NaN, state.params.b ?? NaN, state.plateOptions) : null
   const basis = isAluminumSheet ? sheetBasis(state.grade, state.params.t ?? NaN, state.params.b ?? NaN, state.sheetOptions) : null
@@ -159,7 +165,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
       <div style={st.search}><GostSearchBar onResult={onGostResult} onClear={onGostClear} /></div>
       {needsSortament && <div style={st.warn}>Выберите сортамент</div>}
       <div ref={workRef} className="ui-scroll-area" style={st.work}>
-        <div ref={workContentRef} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div ref={workContentRef} style={{ display: 'flex', flexDirection: 'column', gap: 10, flexShrink: 0 }}>
         <section style={st.card}>
           <div style={st.cardTitle}>Калькулятор металла</div>
           <ModeTabs mode={mode} onSelect={switchMode} isVolume={!!state.profile.isVolume} />
