@@ -20,5 +20,12 @@ export function getFlatStandardChoices(metalGroup: string): FlatStandardChoice[]
   for (const c of choices) if (!c.code && c.profileKeys.includes('flat')) c.profileKey = 'flat'
   const profileKeys = rectangularProfiles(getAllowedProfiles(metalGroup)).map(p => p.key)
   const dimensions: FlatStandardChoice = { code: null, title: 'Расчёт по размерам — без ГОСТа', profileKey: profileKeys.includes('flat') ? 'flat' : profileKeys[0], profileKeys }
-  return [dimensions, ...choices.filter(c => c.code != null)]
+  const standards = choices.filter(c => c.code != null)
+  return standards.length === 1 ? standards : [dimensions, ...standards]
+}
+
+// A sole applicable standard is automatic; no catalogue standard means geometry only.
+export function resolveFlatUseGost(profileKey: ProfileKey, metalGroup: string, requested = false): boolean {
+  const standards = getFlatStandardChoices(metalGroup).filter(c => c.code != null)
+  return standards.some(c => c.profileKeys.includes(profileKey)) && (standards.length === 1 || requested)
 }

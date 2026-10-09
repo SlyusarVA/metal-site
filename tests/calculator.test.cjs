@@ -474,3 +474,15 @@ test('restored agreed sheet tolerance returns to baseline, keeping mandatory all
  c.selectMetal('Алюминий','АМг5');c.setParam('t',5);c.calculate('mass');c=a.render();
  assert.equal(c.state.result.sheetBasis.thicknessMin,4.75);assert.equal(c.state.result.sheetBasis.thicknessMax,5.25);
 });
+
+test('sole flat standard is automatic on product, material and history changes', () => {
+ const a=app(),{getFlatStandardChoices:choices}=a.load('src/data/flatStandards');
+ assert.deepEqual(choices('Латунь').map(c=>c.code),['ГОСТ 2208-2007']);assert.ok(choices('Алюминий').some(c=>c.code===null));assert.deepEqual(choices('Вольфрам').map(c=>c.code),[null]);
+ let c=a.render();c.selectMetal('Латунь','Л63');c.selectProfile('sheet');c=a.render();assert.equal(c.state.flatUseGost,true);
+ c.setLength(3);c.calculate('mass');c=a.render();assert.ok(c.state.result.brassFlatBasis);const old={...c.state.history[0],flatUseGost:false};
+ c.restoreFromHistory(old);c=a.render();assert.equal(c.state.flatUseGost,true);
+ c.selectProfile('sheet',false);c=a.render();assert.equal(c.state.flatUseGost,true);
+ c.selectMetal('Алюминий','Д16Т');c=a.render();assert.equal(c.state.flatUseGost,false);
+ c.selectMetal('Латунь','Л63');c=a.render();assert.equal(c.state.flatUseGost,true);
+ c.selectMetal('Вольфрам','ВА');c=a.render();assert.equal(c.state.flatUseGost,false);
+});

@@ -146,7 +146,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
     setMass(parsed.mass)
     setMode(parsed.unsupportedReason ? 'mass' : 'length')
     setQuickChips(parsed.chips)
-    setQuickStatus(parsed.unsupportedReason ? { kind: 'warning', message: parsed.unsupportedReason } : { kind: 'success', message: 'Данные перенесены в режим «Расчёт длины». Нажмите «Рассчитать».' })
+    setQuickStatus(parsed.unsupportedReason ? { kind: 'warning', message: parsed.unsupportedReason } : { kind: 'success', message: 'Данные перенесены в режим «Расчёт длины». Длина рассчитывается автоматически.' })
   }
 
   return (
@@ -198,7 +198,6 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
           {!state.profile.isVolume && <div><Label>{mode === 'length' ? 'Масса' : 'Длина L'}</Label><UnitInput id={mode === 'length' ? 'calc-mass' : 'calc-length'} name={mode === 'length' ? 'mass' : 'length'} label={mode === 'length' ? 'Масса' : 'Длина L'} value={mode === 'length' ? state.mass ?? '' : displayLength} unit={mode === 'length' ? 'кг.' : lengthUnit} onChange={setSource} /></div>}
           <div><Label>Количество</Label><div style={st.qty}><button type="button" aria-label="Уменьшить количество" onClick={decrementQty} style={st.qtyBtn}>−</button><input id="calc-quantity" name="quantity" aria-label="Количество" type="number" min={1} step={1} value={state.quantity} onChange={e => setQuantity(e.target.value ? Number(e.target.value) : 1)} style={st.qtyInput} /><button type="button" aria-label="Увеличить количество" onClick={incrementQty} style={st.qtyBtn}>+</button></div></div>
         </div>
-        <button type="button" onClick={() => { setCalculationAttempted(true); calculate(mode === 'length' ? 'length' : 'mass') }} style={st.action}>Рассчитать</button>
         {state.error && <ErrorMessage error={state.error} />}
         {state.snackbar && <div style={st.note}>{state.snackbar.message}</div>}
       <div style={{ ...st.result, marginInline: -14 }}>
@@ -442,7 +441,6 @@ const st: Record<string, React.CSSProperties> = {
   qty: { display: 'flex', height: 38, overflow: 'hidden', border: '1px solid var(--outline)', borderRadius: 7 },
   qtyBtn: { width: 36, border: 'none', background: 'var(--surface-container)', color: 'var(--on-surface-variant)', fontSize: 18 },
   qtyInput: { flex: 1, minWidth: 48, border: 'none', outline: 'none', textAlign: 'center', background: 'var(--surface)', color: 'var(--on-surface)', fontWeight: 700 },
-  action: { alignSelf: 'flex-start', border: 'none', borderRadius: 7, padding: '10px 22px', background: 'var(--primary)', color: '#fff', fontWeight: 700 },
   errorWrap: { width: '100%' },
   error: { padding: '7px 10px', borderRadius: 6, border: '1px solid var(--error)', background: 'var(--error-container)', color: 'var(--error)', fontSize: 'var(--text-xs)' },
   errorMsg: { margin: 0 },

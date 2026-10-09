@@ -372,3 +372,8 @@ button { -webkit-tap-highlight-color: transparent; }
 @media (prefers-reduced-motion: reduce) {
   .t-resize { transition: none !important; }
 }
+
+.ui-dialog.ui-dialog-clear-backdrop::backdrop {
+  background: transparent;
+  backdrop-filter: none;
+}

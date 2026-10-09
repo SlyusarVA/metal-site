@@ -9,6 +9,7 @@ interface AppDialogProps {
   width?: number | string
   height?: number | string
   maxWidth?: number | string
+  backdrop?: 'dimmed' | 'clear'
   labelledById?: string
 }
 
@@ -20,6 +21,7 @@ export default function AppDialog({
   height,
   maxWidth = '96vw',
   labelledById,
+  backdrop = 'dimmed',
 }: AppDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const onCloseRef = useRef(onClose)
@@ -102,7 +104,7 @@ export default function AppDialog({
   return (
     <dialog
       ref={dialogRef}
-      className="ui-dialog t-modal"
+      className={`ui-dialog t-modal${backdrop === 'clear' ? ' ui-dialog-clear-backdrop' : ''}`}
       aria-labelledby={titleId}
       style={{
         width,

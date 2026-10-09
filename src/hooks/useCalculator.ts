@@ -14,6 +14,7 @@ import { createRecord, persistRecord, HistoryRecord } from '@/lib/history'
 
 import { BrassOptions, defaultBrassOptions, isBrassBar, brassAvailabilityError } from '@/data/brassTolerance'
 import { defaultSheetOptions, sheetBasis, SheetOptions, SheetBasis } from '@/data/aluminumSheet'
+import { resolveFlatUseGost } from '@/data/flatStandards'
 import { isRectangular } from '@/data/profileNavigation'
 import { validateDimensions } from '@/lib/validation'
 
@@ -157,7 +158,7 @@ export function useCalculator() {
       return {
         ...s,
         brassOptions: resolvedKey !== 'rod' && s.brassOptions.accuracy === 'high' ? { ...s.brassOptions, accuracy: 'normal' } : s.brassOptions,
-        flatUseGost: isRectangular(resolvedKey) && useGost,
+        flatUseGost: resolveFlatUseGost(resolvedKey, s.metalGroup, useGost),
         brassFlatOptions: resolvedKey !== s.profileKey ? { ...defaultBrassFlatOptions, product: resolvedKey === 'strip' ? 'tape' : resolvedKey === 'plate' ? 'plate' : 'cold-sheet' } : s.brassFlatOptions,
         profileKey: resolvedKey,
         profile,
@@ -190,7 +191,7 @@ export function useCalculator() {
 
         return {
           ...s,
-          flatUseGost: false,
+          flatUseGost: resolveFlatUseGost(correctedKey, mat.group),
           profileKey: correctedKey,
           profile: newProfile,
           metalGroup: mat.group,
@@ -210,7 +211,7 @@ export function useCalculator() {
 
       return {
         ...s,
-        flatUseGost: group === s.metalGroup ? s.flatUseGost : false,
+        flatUseGost: resolveFlatUseGost(correctedKey, mat.group, group === s.metalGroup && s.flatUseGost),
         metalGroup: mat.group,
         grade: mat.grade,
         density: mat.density,
@@ -401,7 +402,7 @@ export function useCalculator() {
         grade: record.grade,
         density: mat?.density ?? s.density,
         params,
-        flatUseGost: record.flatUseGost ?? true,
+        flatUseGost: resolveFlatUseGost(profile.key, record.metalGroup, record.flatUseGost ?? true),
         brassFlatOptions: record.brassFlatOptions ?? { ...defaultBrassFlatOptions, product: record.profileKey === 'strip' ? 'tape' : record.profileKey === 'plate' ? 'plate' : 'cold-sheet' },
         brassOptions: record.brassOptions ?? { ...defaultBrassOptions },
         tapeOptions: record.tapeOptions ?? { ...defaultTapeOptions },

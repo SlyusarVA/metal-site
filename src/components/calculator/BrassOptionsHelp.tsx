@@ -7,12 +7,11 @@ export default function BrassOptionsHelp() {
   const [open, setOpen] = useState(false)
   return <>
     <button type="button" aria-label="Как выбрать изготовление и точность прутка" aria-haspopup="dialog" aria-expanded={open}
-      onPointerEnter={event => { if (event.pointerType === 'mouse') setOpen(true) }}
       onClick={() => setOpen(true)}
       style={{ position: 'absolute', top: 2, right: 4, width: 32, height: 32, display: 'grid', placeItems: 'center', border: 'none', borderRadius: '50%', background: 'transparent', color: 'var(--primary)', cursor: 'pointer' }}>
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 10v7M12 7v1"/></svg>
     </button>
-    {open && <AppDialog title="Изготовление и точность прутка" onClose={() => setOpen(false)} width={540}>
+    {open && <AppDialog title="Изготовление и точность прутка" onClose={() => setOpen(false)} width={540} backdrop="clear">
       <div className="ui-dialog-shell" style={{ maxHeight: '80dvh' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '16px 20px', borderBottom: '1px solid var(--outline-variant)' }}>
           <h2 style={{ margin: 0, flex: 1, fontSize: 16 }}>Как выбрать параметры прутка</h2>
