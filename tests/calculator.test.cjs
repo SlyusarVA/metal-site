@@ -435,3 +435,33 @@ test('input and standard edits retain the previous result until recalculation; i
   c.setPlateOptions({accuracy: 'high'}); c = a.render(); assert.equal(c.state.result, flat)
   c.selectProfile('round'); c = a.render(); assert.equal(c.state.result, null)
 })
+
+
+test('GOST 2208 brass flat catalog, appendix density and dimensional interval agree in both directions', () => {
+ const a=app();const {getFlatStandardChoices}=a.load('src/data/flatStandards');
+ assert.equal(getFlatStandardChoices('Латунь').filter(c=>c.code==='ГОСТ 2208-2007').length,1)
+ const {brassFlatBasis:b,brassFlatDensity}=a.load('src/data/brassFlat')
+ assert.equal(brassFlatDensity('Л63'),8400);assert.equal(brassFlatDensity('Л68'),8500)
+ const opts={product:'cold-sheet',accuracy:'normal'};let basis=b('Л63',4,1000,opts)
+ assert.equal(basis.thicknessMin,3.7);assert.equal(basis.widthMin,992)
+ const {calcMass,calcLength}=a.load('src/lib/calculations');const input={flatUseGost:true,profileKey:'sheet',metalGroup:'Латунь',grade:'Л63',params:{t:4,b:1000},quantity:1,brassFlatOptions:opts}
+ const r=calcMass({...input,length:3});assert.equal(r.mass,100.8);assert.equal(r.massRange.min,92.4941);assert.equal(r.massRange.max,100.8);assert.equal(calcLength(r.mass,input),3)
+ assert.equal(r.sheetBasis,undefined);assert.ok(r.brassFlatBasis)
+ assert.equal(b('Л63',4,1000,{...opts,accuracy:'increased'}).widthMin,994)
+ assert.equal(b('Л63',1,100,{product:'tape',accuracy:'normal'}).widthMin,99.5)
+ assert.equal(b('Л63',.1,100,{product:'tape',accuracy:'normal'}).thicknessMin,.08)
+ assert.equal(typeof b('Л63',3,1000,{product:'tape',accuracy:'normal'}),'string')
+ assert.equal(b('Л63',13,1800,{product:'hot-sheet',accuracy:'normal'}).thicknessMin,12)
+ assert.equal(b('Л63',14,1800,{product:'hot-sheet',accuracy:'normal'}).thicknessMin,12.9)
+ assert.equal(b('Л63',40,1000,{product:'plate',accuracy:'normal'}).widthMax,1040)
+ assert.equal(typeof b('Л63',120,2200,{product:'plate',accuracy:'normal'}),'string')
+ assert.equal(typeof b('fake',4,1000,opts),'string')
+})
+
+test('brass flat execution auto state preserves history options and rejects unavailable combinations', () => {
+ const a=app();let c=a.render();c.selectMetal('Латунь','Л63');c.selectProfile('sheet',true);c.setParam('t',4);c.setParam('b',1000);c.setLength(3);c.calculate('mass');c=a.render()
+ assert.equal(c.state.result.value,100.8);assert.equal(c.state.history[0].brassFlatOptions.product,'cold-sheet')
+ const record=c.state.history[0];c.setBrassFlatOptions({product:'tape'});c.calculate('mass');c=a.render();assert.equal(c.state.result,null);assert.ok(c.state.error)
+ c.restoreFromHistory(record);c=a.render();assert.equal(c.state.brassFlatOptions.product,'cold-sheet')
+ c.setBrassFlatOptions({accuracy:'increased'});c.calculate('mass');c=a.render();assert.equal(c.state.result.massRange.min,92.6806);assert.equal(c.state.history.length,2)
+})

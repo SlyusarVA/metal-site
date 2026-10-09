@@ -41,6 +41,7 @@ export const gostMappings: GostMapping[] = [
   { code: 'ГОСТ Р 51685-2013', metalGroups: ['Сталь'],                     profileKeys: ['rail'],           hint: 'Рельсы железнодорожные' },
   { code: 'ГОСТ 503-81',       metalGroups: ['Сталь'],                     profileKeys: ['strip'],          hint: 'Лента холоднокатаная' },
   { code: 'ГОСТ 792-67',       metalGroups: ['Медь', 'Латунь'],            profileKeys: ['wire'],           hint: 'Проволока из меди и медных сплавов' },
+  { code: 'ГОСТ 2208-2007', metalGroups: ['Латунь'], profileKeys: ['sheet', 'strip', 'plate', 'flat'], hint: 'Фольга, ленты, полосы, листы и плиты латунные' },
   { code: 'ГОСТ 2060-2006',    metalGroups: ['Латунь'],                  profileKeys: ['rod', 'square', 'hexagon'], hint: 'Прутки латунные' },
   { code: 'ГОСТ 380-2005',     metalGroups: ['Сталь'],                     profileKeys: [],                 hint: 'Сталь углеродистая обыкновенного качества (Ст3сп, Ст3пс...)' },
   { code: 'ГОСТ 1050-2013',    metalGroups: ['Сталь'],                     profileKeys: [],                 hint: 'Сталь углеродистая качественная (10, 20, 35, 45...)' },

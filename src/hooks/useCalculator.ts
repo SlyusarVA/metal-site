@@ -1,5 +1,7 @@
 'use client'
 
+import { brassFlatBasis, BrassFlatBasis, BrassFlatOptions, defaultBrassFlatOptions, isBrassFlat } from '@/data/brassFlat'
+
 import { tapeBasis, TapeBasis, TapeOptions, defaultTapeOptions } from '@/data/aluminumTape'
 
 import { plateBasis, PlateBasis, PlateOptions, defaultPlateOptions } from '@/data/aluminumPlate'
@@ -41,6 +43,7 @@ export const GOST_WEIGHT_TOLERANCE: Record<string, number> = {
 export type CalcTarget = 'mass' | 'length' | null
 
 export interface CalcResult {
+  brassFlatBasis?: BrassFlatBasis
   massRange?: { min: number; max: number }
   tapeBasis?: TapeBasis
   plateBasis?: PlateBasis
@@ -64,6 +67,7 @@ export interface Snackbar {
 
 // ── Состояние калькулятора ─────────────────────────────────────────────────────
 export interface CalculatorState {
+  brassFlatOptions: BrassFlatOptions
   flatUseGost: boolean
   brassOptions: BrassOptions
   tapeOptions: TapeOptions
@@ -108,6 +112,7 @@ function makeInitialState(): CalculatorState {
 
   return {
     flatUseGost: false,
+    brassFlatOptions: { ...defaultBrassFlatOptions },
     brassOptions: { ...defaultBrassOptions },
     tapeOptions: { ...defaultTapeOptions },
     plateOptions: { ...defaultPlateOptions },
@@ -153,6 +158,7 @@ export function useCalculator() {
         ...s,
         brassOptions: resolvedKey !== 'rod' && s.brassOptions.accuracy === 'high' ? { ...s.brassOptions, accuracy: 'normal' } : s.brassOptions,
         flatUseGost: isRectangular(resolvedKey) && useGost,
+        brassFlatOptions: resolvedKey !== s.profileKey ? { ...defaultBrassFlatOptions, product: resolvedKey === 'strip' ? 'tape' : resolvedKey === 'plate' ? 'plate' : 'cold-sheet' } : s.brassFlatOptions,
         profileKey: resolvedKey,
         profile,
         params,
@@ -215,6 +221,9 @@ export function useCalculator() {
     })
   }, [])
 
+  const setBrassFlatOptions = useCallback((patch: Partial<BrassFlatOptions>) => {
+    setState(s => ({ ...s, brassFlatOptions: { ...s.brassFlatOptions, ...patch, ...(patch.product === 'hot-sheet' || patch.product === 'plate' ? { accuracy: 'normal' as const } : {}) }, error: null }))
+  }, [])
   const setBrassOptions = useCallback((patch: Partial<BrassOptions>) => {
     setState(s => ({ ...s, brassOptions: { ...s.brassOptions, ...patch, ...(patch.manufacturing === 'pressed' && s.brassOptions.accuracy === 'high' ? { accuracy: 'normal' as const } : {}) }, error: null }))
   }, [])
@@ -313,6 +322,10 @@ export function useCalculator() {
         const issue = brassAvailabilityError(s.profileKey, s.profileKey === 'square' ? params.a : params.d, s.brassOptions)
         if (issue) return { ...s, result: null, error: { message: issue, missingFields: [] } }
       }
+      if (s.flatUseGost && isBrassFlat(s.profileKey, s.metalGroup)) {
+        const basis = brassFlatBasis(s.grade, params.t, params.b, s.brassFlatOptions)
+        if (typeof basis === 'string') return { ...s, result: null, error: { message: basis, missingFields: [] } }
+      }
       if (s.profileKey === 'sheet' && s.metalGroup === 'Алюминий' && s.flatUseGost) {
         const basis = sheetBasis(s.grade, params.t, params.b, s.sheetOptions)
         if (typeof basis === 'string') return { ...s, result: null, error: { message: basis, missingFields: [] } }
@@ -329,7 +342,7 @@ export function useCalculator() {
       const hasMass = s.mass != null && Number.isFinite(s.mass) && s.mass > 0
       const target = s.profile.isVolume ? 'mass' : requestedTarget ??
         (hasLength && !hasMass ? 'mass' : hasMass && !hasLength ? 'length' : null)
-      const input = { flatUseGost: s.flatUseGost, tapeOptions: s.tapeOptions, plateOptions: s.plateOptions, sheetOptions: s.sheetOptions, profileKey: s.profileKey, params, metalGroup: s.metalGroup, grade: s.grade, quantity: s.quantity }
+      const input = { brassFlatOptions: s.brassFlatOptions, flatUseGost: s.flatUseGost, tapeOptions: s.tapeOptions, plateOptions: s.plateOptions, sheetOptions: s.sheetOptions, profileKey: s.profileKey, params, metalGroup: s.metalGroup, grade: s.grade, quantity: s.quantity }
       if (target === 'mass' && (s.profile.isVolume || hasLength)) {
         const result = calcMass({ ...input, length: s.length })
         if (result) return buildFinalState(s, target, result.mass, result, params)
@@ -389,6 +402,7 @@ export function useCalculator() {
         density: mat?.density ?? s.density,
         params,
         flatUseGost: record.flatUseGost ?? true,
+        brassFlatOptions: record.brassFlatOptions ?? { ...defaultBrassFlatOptions, product: record.profileKey === 'strip' ? 'tape' : record.profileKey === 'plate' ? 'plate' : 'cold-sheet' },
         brassOptions: record.brassOptions ?? { ...defaultBrassOptions },
         tapeOptions: record.tapeOptions ?? { ...defaultTapeOptions },
         plateOptions: record.plateOptions ?? { ...defaultPlateOptions },
@@ -409,6 +423,7 @@ export function useCalculator() {
     // Действия
     selectProfile,
     selectMetal,
+    setBrassFlatOptions,
     setBrassOptions,
     setTapeOptions,
     setPlateOptions,
@@ -443,6 +458,7 @@ function buildFinalState(
     massRange: massResult?.massRange,
     tapeBasis: massResult?.tapeBasis,
     plateBasis: massResult?.plateBasis,
+    brassFlatBasis: massResult?.brassFlatBasis,
     sheetBasis: massResult?.sheetBasis,
     target,
     value,
@@ -451,6 +467,7 @@ function buildFinalState(
   }
 
   const recordData = {
+    brassFlatOptions: s.flatUseGost && isBrassFlat(s.profileKey, s.metalGroup) ? s.brassFlatOptions : undefined,
     flatUseGost: isRectangular(s.profileKey) ? s.flatUseGost : undefined,
     brassOptions: isBrassBar(s.profileKey, s.metalGroup) ? s.brassOptions : undefined,
     tapeOptions: s.profileKey === 'strip' && s.metalGroup === 'Алюминий' && s.flatUseGost ? s.tapeOptions : undefined,
@@ -467,6 +484,7 @@ function buildFinalState(
   const same = !!previous && previous.profileKey === recordData.profileKey &&
     previous.flatUseGost === recordData.flatUseGost &&
     previous.metalGroup === recordData.metalGroup && previous.grade === recordData.grade &&
+    JSON.stringify(previous.brassFlatOptions) === JSON.stringify(recordData.brassFlatOptions) &&
     JSON.stringify(previous.brassOptions) === JSON.stringify(recordData.brassOptions) &&
     JSON.stringify(previous.tapeOptions) === JSON.stringify(recordData.tapeOptions) &&
     JSON.stringify(previous.plateOptions) === JSON.stringify(recordData.plateOptions) &&

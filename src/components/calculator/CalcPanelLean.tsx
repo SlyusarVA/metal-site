@@ -1,5 +1,7 @@
 'use client'
 
+import { brassFlatBasis, brassFlatDensity, BrassFlatOptions, isBrassFlat } from '@/data/brassFlat'
+
 import { tapeBasis, tapeCoefficient } from '@/data/aluminumTape'
 
 import { plateBasis, plateCoefficient } from '@/data/aluminumPlate'
@@ -64,6 +66,8 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
     setCalculationAttempted(false)
     setExactOpen(false)
   }, [state.profileKey, state.metalGroup, state.grade])
+  const isBrassFlatGost = isBrassFlat(state.profileKey, state.metalGroup) && state.flatUseGost
+  const brassFlat = isBrassFlatGost ? brassFlatBasis(state.grade, state.params.t ?? NaN, state.params.b ?? NaN, state.brassFlatOptions) : null
   const isBrass = isBrassBar(state.profileKey, state.metalGroup)
   const isAluminumSheet = state.profileKey === 'sheet' && state.metalGroup === 'Алюминий' && state.flatUseGost
   const isAluminumPlate = state.profileKey === 'plate' && state.metalGroup === 'Алюминий' && state.flatUseGost
@@ -99,7 +103,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
       calculate(mode === 'length' ? 'length' : 'mass')
     }, 200)
     return () => window.clearTimeout(timer)
-  }, [calculate, mode, state.profile, state.params, state.length, state.mass, state.quantity, state.metalGroup, state.grade, state.flatUseGost, state.sheetOptions, state.plateOptions, state.tapeOptions, state.brassOptions])
+  }, [calculate, mode, state.profile, state.params, state.length, state.mass, state.quantity, state.metalGroup, state.grade, state.flatUseGost, state.sheetOptions, state.plateOptions, state.tapeOptions, state.brassOptions, state.brassFlatOptions])
 
   function switchMode(next: CalcMode) {
     setMode(next)
@@ -150,7 +154,7 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
             <span style={st.headProfileSlot}><AnimatedText text={isRectangular(state.profileKey) ? rectangularName : state.profile.name} /></span>
           </span>
         )}
-        <GostTags metalGroup={state.metalGroup} profile={state.profile} densityText={isAluminumTape ? (tapeCoefficient(state.grade) == null ? 'k: нет в Б.1' : `k = ${tapeCoefficient(state.grade)!.toFixed(3)}`) : isAluminumPlate ? (plateCoefficient(state.grade) == null ? "k: нет в Б.1" : `k = ${plateCoefficient(state.grade)!.toFixed(3)}`) : undefined} density={isAluminumSheet ? sheetDensity(state.grade) : state.density} onGostClick={onGostOpen} onProfileSelect={selectProfile} flatUseGost={state.flatUseGost} showGost={!isRectangular(state.profileKey)} />
+        <GostTags metalGroup={state.metalGroup} profile={state.profile} densityText={isAluminumTape ? (tapeCoefficient(state.grade) == null ? 'k: нет в Б.1' : `k = ${tapeCoefficient(state.grade)!.toFixed(3)}`) : isAluminumPlate ? (plateCoefficient(state.grade) == null ? "k: нет в Б.1" : `k = ${plateCoefficient(state.grade)!.toFixed(3)}`) : undefined} density={isBrassFlatGost ? brassFlatDensity(state.grade) : isAluminumSheet ? sheetDensity(state.grade) : state.density} onGostClick={onGostOpen} onProfileSelect={selectProfile} flatUseGost={state.flatUseGost} showGost={!isRectangular(state.profileKey)} />
       </div>
       <div style={st.search}><GostSearchBar onResult={onGostResult} onClear={onGostClear} /></div>
       {needsSortament && <div style={st.warn}>Выберите сортамент</div>}
@@ -201,10 +205,19 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
         {tolerance && mode === 'mass' && <span style={st.pill}>{tolerance.label}</span>}
         {dimensionalRange && <div aria-label="Диапазон веса по предельным размерам" style={{ ...st.tol, flexBasis: '100%', fontSize: 'var(--text-sm)' }}>Мин–макс: <AnimatedNumber value={dimensionalRange.min} digits={3} /> – <AnimatedNumber value={dimensionalRange.max} digits={3} /> кг <span style={{ color: 'var(--on-surface-variant)' }}>· по допускам размеров</span></div>}
       </div>
-      {(isAluminumSheet || isAluminumPlate || isAluminumTape) && (calculationAttempted || state.result != null) && <div>
-        <button type="button" aria-expanded={exactOpen} aria-controls={isAluminumTape ? "tape-exact-settings" : isAluminumPlate ? "plate-exact-settings" : "sheet-exact-settings"} onClick={() => setExactOpen(open => !open)} style={st.exactToggle}>
+      {(isAluminumSheet || isAluminumPlate || isAluminumTape || isBrassFlatGost) && (calculationAttempted || state.result != null) && <div>
+        <button type="button" aria-expanded={exactOpen} aria-controls={isBrassFlatGost ? "brass-flat-exact-settings" : isAluminumTape ? "tape-exact-settings" : isAluminumPlate ? "plate-exact-settings" : "sheet-exact-settings"} onClick={() => setExactOpen(open => !open)} style={st.exactToggle}>
           <span aria-hidden="true" style={{ display: 'inline-block', transform: exactOpen ? 'rotate(180deg)' : undefined }}>⌄</span> Точный расчёт
         </button>
+        {exactOpen && isBrassFlatGost && <section id="brass-flat-exact-settings" style={st.card} aria-label="Расчёт по ГОСТ 2208-2007">
+          <div style={st.cardTitle}>ГОСТ 2208-2007</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 8 }}>
+            <FieldSelect id="brass-flat-product" name="brass-flat-product" label="Изделие и изготовление" value={state.brassFlatOptions.product} onChange={v => calc.setBrassFlatOptions({ product: v as BrassFlatOptions['product'] })} options={[{value:'cold-sheet',label:'Лист / полоса из листа — холоднокатаные'}, {value:'tape',label:'Лента / фольга / полоса из ленты'}, {value:'hot-sheet',label:'Лист — горячекатаный'}, {value:'plate',label:'Плита — горячекатаная'}]} />
+            <FieldSelect id="brass-flat-accuracy" name="brass-flat-accuracy" label="Точность размеров" value={state.brassFlatOptions.accuracy} onChange={v => calc.setBrassFlatOptions({ accuracy: v as BrassFlatOptions['accuracy'] })} options={[{value:'normal',label:'Нормальная — базовое исполнение'}, ...(['cold-sheet','tape'].includes(state.brassFlatOptions.product) ? [{value:'increased',label:'Повышенная'}] : [])]} />
+          </div>
+          <div style={st.hint}>Масса по номинальным размерам и расчётной плотности. Мин–макс — по предельным толщине и ширине при введённой длине. Поддержаны стандартные односторонние отклонения и обрезанные кромки; согласованные симметричные поля, плюсовая ширина ленты/листа и допуски длины не включены.</div>
+          {typeof brassFlat === 'string' ? <div role="status" style={st.warn}>{brassFlat}</div> : brassFlat && <div style={st.hint}>Толщина: {brassFlat.thicknessMin.toFixed(3)}–{brassFlat.thicknessMax.toFixed(3)} мм; ширина: {brassFlat.widthMin}–{brassFlat.widthMax} мм. ρ = {brassFlat.density} кг/м³.</div>}
+        </section>}
         {exactOpen && isAluminumSheet && <section id="sheet-exact-settings" style={st.card} aria-label="Расчёт по ГОСТ 21631-2023">
           <div style={st.cardTitle}>ГОСТ 21631-2023</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 8 }}>
