@@ -393,3 +393,10 @@ test('flat calculations default to dimensions and thickness only changes an expl
  c.selectProfile('strip',true);c.setParam('t',20);c=a.render();assert.equal(c.state.profileKey,'strip')
  c.selectProfile('flat',false);c.setParam('t',4);c.calculate('mass');c=a.render();assert.equal(c.state.flatUseGost,false);assert.equal(c.state.result.plateBasis,undefined)
 })
+
+test('flat products and wire display length in mm; other profiles retain metres', () => {
+ const a=app(),{usesMillimetreLength:usesMm}=a.load('src/data/profileNavigation'),{profiles}=a.load('src/data/profiles')
+ const mm=new Set(['sheet','plate','flat','strip','wire'])
+ for(const p of profiles)assert.equal(usesMm(p.key),mm.has(p.key),p.key)
+ for(const key of ['angle_equal','angle_unequal','rail','channel','shpunt'])assert.equal(usesMm(key),false)
+})

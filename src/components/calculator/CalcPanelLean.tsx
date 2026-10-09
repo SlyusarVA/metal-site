@@ -9,7 +9,7 @@ import { getWeightTolerance } from '@/data/gost'
 import { ProfileKey } from '@/data/profiles'
 import { parseQuickInput } from '@/lib/quickInputParser'
 import ProfileIcon from './ProfileIcon'
-import { isRectangular, profileGroupKey, rectangularName } from '@/data/profileNavigation'
+import { isRectangular, profileGroupKey, rectangularName, usesMillimetreLength } from '@/data/profileNavigation'
 import { isBrassBar } from '@/data/brassTolerance'
 import { sheetBasis, sheetDensity } from '@/data/aluminumSheet'
 import GostTags from './GostTags'
@@ -78,8 +78,8 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
   const navigationKey = profiles.find(p => profileGroupKey(p.key) === profileGroupKey(state.profileKey))?.key ?? state.profileKey
   const resultMass = state.result?.target === 'mass' ? state.result.value : null
   const resultLength = state.result?.target === 'length' ? state.result.value : null
-  const lengthScale = isRectangular(state.profileKey) ? 1000 : 1
-  const lengthUnit = isRectangular(state.profileKey) ? 'мм' : 'м'
+  const lengthScale = usesMillimetreLength(state.profileKey) ? 1000 : 1
+  const lengthUnit = usesMillimetreLength(state.profileKey) ? 'мм' : 'м'
   const displayLength = state.length == null ? '' : Number((state.length * lengthScale).toFixed(6))
   const displayResult = mode === 'length' && resultLength != null ? resultLength * lengthScale : mode === 'length' ? null : resultMass
   const tolerance = isRectangular(state.profileKey) && !state.flatUseGost ? null : getWeightTolerance(state.profileKey, Object.fromEntries(Object.entries(state.params).filter(([, v]) => v !== null) as [string, number][]), state.metalGroup, state.brassOptions)

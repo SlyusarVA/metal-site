@@ -3,6 +3,7 @@ import { MetalProfile, ProfileKey, profiles } from './profiles'
 export const rectangularKeys: ProfileKey[] = ['sheet', 'plate', 'flat', 'strip']
 export const rectangularName = 'Плоский прокат'
 export const isRectangular = (key: ProfileKey) => rectangularKeys.includes(key)
+export const usesMillimetreLength = (key: ProfileKey) => isRectangular(key) || key === 'wire'
 export const profileGroupKey = (key: ProfileKey): ProfileKey => isRectangular(key) ? 'sheet' : key
 
 // Calculation IDs remain stable for saved links, history, standards and tolerances.

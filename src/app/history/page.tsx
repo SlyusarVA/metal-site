@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { loadHistory, clearHistory, formatTimestamp, HistoryRecord } from '@/lib/history'
-import { isRectangular } from '@/data/profileNavigation'
+import { usesMillimetreLength } from '@/data/profileNavigation'
 import ThemeToggle from '@/components/ThemeToggle'
 
 export default function HistoryPage() {
@@ -163,7 +163,7 @@ export default function HistoryPage() {
                   ))}
                   {r.length > 0 && (
                     <span style={{ fontSize: 12, color: 'var(--on-surface-variant)' }}>
-                      L = {isRectangular(r.profileKey) ? Number((r.length * 1000).toFixed(6)) : r.length} {isRectangular(r.profileKey) ? 'мм' : 'м'}
+                      L = {usesMillimetreLength(r.profileKey) ? Number((r.length * 1000).toFixed(6)) : r.length} {usesMillimetreLength(r.profileKey) ? 'мм' : 'м'}
                     </span>
                   )}
                   {r.quantity > 1 && (
