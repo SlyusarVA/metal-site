@@ -233,8 +233,8 @@ export function useCalculator() {
   const setPlateOptions = useCallback((patch: Partial<PlateOptions>) => {
     setState(s => ({ ...s, plateOptions: { ...s.plateOptions, ...patch }, error: null }))
   }, [])
-  const setSheetOptions = useCallback((patch: Partial<SheetOptions>) => {
-    setState(s => ({ ...s, sheetOptions: { ...s.sheetOptions, ...patch }, error: null }))
+  const setSheetOptions = useCallback((patch: Partial<Omit<SheetOptions, 'symmetric'>>) => {
+    setState(s => ({ ...s, sheetOptions: { ...s.sheetOptions, ...patch, symmetric: false }, error: null }))
   }, [])
 
   // ── Изменение размерного поля ─────────────────────────────────────────────
@@ -406,7 +406,7 @@ export function useCalculator() {
         brassOptions: record.brassOptions ?? { ...defaultBrassOptions },
         tapeOptions: record.tapeOptions ?? { ...defaultTapeOptions },
         plateOptions: record.plateOptions ?? { ...defaultPlateOptions },
-        sheetOptions: record.sheetOptions ?? { ...defaultSheetOptions },
+        sheetOptions: { ...(record.sheetOptions ?? defaultSheetOptions), symmetric: false },
         length: (record.profileKey === 'sheet' || record.profileKey === 'plate') && record.params.a != null ? record.params.a / 1000 : record.length > 0 ? record.length : null,
         mass: null,
         quantity: record.quantity,

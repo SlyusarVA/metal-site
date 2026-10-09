@@ -465,3 +465,12 @@ test('brass flat execution auto state preserves history options and rejects unav
  c.restoreFromHistory(record);c=a.render();assert.equal(c.state.brassFlatOptions.product,'cold-sheet')
  c.setBrassFlatOptions({accuracy:'increased'});c.calculate('mass');c=a.render();assert.equal(c.state.result.massRange.min,92.6806);assert.equal(c.state.history.length,2)
 })
+
+test('restored agreed sheet tolerance returns to baseline, keeping mandatory alloy rules', () => {
+ const a=app();let c=a.render();c.selectMetal('Алюминий','Д16');c.selectProfile('sheet',true);c.setParam('b',1000);c.setParam('t',4);c.setLength(3);c.calculate('mass');c=a.render();
+ const old={...c.state.history[0],sheetOptions:{...c.state.sheetOptions,symmetric:true}};
+ c.restoreFromHistory(old);c=a.render();assert.equal(c.state.sheetOptions.symmetric,false);c.calculate('mass');c=a.render();
+ assert.equal(c.state.result.sheetBasis.thicknessMin,3.7);assert.equal(c.state.result.sheetBasis.thicknessMax,4);
+ c.selectMetal('Алюминий','АМг5');c.setParam('t',5);c.calculate('mass');c=a.render();
+ assert.equal(c.state.result.sheetBasis.thicknessMin,4.75);assert.equal(c.state.result.sheetBasis.thicknessMax,5.25);
+});
