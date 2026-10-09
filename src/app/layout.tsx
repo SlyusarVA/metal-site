@@ -7,10 +7,10 @@ export const metadata: Metadata = {
   title: 'Калькулятор металла',
   icons: {
     icon: [
-      { url: '/favicon.ico', sizes: '16x16 32x32 48x48 64x64' },
-      { url: '/favicon.svg', type: 'image/svg+xml', sizes: 'any' },
+      { url: '/favicon.ico?v=4', sizes: '16x16 32x32 48x48 64x64' },
+      { url: '/favicon.svg?v=4', type: 'image/svg+xml', sizes: 'any' },
     ],
-    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
+    apple: [{ url: '/apple-touch-icon.png?v=4', sizes: '180x180', type: 'image/png' }],
   },
   description: 'Расчёт веса и длины металлопроката. Справочник ГОСТ.',
 }
