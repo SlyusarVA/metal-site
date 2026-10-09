@@ -1,11 +1,12 @@
 'use client'
 
 import Link from 'next/link'
+import { gostReferences } from '@/data/gost'
 import { useMemo, useState } from 'react'
 import { designationTerms, markochnikCategories, metalGrades } from '@/data/markochnik'
 
 type SearchItem = {
-  kind: 'Марка' | 'Раздел' | 'Группа' | 'Обозначение'
+  kind: 'Марка' | 'Раздел' | 'Группа' | 'Обозначение' | 'ГОСТ'
   title: string
   subtitle: string
   href: string
@@ -17,6 +18,13 @@ function normalize(value: string) {
 }
 
 const searchItems: SearchItem[] = [
+  ...gostReferences.map(gost => ({
+    kind: 'ГОСТ' as const,
+    title: gost.code,
+    subtitle: gost.title,
+    href: `/marki-metallov/gost/${encodeURIComponent(gost.code)}`,
+    searchText: [gost.code, gost.title].join(' '),
+  })),
   {
     kind: 'Раздел',
     title: 'Расшифровки обозначений',

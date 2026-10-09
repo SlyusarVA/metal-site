@@ -1,11 +1,21 @@
 'use client'
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { brassFlatBasis, BrassFlatBasis, BrassFlatOptions, defaultBrassFlatOptions, isBrassFlat } from '@/data/brassFlat'
+
+import { tapeBasis, TapeBasis, TapeOptions, defaultTapeOptions } from '@/data/aluminumTape'
+
+import { plateBasis, PlateBasis, PlateOptions, defaultPlateOptions } from '@/data/aluminumPlate'
+
+import { useState, useCallback, useEffect } from 'react'
 import { profiles, ProfileKey, autocorrectProfile, MetalProfile } from '@/data/profiles'
 import { materials, getMetalGroups, getGradesForGroup, isNonFerrous } from '@/data/materials'
 import { calcMass, calcLength } from '@/lib/calculations'
 import { createRecord, persistRecord, HistoryRecord } from '@/lib/history'
 
+import { BrassOptions, defaultBrassOptions, isBrassBar, brassAvailabilityError } from '@/data/brassTolerance'
+import { defaultSheetOptions, sheetBasis, SheetOptions, SheetBasis } from '@/data/aluminumSheet'
+import { resolveFlatUseGost } from '@/data/flatStandards'
+import { isRectangular } from '@/data/profileNavigation'
 import { validateDimensions } from '@/lib/validation'
 
 // ── Константы полей ────────────────────────────────────────────────────────────
@@ -34,6 +44,11 @@ export const GOST_WEIGHT_TOLERANCE: Record<string, number> = {
 export type CalcTarget = 'mass' | 'length' | null
 
 export interface CalcResult {
+  brassFlatBasis?: BrassFlatBasis
+  massRange?: { min: number; max: number }
+  tapeBasis?: TapeBasis
+  plateBasis?: PlateBasis
+  sheetBasis?: SheetBasis
   target: CalcTarget
   value: number
   linearMass: number | null   // кг/м или кг/шт для листа
@@ -53,6 +68,12 @@ export interface Snackbar {
 
 // ── Состояние калькулятора ─────────────────────────────────────────────────────
 export interface CalculatorState {
+  brassFlatOptions: BrassFlatOptions
+  flatUseGost: boolean
+  brassOptions: BrassOptions
+  tapeOptions: TapeOptions
+  plateOptions: PlateOptions
+  sheetOptions: SheetOptions
   // Выбор
   profileKey: ProfileKey
   profile: MetalProfile
@@ -91,6 +112,12 @@ function makeInitialState(): CalculatorState {
   }
 
   return {
+    flatUseGost: false,
+    brassFlatOptions: { ...defaultBrassFlatOptions },
+    brassOptions: { ...defaultBrassOptions },
+    tapeOptions: { ...defaultTapeOptions },
+    plateOptions: { ...defaultPlateOptions },
+    sheetOptions: { ...defaultSheetOptions },
     profileKey: profile.key,
     profile,
     metalGroup: grade.group,
@@ -112,7 +139,6 @@ function makeInitialState(): CalculatorState {
 // ── Главный хук ───────────────────────────────────────────────────────────────
 export function useCalculator() {
   const [state, setState] = useState<CalculatorState>(makeInitialState)
-  const snackbarTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const newestRecord = state.history[0]
   useEffect(() => {
@@ -121,34 +147,26 @@ export function useCalculator() {
     }
   }, [newestRecord])
 
-  useEffect(() => () => {
-    if (snackbarTimerRef.current) clearTimeout(snackbarTimerRef.current)
-  }, [])
-
-  // ── Показать снэкбар ───────────────────────────────────────────────────────
-  const showSnackbar = useCallback((message: string) => {
-    if (snackbarTimerRef.current) clearTimeout(snackbarTimerRef.current)
-    setState(s => ({ ...s, snackbar: { message, id: Date.now() } }))
-    snackbarTimerRef.current = setTimeout(() => {
-      setState(s => ({ ...s, snackbar: null }))
-    }, 3000)
-  }, [])
-
   // ── Выбор профиля ─────────────────────────────────────────────────────────
-  const selectProfile = useCallback((key: ProfileKey) => {
+  const selectProfile = useCallback((key: ProfileKey, useGost = false) => {
     setState(s => {
-      const profile = profiles.find(p => p.key === key)!
+      const resolvedKey = useGost && s.metalGroup === 'Алюминий' && (key === 'sheet' || key === 'plate') && isRectangular(s.profileKey) && s.params.t != null && s.params.t > 0 ? (s.params.t <= 10.5 ? 'sheet' : 'plate') : key
+      const profile = profiles.find(p => p.key === resolvedKey)!
+      const keepDimensions = isRectangular(s.profileKey) && isRectangular(resolvedKey)
       const params: Record<string, number | null> = {}
-      for (const p of profile.params) params[p.key] = p.defaultValue
+      for (const p of profile.params) params[p.key] = keepDimensions ? s.params[p.key] ?? null : p.defaultValue
       return {
         ...s,
-        profileKey: key,
+        brassOptions: resolvedKey !== 'rod' && s.brassOptions.accuracy === 'high' ? { ...s.brassOptions, accuracy: 'normal' } : s.brassOptions,
+        flatUseGost: resolveFlatUseGost(resolvedKey, s.metalGroup, useGost),
+        brassFlatOptions: resolvedKey !== s.profileKey ? { ...defaultBrassFlatOptions, product: resolvedKey === 'strip' ? 'tape' : resolvedKey === 'plate' ? 'plate' : 'cold-sheet' } : s.brassFlatOptions,
+        profileKey: resolvedKey,
         profile,
         params,
-        length: null,
-        mass: null,
-        quantity: 1,
-        result: null,
+        length: keepDimensions ? s.length : null,
+        mass: keepDimensions ? s.mass : null,
+        quantity: keepDimensions ? s.quantity : 1,
+        result: keepDimensions ? s.result : null,
         prevResult: null,
         error: null,
         unchanged: false,
@@ -167,16 +185,13 @@ export function useCalculator() {
 
       if (correctedKey !== s.profileKey) {
         // Нужна автокоррекция профиля
-        const oldProfile = profiles.find(p => p.key === s.profileKey)!
         const newProfile = profiles.find(p => p.key === correctedKey)!
         const params: Record<string, number | null> = {}
         for (const p of newProfile.params) params[p.key] = p.defaultValue
 
-        // Показываем снэкбар отдельно (не внутри setState)
-        setTimeout(() => showSnackbar(`Сортамент изменён: ${oldProfile.name} → ${newProfile.name}`), 0)
-
         return {
           ...s,
+          flatUseGost: resolveFlatUseGost(correctedKey, mat.group),
           profileKey: correctedKey,
           profile: newProfile,
           metalGroup: mat.group,
@@ -196,26 +211,47 @@ export function useCalculator() {
 
       return {
         ...s,
+        flatUseGost: resolveFlatUseGost(correctedKey, mat.group, group === s.metalGroup && s.flatUseGost),
         metalGroup: mat.group,
         grade: mat.grade,
         density: mat.density,
-        result: null,
         prevResult: null,
         error: null,
         unchanged: false,
       }
     })
-  }, [showSnackbar])
+  }, [])
+
+  const setBrassFlatOptions = useCallback((patch: Partial<BrassFlatOptions>) => {
+    setState(s => ({ ...s, brassFlatOptions: { ...s.brassFlatOptions, ...patch, ...(patch.product === 'hot-sheet' || patch.product === 'plate' ? { accuracy: 'normal' as const } : {}) }, error: null }))
+  }, [])
+  const setBrassOptions = useCallback((patch: Partial<BrassOptions>) => {
+    setState(s => ({ ...s, brassOptions: { ...s.brassOptions, ...patch, ...(patch.manufacturing === 'pressed' && s.brassOptions.accuracy === 'high' ? { accuracy: 'normal' as const } : {}) }, error: null }))
+  }, [])
+  const setTapeOptions = useCallback((patch: Partial<TapeOptions>) => {
+    setState(s => ({ ...s, tapeOptions: { ...s.tapeOptions, ...patch }, error: null }))
+  }, [])
+  const setPlateOptions = useCallback((patch: Partial<PlateOptions>) => {
+    setState(s => ({ ...s, plateOptions: { ...s.plateOptions, ...patch }, error: null }))
+  }, [])
+  const setSheetOptions = useCallback((patch: Partial<Omit<SheetOptions, 'symmetric'>>) => {
+    setState(s => ({ ...s, sheetOptions: { ...s.sheetOptions, ...patch, symmetric: false }, error: null }))
+  }, [])
 
   // ── Изменение размерного поля ─────────────────────────────────────────────
   const setParam = useCallback((key: string, value: number | null) => {
-    setState(s => ({
+    setState(s => {
+      const nextKey = key === 't' && value != null && Number.isFinite(value) && value > 0 && s.flatUseGost && s.metalGroup === 'Алюминий' && (s.profileKey === 'sheet' || s.profileKey === 'plate') ? (value <= 10.5 ? 'sheet' : 'plate') : s.profileKey
+      return {
       ...s,
-      params: { ...s.params, [key]: value },
-      result: null,
+      profileKey: nextKey,
+      profile: profiles.find(p => p.key === nextKey)!,
+      params: (key === 'a' && (s.profileKey === 'sheet' || s.profileKey === 'plate')) ? s.params : { ...s.params, [key]: value },
+      length: key === 'a' && (s.profileKey === 'sheet' || s.profileKey === 'plate') ? (value == null ? null : value / 1000) : s.length,
       error: null,
       unchanged: false,
-    }))
+    }
+    })
   }, [])
 
   // ── Изменение длины ───────────────────────────────────────────────────────
@@ -223,7 +259,6 @@ export function useCalculator() {
     setState(s => ({
       ...s,
       length: value,
-      result: null,
       error: null,
       unchanged: false,
     }))
@@ -234,7 +269,6 @@ export function useCalculator() {
     setState(s => ({
       ...s,
       mass: value,
-      result: null,
       error: null,
       unchanged: false,
     }))
@@ -246,7 +280,6 @@ export function useCalculator() {
     setState(s => ({
       ...s,
       quantity: normalized,
-      result: null,
       error: null,
       unchanged: false,
     }))
@@ -256,7 +289,6 @@ export function useCalculator() {
     setState(s => ({
       ...s,
       quantity: s.quantity + 1,
-      result: null,
       error: null,
       unchanged: false,
     }))
@@ -266,7 +298,6 @@ export function useCalculator() {
     setState(s => ({
       ...s,
       quantity: Math.max(1, s.quantity - 1),
-      result: null,
       error: null,
       unchanged: false,
     }))
@@ -276,7 +307,6 @@ export function useCalculator() {
     setState(s => ({
       ...s,
       quantity: 1,
-      result: null,
       error: null,
       unchanged: false,
     }))
@@ -289,11 +319,31 @@ export function useCalculator() {
       for (const p of s.profile.params) params[p.key] = s.params[p.key] ?? NaN
       const dimensionError = validateDimensions(s.profileKey, params)
       if (dimensionError) return { ...s, result: null, error: { message: dimensionError, missingFields: [] } }
+      if (isBrassBar(s.profileKey, s.metalGroup)) {
+        const issue = brassAvailabilityError(s.profileKey, s.profileKey === 'square' ? params.a : params.d, s.brassOptions)
+        if (issue) return { ...s, result: null, error: { message: issue, missingFields: [] } }
+      }
+      if (s.flatUseGost && isBrassFlat(s.profileKey, s.metalGroup)) {
+        const basis = brassFlatBasis(s.grade, params.t, params.b, s.brassFlatOptions)
+        if (typeof basis === 'string') return { ...s, result: null, error: { message: basis, missingFields: [] } }
+      }
+      if (s.profileKey === 'sheet' && s.metalGroup === 'Алюминий' && s.flatUseGost) {
+        const basis = sheetBasis(s.grade, params.t, params.b, s.sheetOptions)
+        if (typeof basis === 'string') return { ...s, result: null, error: { message: basis, missingFields: [] } }
+      }
+      if (s.profileKey === 'strip' && s.metalGroup === 'Алюминий' && s.flatUseGost) {
+        const basis = tapeBasis(s.grade, params.t, params.b, s.tapeOptions)
+        if (typeof basis === 'string') return { ...s, result: null, error: { message: basis, missingFields: [] } }
+      }
+      if (s.profileKey === 'plate' && s.metalGroup === 'Алюминий' && s.flatUseGost) {
+        const basis = plateBasis(s.grade, params.t, params.b, s.plateOptions)
+        if (typeof basis === 'string') return { ...s, result: null, error: { message: basis, missingFields: [] } }
+      }
       const hasLength = s.length != null && Number.isFinite(s.length) && s.length > 0
       const hasMass = s.mass != null && Number.isFinite(s.mass) && s.mass > 0
       const target = s.profile.isVolume ? 'mass' : requestedTarget ??
         (hasLength && !hasMass ? 'mass' : hasMass && !hasLength ? 'length' : null)
-      const input = { profileKey: s.profileKey, params, metalGroup: s.metalGroup, grade: s.grade, quantity: s.quantity }
+      const input = { brassFlatOptions: s.brassFlatOptions, flatUseGost: s.flatUseGost, tapeOptions: s.tapeOptions, plateOptions: s.plateOptions, sheetOptions: s.sheetOptions, profileKey: s.profileKey, params, metalGroup: s.metalGroup, grade: s.grade, quantity: s.quantity }
       if (target === 'mass' && (s.profile.isVolume || hasLength)) {
         const result = calcMass({ ...input, length: s.length })
         if (result) return buildFinalState(s, target, result.mass, result, params)
@@ -352,7 +402,13 @@ export function useCalculator() {
         grade: record.grade,
         density: mat?.density ?? s.density,
         params,
-        length: record.length > 0 ? record.length : null,
+        flatUseGost: resolveFlatUseGost(profile.key, record.metalGroup, record.flatUseGost ?? true),
+        brassFlatOptions: record.brassFlatOptions ?? { ...defaultBrassFlatOptions, product: record.profileKey === 'strip' ? 'tape' : record.profileKey === 'plate' ? 'plate' : 'cold-sheet' },
+        brassOptions: record.brassOptions ?? { ...defaultBrassOptions },
+        tapeOptions: record.tapeOptions ?? { ...defaultTapeOptions },
+        plateOptions: record.plateOptions ?? { ...defaultPlateOptions },
+        sheetOptions: { ...(record.sheetOptions ?? defaultSheetOptions), symmetric: false },
+        length: (record.profileKey === 'sheet' || record.profileKey === 'plate') && record.params.a != null ? record.params.a / 1000 : record.length > 0 ? record.length : null,
         mass: null,
         quantity: record.quantity,
         result: null,
@@ -368,6 +424,11 @@ export function useCalculator() {
     // Действия
     selectProfile,
     selectMetal,
+    setBrassFlatOptions,
+    setBrassOptions,
+    setTapeOptions,
+    setPlateOptions,
+    setSheetOptions,
     setParam,
     setLength,
     setMass,
@@ -395,6 +456,11 @@ function buildFinalState(
   params: Record<string, number>,
 ): CalculatorState {
   const calcResult: CalcResult = {
+    massRange: massResult?.massRange,
+    tapeBasis: massResult?.tapeBasis,
+    plateBasis: massResult?.plateBasis,
+    brassFlatBasis: massResult?.brassFlatBasis,
+    sheetBasis: massResult?.sheetBasis,
     target,
     value,
     linearMass: massResult?.linearDensity ?? null,
@@ -402,6 +468,12 @@ function buildFinalState(
   }
 
   const recordData = {
+    brassFlatOptions: s.flatUseGost && isBrassFlat(s.profileKey, s.metalGroup) ? s.brassFlatOptions : undefined,
+    flatUseGost: isRectangular(s.profileKey) ? s.flatUseGost : undefined,
+    brassOptions: isBrassBar(s.profileKey, s.metalGroup) ? s.brassOptions : undefined,
+    tapeOptions: s.profileKey === 'strip' && s.metalGroup === 'Алюминий' && s.flatUseGost ? s.tapeOptions : undefined,
+    plateOptions: s.profileKey === 'plate' && s.metalGroup === 'Алюминий' && s.flatUseGost ? s.plateOptions : undefined,
+    sheetOptions: s.profileKey === 'sheet' && s.metalGroup === 'Алюминий' && s.flatUseGost ? s.sheetOptions : undefined,
     profileKey: s.profileKey, profileName: s.profile.name,
     metalGroup: s.metalGroup, grade: s.grade, params, quantity: s.quantity,
     length: s.profile.isVolume ? 0 : target === 'length' ? value : s.length ?? 0,
@@ -411,7 +483,13 @@ function buildFinalState(
   }
   const previous = s.history[0]
   const same = !!previous && previous.profileKey === recordData.profileKey &&
+    previous.flatUseGost === recordData.flatUseGost &&
     previous.metalGroup === recordData.metalGroup && previous.grade === recordData.grade &&
+    JSON.stringify(previous.brassFlatOptions) === JSON.stringify(recordData.brassFlatOptions) &&
+    JSON.stringify(previous.brassOptions) === JSON.stringify(recordData.brassOptions) &&
+    JSON.stringify(previous.tapeOptions) === JSON.stringify(recordData.tapeOptions) &&
+    JSON.stringify(previous.plateOptions) === JSON.stringify(recordData.plateOptions) &&
+    JSON.stringify(previous.sheetOptions) === JSON.stringify(recordData.sheetOptions) &&
     previous.quantity === recordData.quantity && previous.length === recordData.length &&
     previous.mass === recordData.mass &&
     s.profile.params.every(p => previous.params[p.key] === params[p.key])

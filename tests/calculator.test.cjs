@@ -135,8 +135,354 @@ test('corrupt history and denied writes cannot break calculations', () => {
   assert.equal(a.writes(), 0)
 })
 
-test('volume profiles return mass even if length was previously selected', () => {
+test('sheet supports inverse length in the common flat-product form', () => {
   const a = app(); let c = a.render()
-  c.selectProfile('sheet'); c.calculate('length'); c = a.render()
-  assert.equal(c.state.result.target, 'mass'); assert.equal(c.state.result.massOne, 31.4)
+  c.selectProfile('sheet'); c.setMass(62.8); c.calculate('length'); c = a.render()
+  assert.equal(c.state.result.target, 'length'); assert.equal(c.state.result.value, 2)
 })
+
+test('rectangular navigation groups once and keeps material restrictions', () => {
+  const a = app()
+  const { profiles } = a.load('src/data/profiles')
+  const { groupProfiles, profileGroupKey, rectangularProfiles } = a.load('src/data/profileNavigation')
+  const grouped = groupProfiles(profiles)
+  assert.equal(grouped.length, profiles.length - 3)
+  assert.equal(grouped.filter(p => profileGroupKey(p.key) === 'sheet').length, 1)
+  assert.ok(grouped.some(p => p.key === 'square'))
+  assert.ok(!grouped.some(p => p.key === 'strip'))
+  assert.deepEqual(groupProfiles(profiles, ['plate', 'square']).map(p => p.key), ['plate', 'square'])
+  assert.deepEqual(rectangularProfiles(['sheet', 'plate']).map(p => p.key), ['sheet', 'plate'])
+  assert.deepEqual(groupProfiles(profiles, ['wire']).map(p => p.key), ['wire'])
+})
+
+test('custom order keeps the first rectangular position and all calculation IDs', () => {
+  const { groupedProfileOrder, expandProfileOrder } = app().load('src/data/profileNavigation')
+  assert.deepEqual(groupedProfileOrder(['round', 'flat', 'square', 'plate', 'sheet']), ['round', 'sheet', 'square'])
+  assert.deepEqual(expandProfileOrder(['round', 'sheet', 'square']), ['round', 'sheet', 'plate', 'flat', 'strip', 'square'])
+})
+
+test('grouped products keep equivalent mass, individual standards and legacy history', () => {
+  const a = app()
+  const { calcMass } = a.load('src/lib/calculations')
+  const { profileMap } = a.load('src/data/profiles')
+  const { loadHistory } = a.load('src/lib/history')
+  const records = ['sheet', 'plate', 'flat'].map(profileKey => {
+    const params = profileKey === 'flat' ? { b: 1000, t: 4 } : { a: 2000, b: 1000, t: 4 }
+    const result = calcMass({ ...base, profileKey, params, length: 2 })
+    assert.equal(result.mass, 62.8)
+    return { id: profileKey, timestamp: 1, profileKey, profileName: profileMap.get(profileKey).name,
+      metalGroup: 'Сталь', grade: '20', params, quantity: 1, length: 2, mass: 62.8, massOne: 62.8, linearDensity: 31.4 }
+  })
+  assert.equal(new Set(records.map(r => profileMap.get(r.profileKey).gost)).size, 3)
+  a.storage.set('metal_calc_history', JSON.stringify(records))
+  assert.deepEqual(loadHistory(), records)
+})
+
+test('all flat products support the same mass and inverse length with quantity', () => {
+  const { calcMass, calcLength } = app().load('src/lib/calculations')
+  for (const profileKey of ['sheet', 'plate', 'flat', 'strip']) {
+    const input = { ...base, profileKey, params: { b: 1000, t: 4 }, quantity: 3 }
+    assert.equal(calcMass({ ...input, length: 2 }).mass, 188.4)
+    assert.equal(calcLength(188.4, input), 2)
+  }
+})
+
+test('legacy sheet dimension and saved history restore length in metres', () => {
+  const a = app(); let c = a.render()
+  c.selectProfile('sheet'); c.setParam('a', 2000); c.calculate('mass'); c = a.render()
+  assert.equal(c.state.length, 2); assert.equal(c.state.result.value, 62.8)
+  c.restoreFromHistory({ profileKey: 'sheet', metalGroup: 'Сталь', grade: '20', params: { a: 3000, b: 1000, t: 4 }, length: 0, quantity: 1 })
+  c.calculate('mass'); c = a.render()
+  assert.equal(c.state.length, 3); assert.equal(c.state.result.value, 94.2)
+})
+
+test('changing a legacy flat-product alias keeps user dimensions and quantity', () => {
+  const a = app(); let c = a.render()
+  c.selectProfile('sheet'); c.setParam('b', 500); c.setParam('t', 2); c.setLength(3); c.setQuantity(2)
+  c.selectProfile('strip'); c.calculate('mass'); c = a.render()
+  assert.equal(c.state.params.b, 500); assert.equal(c.state.params.t, 2)
+  assert.equal(c.state.quantity, 2); assert.equal(c.state.result.value, 47.1)
+})
+
+test('standard and tolerance depend on material as well as product shape', () => {
+  const a = app()
+  const { getProfileGostCodes } = a.load('src/data/profileStandards')
+  const { getWeightTolerance } = a.load('src/data/gost')
+  for (const metal of ['Алюминий', 'Медь', 'Бронза']) {
+    assert.ok(!getProfileGostCodes('rod', metal).includes('ГОСТ 2060-2006'))
+    assert.equal(getWeightTolerance('rod', { d: 25 }, metal), null)
+  }
+  assert.deepEqual(getProfileGostCodes('rod', 'Латунь'), ['ГОСТ 2060-2006'])
+  assert.equal(getWeightTolerance('rod', { d: 25 }, 'Латунь'), null)
+  assert.deepEqual(getProfileGostCodes('plate', 'Сталь'), ['ГОСТ 19903-2015'])
+  assert.deepEqual(getProfileGostCodes('plate', 'Алюминий'), ['ГОСТ 17232-2023'])
+  assert.equal(getWeightTolerance('strip', { b: 20, t: 1 }, 'Алюминий'), null)
+})
+
+test('GOST 21631 uses limit means and appendix B density without double correction', () => {
+  const a = app(); const { sheetBasis, defaultSheetOptions: o, sheetDensity } = a.load('src/data/aluminumSheet')
+  const basis = sheetBasis('Д16', 4, 1000, o)
+  assert.equal(basis.thicknessMin, 3.7); assert.equal(basis.thicknessMax, 4)
+  assert.equal(basis.meanWidth, 1004); assert.equal(basis.density, 2770)
+  assert.ok(Math.abs(basis.linearMass - 10.707158) < 1e-9)
+  assert.equal(sheetDensity('АМг2'), 2690); assert.equal(sheetDensity('АМг6'), 2650)
+  assert.equal(sheetDensity('7075 (В95)'), null); assert.equal(sheetDensity('6061'), null)
+  const { calcMass, calcLength } = a.load('src/lib/calculations')
+  const input = { profileKey: 'sheet', metalGroup: 'Алюминий', grade: 'Д16', params: { b: 1000, t: 4 }, quantity: 3, sheetOptions: o }
+  assert.equal(calcMass({ ...input, length: 2 }).mass, 64.2429)
+  assert.equal(calcLength(64.242948, input), 2)
+})
+
+test('GOST sheet boundary rules, accuracy and special symmetric alloy tolerances', () => {
+  const { sheetBasis: b, defaultSheetOptions: o } = app().load('src/data/aluminumSheet')
+  assert.equal(b('Д16', 4.2, 1000, o).referenceThickness, 4)
+  assert.ok(Math.abs(b('Д16', 4.2, 1000, o).thicknessMin - 3.9) < 1e-9)
+  assert.equal(b('Д16', 4, 1000, {...o, thicknessAccuracy:'high'}).thicknessMin, 3.76)
+  assert.equal(b('Д16', 4, 1000, {...o, widthAccuracy:'high'}).widthMax, 1006)
+  assert.equal(b('АМг6', 5, 1000, o).meanThickness, 5)
+  assert.equal(b('АМг6', 5, 1000, o).thicknessMin, 4.75)
+  assert.equal(b('АМг6', 5, 1000, {...o,condition:'other'}).meanThickness, 4.825)
+  assert.equal(b('Д16', 4, 1000, {...o,symmetric:true}).meanThickness, 4)
+  assert.equal(b('Д16', 5, 1000, o).widthMax, 1008)
+  assert.equal(b('Д16', 5.01, 1000, o).widthMax, 1012)
+  assert.equal(b('Д16', 10.5, 2800, o).thicknessMin, 9.55)
+  for (const [t,w,opt] of [[.29,600,o],[10.6,1000,o],[1,599,o],[5,2801,o],[.3,1200,o],[4,2600,o],[5,2200,{...o,thicknessAccuracy:'high'}],[5,1200,{...o,widthAccuracy:'high'}],[1,1000,{...o,symmetric:true}]]) assert.equal(typeof b('Д16',t,w,opt), 'string')
+})
+
+test('GOST sheet hook saves calculation basis and rejects unsupported grades explicitly', () => {
+  const a = app(); let c = a.render()
+  c.selectMetal('Алюминий','Д16'); c.selectProfile('sheet',true); c.setLength(2)
+  c.setSheetOptions({thicknessAccuracy:'high'}); c.calculate('mass'); c = a.render()
+  assert.ok(c.state.result.sheetBasis); assert.equal(c.state.history[0].sheetOptions.thicknessAccuracy,'high')
+  c.selectMetal('Алюминий','6061'); c.calculate('mass'); c = a.render()
+  assert.equal(c.state.result,null); assert.match(c.state.error.message,/Б.1/)
+})
+
+test('brass mass interval is derived from the squared dimensional ratio', () => {
+  const a=app(); const {brassMassRange,brassDimensionTolerance,defaultBrassOptions}=a.load('src/data/brassTolerance')
+  assert.equal(defaultBrassOptions.manufacturing, 'drawn')
+  assert.equal(brassDimensionTolerance('rod',20,defaultBrassOptions),.30)
+  const o={...defaultBrassOptions,manufacturing:'drawn'}
+  const r=brassMassRange('rod',20,o)
+  assert.ok(Math.abs(r.minus-.029775)<1e-12); assert.ok(Math.abs(r.plus-.030225)<1e-12)
+  assert.equal(brassDimensionTolerance('rod',3,o),.10)
+  assert.equal(brassDimensionTolerance('rod',3.001,o),.15)
+  assert.equal(brassDimensionTolerance('rod',30,o),.30)
+  assert.equal(brassDimensionTolerance('rod',30.001,o),.60)
+  assert.equal(brassDimensionTolerance('rod',50,o),.60)
+  assert.equal(brassDimensionTolerance('rod',50.01,o),null)
+  assert.equal(brassDimensionTolerance('rod',20,{...o,manufacturing:'pressed'}),.42)
+  assert.equal(brassDimensionTolerance('square',4,{...o,accuracy:'increased'}),null)
+  assert.equal(brassDimensionTolerance('hexagon',5,{...o,accuracy:'increased'}),.08)
+  assert.equal(brassDimensionTolerance('square',20,{...o,accuracy:'high'}),null)
+  const {getWeightTolerance}=a.load('src/data/gost')
+  assert.equal(getWeightTolerance('rod',{d:20},'Латунь',o).minus,r.minus)
+  assert.equal(getWeightTolerance('square',{a:20},'Латунь',o).minus,r.minus)
+  assert.equal(getWeightTolerance('rod',{d:20},'Алюминий',o),null)
+})
+
+test('pressed brass table includes boundaries and rejects unavailable products', () => {
+  const a=app(); const {brassDimensionTolerance:d,brassAvailabilityError:e}=a.load('src/data/brassTolerance')
+  const o={manufacturing:'pressed',accuracy:'normal'}
+  for(const [size,delta] of [[10,.29],[10.01,.35],[18,.35],[18.01,.42],[30,.42],[50,.5],[80,.6],[100,.7],[120,1.1],[160,1.25],[180,1.4]]) assert.equal(d('rod',size,o),delta)
+  assert.equal(d('rod',181,o),null)
+  assert.equal(d('rod',50,{...o,accuracy:'increased'}),.31)
+  assert.equal(d('square',30,{...o,accuracy:'increased'}),.26)
+  assert.ok(e('square',18,o)); assert.ok(e('square',31,{...o,accuracy:'increased'}))
+  assert.ok(e('hexagon',101,o)); assert.equal(e('hexagon',100,o),null)
+  let c=a.render(); c.selectMetal('Латунь','Л63'); c.selectProfile('square'); c.setParam('a',10);c.setLength(1);c.setBrassOptions(o);c.calculate('mass');c=a.render()
+  assert.equal(c.state.result,null);assert.match(c.state.error.message,/не предусматривает/)
+})
+
+test('GOST plate mass uses published A.1 once and the B.1 alloy coefficient in both directions', () => {
+ const a=app(),{calcMass,calcLength}=a.load('src/lib/calculations')
+ const input={profileKey:'plate',params:{t:20,b:1200},metalGroup:'Алюминий',grade:'Д16Т',quantity:3,length:2}
+ const r=calcMass(input)
+ assert.equal(r.plateBasis.referenceMass,71.25);assert.equal(r.plateBasis.coefficient,.976)
+ assert.equal(r.linearDensity,69.54);assert.equal(r.mass,417.24);assert.equal(calcLength(r.mass,input),2)
+ assert.equal(calcMass({...input,grade:'В95'}).linearDensity,71.25)
+ assert.ok(Math.abs(calcMass({...input,grade:'АД31'}).linearDensity-67.47375)<.0001)
+ assert.equal(calcMass({...input,plateOptions:{accuracy:'high'}}).mass,r.mass)
+ const dimensions=calcMass({...input,params:{t:20,b:1000}})
+ assert.equal(dimensions.plateBasis.method,'dimensions');assert.equal(dimensions.linearDensity,58.4136)
+})
+test('GOST plate size limits, accuracy boundaries and unsupported grades are explicit', () => {
+ const {plateBasis:b,plateCoefficient:k,plateReferenceMass:r}=app().load('src/data/aluminumPlate')
+ assert.match(b('Д16',4,1200),/Лист/);assert.match(b('Д16',10.5,1200),/10,5/)
+ assert.equal(b('Д16',12,1200).thicknessMin,11.5)
+ assert.equal(b('Д16',20,1500,{accuracy:'high'}).thicknessMin,19.3)
+ assert.equal(b('Д16',20.01,1500,{accuracy:'high'}).thicknessMin,19.21)
+ assert.equal(b('Д16',20,1500.01).thicknessMin,19)
+ assert.match(b('Д16',20,2500),/2000/);assert.match(b('АМг6',45,2500),/2000/)
+ assert.equal(b('АМг6',45.01,2500).widthMax,2600)
+ assert.match(b('1565ч',60.01,1200),/60/)
+ for(const grade of ['6061','6082','7075 (В95)','АК4']){assert.equal(k(grade),null);assert.match(b(grade,20,1200),/коэффициента/)}
+ assert.equal(k('Д1'),.982);assert.equal(k('АД31'),.947);assert.equal(k('АМг6'),.926)
+ assert.equal(r(11,1500),49.593);assert.ok(b('В95',11,1500).warning)
+ assert.equal(r(22,1800),115.45);assert.equal(r(20,1250),null)
+})
+test('GOST plate options survive history, distinguish records and keep sheet settings separate', () => {
+ const a=app();let c=a.render();c.selectMetal('Алюминий','Д16Т');c.selectProfile('plate',true);c.setParam('b',1200);c.setLength(3);c.calculate('mass');c=a.render()
+ assert.equal(c.state.result.value,208.62);assert.ok(c.state.result.plateBasis)
+ const normal=c.state.history[0];assert.deepEqual(normal.plateOptions,{accuracy:'normal'});assert.equal(normal.sheetOptions,undefined)
+ c.setPlateOptions({accuracy:'high'});c.calculate('mass');c=a.render();assert.equal(c.state.history.length,2)
+ c.restoreFromHistory(normal);c=a.render();assert.equal(c.state.plateOptions.accuracy,'normal');c.calculate('mass');c=a.render();assert.equal(c.state.result.value,208.62)
+ c.selectProfile('sheet',true);c.setParam('t',4);c.calculate('mass');c=a.render();assert.ok(c.state.result.sheetBasis);assert.equal(c.state.result.plateBasis,undefined)
+})
+
+
+test('GOST tape uses table 2 mean dimensions and B.1 once in mass and inverse length', () => {
+ const a=app(), {calcMass,calcLength}=a.load('src/lib/calculations'),{tapeBasis:b,tapeCoefficient:k,defaultTapeOptions:o}=a.load('src/data/aluminumTape')
+ const input={profileKey:'strip',params:{t:1,b:600},metalGroup:'Алюминий',grade:'АМг5',quantity:2,length:10}
+ const r=calcMass(input)
+ assert.equal(k('АМг5'),.930);assert.equal(k('АМг6'),.926);assert.equal(k('Д16Т'),.976)
+ // A.1: base mass 1.625 kg/m (rounded), here the unrounded dimensional value is 1.6245.
+ assert.equal(r.tapeBasis.referenceMass,1.6245);assert.equal(r.mass,30.2157);assert.equal(calcLength(r.mass,input),10)
+ assert.equal(b('Д16',2,1200).thicknessMin,1.76);assert.equal(b('Д16',2,1200,{...o,accuracy:'high'}).thicknessMin,1.8)
+ assert.equal(b('Д16',2,1200,{...o,accuracy:'symmetric'}).meanThickness,2)
+ assert.equal(b('Д16',5,1200).symmetric,true);assert.equal(b('Д16',5,1200).meanThickness,5)
+ assert.equal(b('АМг6',10.5,2800,{...o,edges:'untrimmed'}).thicknessMax,11.2)
+ assert.equal(b('АМг6',1,600.01).thicknessMin,.85);assert.equal(b('АМг6',1,900).thicknessMin,.85)
+ assert.ok(Math.abs(b('АМг6',.2,900).thicknessMin-.12)<1e-12);assert.ok(Math.abs(b('АМг6',.2,900.01).thicknessMin-.12)<1e-12)
+ assert.equal(b('Д16',4,1800).thicknessMin,3.63);assert.equal(b('Д16',4,1800.01).thicknessMin,3.63)
+ assert.equal(b('Д16',1,200).widthMax,200.5);assert.equal(b('Д16',1,205).widthMax,206)
+ const {getWeightTolerance}=a.load('src/data/gost');assert.equal(getWeightTolerance('strip',{t:1,b:600},'Алюминий'),null)
+})
+
+test('GOST tape slit tolerances use parent width and require agreed cutting tolerances', () => {
+ const {tapeBasis:b,defaultTapeOptions:o}=app().load('src/data/aluminumTape')
+ const slit={...o,manufacturing:'slit',parentWidth:1200,widthMinus:.3,widthPlus:.7}
+ const r=b('Д16',2,100,slit)
+ assert.equal(r.thicknessWidth,1200);assert.equal(r.thicknessMin,1.76);assert.equal(r.meanWidth,100.2)
+ assert.match(b('Д16',2,100,{...slit,parentWidth:null}),/исходной/)
+ assert.match(b('Д16',2,100,{...slit,widthPlus:null}),/согласованные/)
+ assert.match(b('Д16',2,100,{...slit,widthMinus:101}),/положительными/)
+ assert.equal(b('Д16',2,1200,{...o,edges:'untrimmed'}).widthMax,1280)
+ assert.equal(b('АД0',2,1200,{...o,edges:'untrimmed'}).widthMax,1250)
+ assert.equal(b('Д16',2,2100,{...o,edges:'untrimmed'}).widthMax,2200)
+ for(const [t,w,opt] of [[.19,600,o],[10.6,600,o],[1.25,600,o],[.2,1200,o],[1,2600,o],[6,1200,o],[1,100,{...o,edges:'untrimmed'}],[1,302,o]])assert.equal(typeof b('Д16',t,w,opt),'string')
+ for(const grade of ['6061','6082','7075 (В95)','АД31','АК4'])assert.match(b(grade,1,600),/коэффициента/)
+})
+
+test('GOST tape options persist, restore and distinguish history records', () => {
+ const a=app();let c=a.render();c.selectMetal('Алюминий','Д16');c.selectProfile('strip',true);c.setParam('t',2);c.setParam('b',1200);c.setLength(3);c.calculate('mass');c=a.render()
+ assert.ok(c.state.result.tapeBasis);const normal=c.state.history[0];assert.equal(normal.tapeOptions.accuracy,'normal');assert.equal(normal.sheetOptions,undefined)
+ c.setTapeOptions({accuracy:'high'});c.calculate('mass');c=a.render();assert.equal(c.state.history.length,2)
+ c.restoreFromHistory(normal);c=a.render();assert.equal(c.state.tapeOptions.accuracy,'normal');c.calculate('mass');c=a.render();assert.equal(c.state.result.value,normal.mass)
+ c.selectMetal('Алюминий','6061');c.calculate('mass');c=a.render();assert.equal(c.state.result,null);assert.match(c.state.error.message,/Б.1/)
+})
+
+test('flat standard menu is material-specific and preserves one choice per standard', () => {
+ const {getFlatStandardChoices:choices}=app().load('src/data/flatStandards')
+ const aluminum=choices('Алюминий')
+ assert.deepEqual(aluminum.filter(x=>x.code).map(x=>x.code),['ГОСТ 21631-2023','ГОСТ 17232-2023','ГОСТ 13726-2023'])
+ assert.equal(aluminum.find(x=>x.code==='ГОСТ 17232-2023').profileKey,'plate')
+ assert.match(aluminum.find(x=>x.code==='ГОСТ 13726-2023').title,/Ленты из алюминия и алюминиевых сплавов. Технические условия/)
+ assert.equal(aluminum.find(x=>!x.code).profileKey,'flat')
+ const steel=choices('Сталь');assert.deepEqual(steel.filter(x=>x.code).map(x=>x.code),['ГОСТ 19903-2015','ГОСТ 103-2006','ГОСТ 503-81'])
+ assert.deepEqual(steel[1].profileKeys,['sheet','plate'])
+ assert.ok(!choices('Медь').some(x=>x.code==='ГОСТ 2060-2006'))
+})
+
+test('flat calculations default to dimensions and thickness only changes an explicitly selected sheet or plate standard', () => {
+ const a=app();let c=a.render();c.selectMetal('Алюминий','Д16Т');c.selectProfile('sheet');c.setParam('t',20);c.setParam('b',1000);c.setLength(3);c.calculate('mass');c=a.render()
+ assert.equal(c.state.flatUseGost,false);assert.equal(c.state.profileKey,'sheet');assert.equal(c.state.result.value,166.8);assert.equal(c.state.result.sheetBasis,undefined)
+ const geometric=c.state.history[0];assert.equal(geometric.flatUseGost,false)
+ c.selectProfile('sheet',true);c.setParam('t',20);c=a.render();assert.equal(c.state.profileKey,'plate');assert.equal(c.state.flatUseGost,true);assert.equal(c.state.length,3)
+ c.calculate('mass');c=a.render();assert.equal(c.state.result.value,175.2408);assert.ok(c.state.result.plateBasis)
+ c.setParam('t',10.5);c=a.render();assert.equal(c.state.profileKey,'sheet');c.setParam('t',10.5001);c=a.render();assert.equal(c.state.profileKey,'plate')
+ c.setParam('t',null);c=a.render();assert.equal(c.state.profileKey,'plate')
+ c.restoreFromHistory(geometric);c=a.render();assert.equal(c.state.flatUseGost,false);c.calculate('mass');c=a.render();assert.equal(c.state.result.value,166.8)
+ c.selectProfile('strip',true);c.setParam('t',20);c=a.render();assert.equal(c.state.profileKey,'strip')
+ c.selectProfile('flat',false);c.setParam('t',4);c.calculate('mass');c=a.render();assert.equal(c.state.flatUseGost,false);assert.equal(c.state.result.plateBasis,undefined)
+})
+
+test('flat products and wire display length in mm; other profiles retain metres', () => {
+ const a=app(),{usesMillimetreLength:usesMm}=a.load('src/data/profileNavigation'),{profiles}=a.load('src/data/profiles')
+ const mm=new Set(['sheet','plate','flat','strip','wire'])
+ for(const p of profiles)assert.equal(usesMm(p.key),mm.has(p.key),p.key)
+ for(const key of ['angle_equal','angle_unequal','rail','channel','shpunt'])assert.equal(usesMm(key),false)
+})
+
+test('GOST flat mass range uses the dimensional endpoints, fixed length and alloy density once', () => {
+ const {calcMass}=app().load('src/lib/calculations')
+ const input={profileKey:'plate',metalGroup:'Алюминий',grade:'Д16Т',params:{t:12,b:1000},quantity:1,length:3,flatUseGost:true}
+ const r=calcMass(input);assert.equal(r.mass,105.1445);assert.deepEqual(r.massRange,{min:95.9652,max:114.741})
+ assert.deepEqual(calcMass({...input,quantity:3}).massRange,{min:287.8956,max:344.223})
+ assert.equal(calcMass({...input,flatUseGost:false}).massRange,undefined)
+ const normal=calcMass({...input,params:{t:20,b:1500}}),high=calcMass({...input,params:{t:20,b:1500},plateOptions:{accuracy:'high'}})
+ assert.equal(normal.mass,high.mass);assert.ok(high.massRange.min>normal.massRange.min);assert.ok(high.massRange.max<normal.massRange.max)
+ const sheet=calcMass({...input,profileKey:'sheet',params:{t:4,b:1000}})
+ assert.deepEqual(sheet.massRange,{min:30.747,max:33.5059});assert.ok(sheet.massRange.min<sheet.mass&&sheet.mass<sheet.massRange.max)
+ const tape=calcMass({...input,profileKey:'strip',params:{t:1,b:600},grade:'АМг5',length:10})
+ assert.deepEqual(tape.massRange,{min:14.265,max:15.956});assert.ok(tape.massRange.min<tape.mass&&tape.mass<tape.massRange.max)
+})
+
+
+test('input and standard edits retain the previous result until recalculation; invalid results clear it', () => {
+  const a = app(); let c = a.render()
+  c.setLength(3); c.calculate('mass'); c = a.render()
+  const first = c.state.result
+  c.setParam('d', 25); c = a.render(); assert.equal(c.state.result, first)
+  c.setLength(4); c = a.render(); assert.equal(c.state.result, first)
+  c.incrementQty(); c = a.render(); assert.equal(c.state.result, first)
+  c.calculate('mass'); c = a.render(); assert.notEqual(c.state.result.value, first.value)
+  c.setParam('d', 0); c.calculate('mass'); c = a.render()
+  assert.equal(c.state.result, null); assert.ok(c.state.error)
+  c.selectProfile('sheet'); c.setLength(3); c.calculate('mass'); c = a.render()
+  const flat = c.state.result
+  c.selectProfile('plate', true); c = a.render(); assert.equal(c.state.result, flat)
+  c.setPlateOptions({accuracy: 'high'}); c = a.render(); assert.equal(c.state.result, flat)
+  c.selectProfile('round'); c = a.render(); assert.equal(c.state.result, null)
+})
+
+
+test('GOST 2208 brass flat catalog, appendix density and dimensional interval agree in both directions', () => {
+ const a=app();const {getFlatStandardChoices}=a.load('src/data/flatStandards');
+ assert.equal(getFlatStandardChoices('Латунь').filter(c=>c.code==='ГОСТ 2208-2007').length,1)
+ const {brassFlatBasis:b,brassFlatDensity}=a.load('src/data/brassFlat')
+ assert.equal(brassFlatDensity('Л63'),8400);assert.equal(brassFlatDensity('Л68'),8500)
+ const opts={product:'cold-sheet',accuracy:'normal'};let basis=b('Л63',4,1000,opts)
+ assert.equal(basis.thicknessMin,3.7);assert.equal(basis.widthMin,992)
+ const {calcMass,calcLength}=a.load('src/lib/calculations');const input={flatUseGost:true,profileKey:'sheet',metalGroup:'Латунь',grade:'Л63',params:{t:4,b:1000},quantity:1,brassFlatOptions:opts}
+ const r=calcMass({...input,length:3});assert.equal(r.mass,100.8);assert.equal(r.massRange.min,92.4941);assert.equal(r.massRange.max,100.8);assert.equal(calcLength(r.mass,input),3)
+ assert.equal(r.sheetBasis,undefined);assert.ok(r.brassFlatBasis)
+ assert.equal(b('Л63',4,1000,{...opts,accuracy:'increased'}).widthMin,994)
+ assert.equal(b('Л63',1,100,{product:'tape',accuracy:'normal'}).widthMin,99.5)
+ assert.equal(b('Л63',.1,100,{product:'tape',accuracy:'normal'}).thicknessMin,.08)
+ assert.equal(typeof b('Л63',3,1000,{product:'tape',accuracy:'normal'}),'string')
+ assert.equal(b('Л63',13,1800,{product:'hot-sheet',accuracy:'normal'}).thicknessMin,12)
+ assert.equal(b('Л63',14,1800,{product:'hot-sheet',accuracy:'normal'}).thicknessMin,12.9)
+ assert.equal(b('Л63',40,1000,{product:'plate',accuracy:'normal'}).widthMax,1040)
+ assert.equal(typeof b('Л63',120,2200,{product:'plate',accuracy:'normal'}),'string')
+ assert.equal(typeof b('fake',4,1000,opts),'string')
+})
+
+test('brass flat execution auto state preserves history options and rejects unavailable combinations', () => {
+ const a=app();let c=a.render();c.selectMetal('Латунь','Л63');c.selectProfile('sheet',true);c.setParam('t',4);c.setParam('b',1000);c.setLength(3);c.calculate('mass');c=a.render()
+ assert.equal(c.state.result.value,100.8);assert.equal(c.state.history[0].brassFlatOptions.product,'cold-sheet')
+ const record=c.state.history[0];c.setBrassFlatOptions({product:'tape'});c.calculate('mass');c=a.render();assert.equal(c.state.result,null);assert.ok(c.state.error)
+ c.restoreFromHistory(record);c=a.render();assert.equal(c.state.brassFlatOptions.product,'cold-sheet')
+ c.setBrassFlatOptions({accuracy:'increased'});c.calculate('mass');c=a.render();assert.equal(c.state.result.massRange.min,92.6806);assert.equal(c.state.history.length,2)
+})
+
+test('restored agreed sheet tolerance returns to baseline, keeping mandatory alloy rules', () => {
+ const a=app();let c=a.render();c.selectMetal('Алюминий','Д16');c.selectProfile('sheet',true);c.setParam('b',1000);c.setParam('t',4);c.setLength(3);c.calculate('mass');c=a.render();
+ const old={...c.state.history[0],sheetOptions:{...c.state.sheetOptions,symmetric:true}};
+ c.restoreFromHistory(old);c=a.render();assert.equal(c.state.sheetOptions.symmetric,false);c.calculate('mass');c=a.render();
+ assert.equal(c.state.result.sheetBasis.thicknessMin,3.7);assert.equal(c.state.result.sheetBasis.thicknessMax,4);
+ c.selectMetal('Алюминий','АМг5');c.setParam('t',5);c.calculate('mass');c=a.render();
+ assert.equal(c.state.result.sheetBasis.thicknessMin,4.75);assert.equal(c.state.result.sheetBasis.thicknessMax,5.25);
+});
+
+test('sole flat standard is automatic on product, material and history changes', () => {
+ const a=app(),{getFlatStandardChoices:choices}=a.load('src/data/flatStandards');
+ assert.deepEqual(choices('Латунь').map(c=>c.code),['ГОСТ 2208-2007']);assert.ok(choices('Алюминий').some(c=>c.code===null));assert.deepEqual(choices('Вольфрам').map(c=>c.code),[null]);
+ let c=a.render();c.selectMetal('Латунь','Л63');c.selectProfile('sheet');c=a.render();assert.equal(c.state.flatUseGost,true);
+ c.setLength(3);c.calculate('mass');c=a.render();assert.ok(c.state.result.brassFlatBasis);const old={...c.state.history[0],flatUseGost:false};
+ c.restoreFromHistory(old);c=a.render();assert.equal(c.state.flatUseGost,true);
+ c.selectProfile('sheet',false);c=a.render();assert.equal(c.state.flatUseGost,true);
+ c.selectMetal('Алюминий','Д16Т');c=a.render();assert.equal(c.state.flatUseGost,false);
+ c.selectMetal('Латунь','Л63');c=a.render();assert.equal(c.state.flatUseGost,true);
+ c.selectMetal('Вольфрам','ВА');c=a.render();assert.equal(c.state.flatUseGost,false);
+});

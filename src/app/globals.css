@@ -355,3 +355,44 @@ button { -webkit-tap-highlight-color: transparent; }
     min-height: 44px;
   }
 }
+
+/* The closed calculator keeps the Steel–Round baseline; its exact panel can grow it. */
+:root {
+  --resize-dur: 300ms;
+  --resize-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.t-resize {
+  transition:
+    width  var(--resize-dur) var(--resize-ease),
+    height var(--resize-dur) var(--resize-ease);
+  will-change: width, height;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-resize { transition: none !important; }
+}
+
+.ui-dialog.ui-dialog-clear-backdrop::backdrop {
+  background: transparent;
+  backdrop-filter: none;
+}
+
+@media (max-width: 767px) {
+  .ui-settings-shell {
+    height: calc(100dvh - 18px) !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .ui-gost-body { flex-direction: column; }
+  .ui-gost-sidebar {
+    width: 100% !important;
+    height: 180px;
+    border-right: none !important;
+    border-bottom: 1px solid var(--outline-variant);
+  }
+  .ui-gost-details { padding: 16px !important; }
+}
+
+.ui-settings-shell { max-block-size: none; }

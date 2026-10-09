@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { groupedProfileOrder, expandProfileOrder, isRectangular, rectangularName } from '@/data/profileNavigation'
 import { profiles } from '@/data/profiles'
 import { useSettings, GradeSort, GradeSortMode } from '@/data/settings'
 import { useTheme } from '@/hooks/useTheme'
@@ -60,8 +61,8 @@ export default function SettingsPanel({ onClose }: Props) {
   }
 
   return (
-    <AppDialog title="Настройки" onClose={onClose} width={540} height={520}>
-      <div className="ui-dialog-shell" style={{ height: '100%' }}>
+    <AppDialog title="Настройки" onClose={onClose} width={540} height="min(900px, calc(100dvh - 64px))">
+      <div className="ui-dialog-shell ui-settings-shell" style={{ height: '100%' }}>
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '18px 20px 0', flexShrink: 0,
@@ -111,9 +112,9 @@ export default function SettingsPanel({ onClose }: Props) {
           <section ref={element => setPageInert(element, tab !== 'sortament')} aria-hidden={tab !== 'sortament'} className={`t-page ${tab === 'sortament' ? 'is-active' : ''}`} data-page-id="sortament" style={{ ['--t-page-from-x' as string]: `${pageDirection('sortament') * 8}px` }}>
             <div className="ui-scroll-area" style={pageContentStyle}>
               <DragList
-                items={settings.profileOrder}
-                renderLabel={k => profiles.find(p => p.key === k)?.name ?? k}
-                onReorder={order => setProfileOrder(order as ProfileKey[])}
+                items={groupedProfileOrder(settings.profileOrder)}
+                renderLabel={k => isRectangular(k as ProfileKey) ? rectangularName : profiles.find(p => p.key === k)?.name ?? k}
+                onReorder={order => setProfileOrder(expandProfileOrder(order as ProfileKey[]))}
                 hint="Перетащите для изменения порядка в средней колонке калькулятора"
               />
             </div>

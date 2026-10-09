@@ -1,6 +1,9 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { MetalProfile, ProfileKey } from '@/data/profiles'
+import ProfileIcon from './ProfileIcon'
+import { groupProfiles, profileGroupKey } from '@/data/profileNavigation'
 import { getAllowedProfiles } from '@/data/materials'
 
 interface Props {
@@ -9,24 +12,42 @@ interface Props {
   highlighted?: ProfileKey[]
   onSelect: (key: ProfileKey) => void
   metalGroup: string
+  onContentHeight?: (height: number) => void
   mobileOpen?: boolean
   onMobileClose?: () => void
 }
 
 export default function SortamentNav({
   profiles, selected, highlighted = [], onSelect, metalGroup,
-  mobileOpen, onMobileClose,
+  mobileOpen, onMobileClose, onContentHeight,
 }: Props) {
 
-  const allowed = getAllowedProfiles(metalGroup)
-  const visibleProfiles = allowed
-    ? profiles.filter(p => allowed.includes(p.key))
-    : profiles
+  const headerRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!onContentHeight || !headerRef.current || !listRef.current) return
+    // Keep the frame at the initial Steel sidebar height, regardless of the active metal.
+    const measure = () => {
+      if (!headerRef.current || !listRef.current) return
+      const row = listRef.current.querySelector('button')
+      if (!row) return
+      const steelRows = groupProfiles(profiles, getAllowedProfiles('Сталь')).length
+      onContentHeight(Math.ceil(headerRef.current!.getBoundingClientRect().height + steelRows * row.getBoundingClientRect().height) + 2)
+    }
+    const observer = new ResizeObserver(measure)
+    observer.observe(headerRef.current)
+    observer.observe(listRef.current)
+    measure()
+    return () => observer.disconnect()
+  }, [onContentHeight, profiles])
 
-  const renderList = (fontSize = 15, padding = '7px 14px', iconSize = 24, minHeight = 40) =>
+  const allowed = getAllowedProfiles(metalGroup)
+  const visibleProfiles = groupProfiles(profiles, allowed)
+
+  const renderList = (fontSize = 15, padding = '7px 14px', iconSize = 28, minHeight = 40) =>
     visibleProfiles.map(p => {
-      const isActive = p.key === selected
-      const isHighlighted = highlighted.includes(p.key)
+      const isActive = profileGroupKey(p.key) === profileGroupKey(selected)
+      const isHighlighted = highlighted.some(key => profileGroupKey(key) === profileGroupKey(p.key))
 
       let bg = 'none'
       let borderColor = 'transparent'
@@ -45,7 +66,7 @@ export default function SortamentNav({
         <button
           key={p.key}
           className="nav-item"
-          onClick={() => { onSelect(p.key); onMobileClose?.() }}
+          onClick={() => { onSelect(isActive ? selected : p.key); onMobileClose?.() }}
           style={{
             display: 'flex', alignItems: 'center', gap: 12,
             width: '100%', textAlign: 'left',
@@ -67,13 +88,8 @@ export default function SortamentNav({
               (e.currentTarget as HTMLElement).style.background = 'none'
           }}
         >
-          <img
-            src={`/icons/${p.icon}.svg`}
-            alt=""
-            width={iconSize} height={iconSize}
-            style={{ flexShrink: 0 }}
-          />
-          <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
+          <ProfileIcon icon={p.icon} size={iconSize} />
+          <span style={{ flex: 1, whiteSpace: 'normal' }}>{p.name}</span>
           {isHighlighted && !isActive && (
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#F9A825', flexShrink: 0 }} />
           )}
@@ -92,7 +108,7 @@ export default function SortamentNav({
       display: 'flex',
       flexDirection: 'column',
     }}>
-      <div style={{
+      <div ref={headerRef} style={{
         fontSize: 11, fontWeight: 800, letterSpacing: '.08em',
         color: 'var(--on-surface-variant)',
         padding: '12px 16px 6px', textTransform: 'uppercase',
@@ -101,7 +117,7 @@ export default function SortamentNav({
         Сортамент
       </div>
       <div className="ui-scroll-area" style={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-        {renderList()}
+        <div ref={listRef}>{renderList()}</div>
       </div>
     </div>
   )
@@ -127,7 +143,7 @@ export default function SortamentNav({
         }}>
           Сортамент
         </div>
-        {renderList(15, '12px 14px', 24, 44)}
+        {renderList(15, '12px 14px', 28, 44)}
       </div>
     </>
   )

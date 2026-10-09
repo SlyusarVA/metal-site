@@ -22,6 +22,8 @@ interface GostMapping {
 }
 
 export const gostMappings: GostMapping[] = [
+  { code: 'ГОСТ 13726-2023', metalGroups: ['Алюминий'], profileKeys: ['strip'], hint: 'Ленты из алюминия и алюминиевых сплавов' },
+  { code: 'ГОСТ 21631-2023', metalGroups: ['Алюминий'], profileKeys: ['sheet'], hint: 'Листы из алюминия и алюминиевых сплавов' },
   { code: 'ГОСТ 2590-2006',    metalGroups: ['Сталь'],                     profileKeys: ['round'],          hint: 'Круг стальной горячекатаный' },
   { code: 'ГОСТ 2591-2006',    metalGroups: ['Сталь'],                     profileKeys: ['square'],         hint: 'Квадрат стальной горячекатаный' },
   { code: 'ГОСТ 2879-2006',    metalGroups: ['Сталь'],                     profileKeys: ['hexagon'],        hint: 'Шестигранник стальной горячекатаный' },
@@ -33,13 +35,14 @@ export const gostMappings: GostMapping[] = [
   { code: 'ГОСТ 8645-68',      metalGroups: ['Сталь'],                     profileKeys: ['pipe_prof'],      hint: 'Труба стальная профильная' },
   { code: 'ГОСТ 103-2006',     metalGroups: ['Сталь'],                     profileKeys: ['flat'],           hint: 'Полоса стальная горячекатаная' },
   { code: 'ГОСТ 19903-2015',   metalGroups: ['Сталь', 'Нержавейка'],       profileKeys: ['sheet', 'plate'], hint: 'Лист горячекатаный стальной' },
-  { code: 'ГОСТ 17232-99',     metalGroups: ['Алюминий'],                  profileKeys: ['plate'],          hint: 'Плита из алюминия и алюминиевых сплавов' },
+  { code: 'ГОСТ 17232-2023',     metalGroups: ['Алюминий'],                  profileKeys: ['plate'],          hint: 'Плита из алюминия и алюминиевых сплавов' },
   { code: 'ГОСТ 34028-2016',   metalGroups: ['Сталь'],                     profileKeys: ['armature'],       hint: 'Арматура для железобетонных конструкций' },
   { code: 'ГОСТ 4781-85',      metalGroups: ['Сталь'],                     profileKeys: ['shpunt'],         hint: 'Шпунт Ларсена металлический' },
   { code: 'ГОСТ Р 51685-2013', metalGroups: ['Сталь'],                     profileKeys: ['rail'],           hint: 'Рельсы железнодорожные' },
   { code: 'ГОСТ 503-81',       metalGroups: ['Сталь'],                     profileKeys: ['strip'],          hint: 'Лента холоднокатаная' },
   { code: 'ГОСТ 792-67',       metalGroups: ['Медь', 'Латунь'],            profileKeys: ['wire'],           hint: 'Проволока из меди и медных сплавов' },
-  { code: 'ГОСТ 2060-2006',    metalGroups: ['Медь', 'Латунь', 'Бронза'], profileKeys: ['rod'],            hint: 'Прутки из меди и медных сплавов' },
+  { code: 'ГОСТ 2208-2007', metalGroups: ['Латунь'], profileKeys: ['sheet', 'strip', 'plate', 'flat'], hint: 'Фольга, ленты, полосы, листы и плиты латунные' },
+  { code: 'ГОСТ 2060-2006',    metalGroups: ['Латунь'],                  profileKeys: ['rod', 'square', 'hexagon'], hint: 'Прутки латунные' },
   { code: 'ГОСТ 380-2005',     metalGroups: ['Сталь'],                     profileKeys: [],                 hint: 'Сталь углеродистая обыкновенного качества (Ст3сп, Ст3пс...)' },
   { code: 'ГОСТ 1050-2013',    metalGroups: ['Сталь'],                     profileKeys: [],                 hint: 'Сталь углеродистая качественная (10, 20, 35, 45...)' },
   { code: 'ГОСТ 4543-2016',    metalGroups: ['Сталь'],                     profileKeys: [],                 hint: 'Сталь легированная конструкционная (20Х, 40Х, 30ХГСА...)' },

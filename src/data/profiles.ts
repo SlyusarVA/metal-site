@@ -45,13 +45,12 @@ export const profiles: MetalProfile[] = [
 
   // Лист — 593 выдачи
   {
-    key: 'sheet', name: 'Лист', gost: 'ГОСТ 19903-2015', icon: 'sheet', isVolume: true,
+    key: 'sheet', name: 'Лист', gost: 'ГОСТ 19903-2015', icon: 'sheet',
     params: [
-      { key: 'a', label: 'Длина листа', unit: 'мм', defaultValue: 1000 },
-      { key: 'b', label: 'Ширина листа', unit: 'мм', defaultValue: 1000 },
+      { key: 'b', label: 'Ширина b', unit: 'мм', defaultValue: 1000 },
       { key: 't', label: 'Толщина t',    unit: 'мм', defaultValue: 4 },
     ],
-    sectionArea: (v) => v.a * v.b * v.t,
+    sectionArea: (v) => v.b * v.t,
   },
 
   // Труба кр. — часть из 425
@@ -79,7 +78,7 @@ export const profiles: MetalProfile[] = [
   {
     key: 'strip', name: 'Лента', gost: 'ГОСТ 503-81', icon: 'strip',
     params: [
-      { key: 'b', label: 'Ширина a',  unit: 'мм', defaultValue: 20 },
+      { key: 'b', label: 'Ширина b',  unit: 'мм', defaultValue: 20 },
       { key: 't', label: 'Толщина t', unit: 'мм', defaultValue: 1.5 },
     ],
     sectionArea: (v) => v.b * v.t,
@@ -87,13 +86,12 @@ export const profiles: MetalProfile[] = [
 
   // Плита — 130 выдач
   {
-    key: 'plate', name: 'Плита', gost: 'ГОСТ 17232-99', icon: 'plate', isVolume: true,
+    key: 'plate', name: 'Плита', gost: 'ГОСТ 17232-2023', icon: 'plate',
     params: [
-      { key: 'a', label: 'Длина',     unit: 'мм', defaultValue: 1000 },
-      { key: 'b', label: 'Ширина',    unit: 'мм', defaultValue: 1000 },
+      { key: 'b', label: 'Ширина b',    unit: 'мм', defaultValue: 1000 },
       { key: 't', label: 'Толщина t', unit: 'мм', defaultValue: 20 },
     ],
-    sectionArea: (v) => v.a * v.b * v.t,
+    sectionArea: (v) => v.b * v.t,
   },
 
   // Проволока — 122 выдачи
@@ -148,7 +146,7 @@ export const profiles: MetalProfile[] = [
   {
     key: 'flat', name: 'Полоса', gost: 'ГОСТ 103-2006', icon: 'flat_bar',
     params: [
-      { key: 'b', label: 'Ширина a',  unit: 'мм', defaultValue: 40 },
+      { key: 'b', label: 'Ширина b',  unit: 'мм', defaultValue: 40 },
       { key: 't', label: 'Толщина t', unit: 'мм', defaultValue: 4 },
     ],
     sectionArea: (v) => v.b * v.t,

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { groupProfiles } from '@/data/profileNavigation'
 import { profiles, ProfileKey } from '@/data/profiles'
 import { getAllowedProfiles, getGradesForGroup } from '@/data/materials'
 import { useCalculator } from '@/hooks/useCalculator'
@@ -14,10 +15,6 @@ import GostPanel from './GostPanel'
 import ThemeToggle from '../ThemeToggle'
 import AccentSchemeToggle from '../AccentSchemeToggle'
 
-const SORTAMENT_HEADER_HEIGHT = 31
-const SORTAMENT_ROW_HEIGHT = 40
-const SORTAMENT_SAFE_GAP = 16
-const DESKTOP_OUTER_RESERVED_HEIGHT = 70
 
 export default function CalculatorLayout() {
   const router = useRouter()
@@ -25,6 +22,8 @@ export default function CalculatorLayout() {
   const calc = useCalculator()
   const { state, selectProfile, selectMetal, setParam, setLength, setMass, setQuantity } = calc
   const { settings } = useSettings()
+  const [sortamentHeight, setSortamentHeight] = useState(624)
+  const [expandedHeight, setExpandedHeight] = useState(0)
   const [showSettings, setShowSettings] = useState(false)
   const [showGost, setShowGost] = useState(false)
   const [selectedGostCode, setSelectedGostCode] = useState<string | null>(null)
@@ -58,6 +57,11 @@ export default function CalculatorLayout() {
     if (Number.isFinite(mass) && mass > 0) setMass(mass)
     if (Number.isFinite(qty) && qty > 0) setQuantity(qty)
 
+    // Legacy flat-sheet URLs encode length in millimetres as a.
+    if ((profile === 'sheet' || profile === 'plate') && searchParams.has('a')) {
+      const legacyLength = Number(searchParams.get('a')) / 1000
+      if (Number.isFinite(legacyLength) && legacyLength > 0) setLength(legacyLength)
+    }
     for (const profileParam of profiles.flatMap(item => item.params)) {
       const raw = searchParams.get(profileParam.key)
       if (raw == null) continue
@@ -73,20 +77,7 @@ export default function CalculatorLayout() {
     .map(key => profiles.find(p => p.key === key))
     .filter(Boolean) as typeof profiles
 
-  const maxSortamentRows = Math.max(
-    1,
-    ...orderedMetals.map(group => {
-      const allowed = getAllowedProfiles(group)
-      return allowed ? allowed.length : orderedProfiles.length
-    })
-  )
-
-  const desktopCalculatorHeight =
-    SORTAMENT_HEADER_HEIGHT +
-    maxSortamentRows * SORTAMENT_ROW_HEIGHT +
-    SORTAMENT_SAFE_GAP
-
-  const desktopShellStyle = getDesktopShellStyle(desktopCalculatorHeight)
+  const desktopShellStyle = getDesktopShellStyle(Math.max(sortamentHeight, expandedHeight))
 
   const getGradesOrdered = (group: string) => {
     const raw = getGradesForGroup(group)
@@ -142,7 +133,7 @@ export default function CalculatorLayout() {
           <ThemeToggle />
         </nav>
 
-        <div style={desktopShellStyle}>
+        <div className="t-resize" style={desktopShellStyle}>
           <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
             <MetalNav
               groups={orderedMetals}
@@ -154,13 +145,14 @@ export default function CalculatorLayout() {
               }}
             />
             <SortamentNav
+              onContentHeight={setSortamentHeight}
               profiles={orderedProfiles}
               selected={state.profileKey}
               highlighted={highlightedProfiles}
               metalGroup={state.metalGroup}
               onSelect={(key) => { selectProfile(key); setNeedsSortament(false) }}
             />
-            <CalcPanel {...commonProps} />
+            <CalcPanel {...commonProps} onExpandedHeight={setExpandedHeight} />
           </div>
         </div>
 
@@ -180,7 +172,7 @@ export default function CalculatorLayout() {
         <button onClick={() => setShowSettings(true)} aria-label="Открыть настройки" style={mobileIconBtnStyle}><SettingsIcon /></button>
       </nav>
       <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
-        <CalcPanel {...commonProps} isMobile metalGroups={orderedMetals} profiles={orderedProfiles.map(p => ({ key: p.key, name: p.name }))} />
+        <CalcPanel {...commonProps} isMobile metalGroups={orderedMetals} profiles={groupProfiles(orderedProfiles, getAllowedProfiles(state.metalGroup)).map(p => ({ key: p.key, name: p.name }))} />
       </div>
       {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
       {showGost && <GostPanel initialCode={selectedGostCode} onClose={() => setShowGost(false)} />}
@@ -211,9 +203,9 @@ function getDesktopShellStyle(targetHeight: number): React.CSSProperties {
     overflow: 'hidden',
     display: 'flex',
     flexDirection: 'column',
-    height: `min(${targetHeight}px, calc(100dvh - ${DESKTOP_OUTER_RESERVED_HEIGHT}px))`,
+    height: targetHeight,
     minHeight: 0,
-    flexShrink: 0,
+    flexShrink: 1,
   }
 }
 

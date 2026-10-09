@@ -54,7 +54,7 @@ export default function CalcPanel({
   const grades = getGrades(state.metalGroup)
   const tolerance = getWeightTolerance(state.profileKey, Object.fromEntries(
     Object.entries(state.params).filter(([, v]) => v !== null) as [string, number][]
-  ))
+  ), state.metalGroup)
 
   const resultMass = state.result?.target === 'mass' ? state.result.value : (state.mass ?? null)
   const resultLength = state.result?.target === 'length' ? state.result.value : (state.length ?? null)
@@ -110,7 +110,7 @@ export default function CalcPanel({
         <span style={{ fontSize: 'var(--text-base)', fontWeight: 600, color: 'var(--on-surface)' }}>
           {state.metalGroup} · {state.profile.name}
         </span>
-        <GostTags profile={state.profile} density={state.density} onGostClick={(code) => router.push(`/gost/${encodeURIComponent(code)}`)} />
+        <GostTags metalGroup={state.metalGroup} profile={state.profile} density={state.density} onGostClick={(code) => router.push(`/gost/${encodeURIComponent(code)}`)} />
       </div>
 
       <div style={searchWrapStyle}>

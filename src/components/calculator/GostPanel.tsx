@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { gostReferences, GostReference } from '@/data/gost'
 import AppDialog from '@/components/ui/AppDialog'
 
@@ -41,7 +42,7 @@ export default function GostPanel({ onClose, initialCode }: Props) {
           </button>
         </div>
 
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        <div className="ui-gost-body" style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
           <div style={{
             width: 260,
             flexShrink: 0,
@@ -115,13 +116,15 @@ export default function GostPanel({ onClose, initialCode }: Props) {
             </div>
           </div>
 
-          <div className="ui-scroll-area" style={{ flex: 1, overflowY: 'auto', padding: '20px 24px' }}>
+          <div className="ui-scroll-area ui-gost-details" style={{ flex: 1, minWidth: 0, minHeight: 0, overflowY: 'auto', padding: '20px 24px' }}>
             <div style={{ fontSize: 11, color: 'var(--primary)', fontWeight: 700, letterSpacing: '.06em', marginBottom: 4 }}>
               {selected.code}
             </div>
             <h3 style={{ fontSize: 15, fontWeight: 700, margin: '0 0 12px', lineHeight: 1.4 }}>
               {selected.title}
             </h3>
+
+            <Link href={`/marki-metallov/gost/${encodeURIComponent(selected.code)}`} onClick={onClose} style={{ display: 'inline-flex', alignItems: 'center', minHeight: 40, padding: '0 14px', marginBottom: 8, border: '1px solid var(--primary)', borderRadius: 'var(--radius-sm)', background: 'var(--primary-container)', color: 'var(--primary)', fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>Открыть в марочнике →</Link>
 
             <Section title="Область применения"><p style={textStyle}>{selected.scope}</p></Section>
             <Section title="Ключевые параметры"><ul style={ulStyle}>{selected.keyParams.map((p, i) => <li key={i} style={liStyle}>{p}</li>)}</ul></Section>
