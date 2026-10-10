@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 
 const css = `
-@media (max-width: 767px) {
+@media (max-width: 767px), (max-width: 1023px) and (pointer: coarse) {
   html.markochnik-scroll-html,
   body.markochnik-scroll-page {
     block-size: auto !important;
@@ -12,7 +12,7 @@ const css = `
     overflow: auto !important;
     overflow-y: auto !important;
     overscroll-behavior-y: auto !important;
-    touch-action: pan-y !important;
+    touch-action: auto !important;
     -webkit-overflow-scrolling: touch;
   }
 

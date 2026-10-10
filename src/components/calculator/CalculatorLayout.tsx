@@ -10,13 +10,18 @@ import { useSettings, sortGrades } from '@/data/settings'
 import MetalNav from './MetalNav'
 import SortamentNav from './SortamentNav'
 import CalcPanel from './CalcPanelLean'
-import SettingsPanel from './SettingsPanel'
-import GostPanel from './GostPanel'
+import DeferredCalculatorDialog from './DeferredCalculatorDialog'
+import { MOBILE_MEDIA_QUERY, useMobileViewport } from '@/hooks/useMobileViewport'
+
 import ThemeToggle from '../ThemeToggle'
 import AccentSchemeToggle from '../AccentSchemeToggle'
 
+const loadSettings = () => import('./SettingsPanel')
+const loadGost = () => import('./GostPanel')
+
 
 export default function CalculatorLayout() {
+  useMobileViewport()
   const router = useRouter()
   const searchParams = useSearchParams()
   const calc = useCalculator()
@@ -34,10 +39,11 @@ export default function CalculatorLayout() {
   const appliedPresetRef = useRef<string | null>(null)
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768)
+    const media = window.matchMedia(MOBILE_MEDIA_QUERY)
+    const check = () => setIsMobile(media.matches)
     check()
-    window.addEventListener('resize', check)
-    return () => window.removeEventListener('resize', check)
+    media.addEventListener('change', check)
+    return () => media.removeEventListener('change', check)
   }, [])
 
   useEffect(() => {
@@ -157,14 +163,14 @@ export default function CalculatorLayout() {
         </div>
 
         <p style={footerNoteStyle}>Данные по плотностям согласно ГОСТ. Результат расчёта — теоретический вес.</p>
-        {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
-        {showGost && <GostPanel initialCode={selectedGostCode} onClose={() => setShowGost(false)} />}
+        {showSettings && <DeferredCalculatorDialog title="Настройки" load={loadSettings} onClose={() => setShowSettings(false)} />}
+        {showGost && <DeferredCalculatorDialog title="Справочник ГОСТ" load={loadGost} initialCode={selectedGostCode} onClose={() => setShowGost(false)} />}
       </div>
     )
   }
 
   return (
-    <div style={mobilePageStyle}>
+    <div className="mobile-calculator" style={mobilePageStyle}>
       <nav aria-label="Основная навигация" style={mobileNavStyle}>
         <button onClick={() => router.push('/marki-metallov')} style={mobileTopBtnStyle}>Марочник</button>
         <button onClick={() => router.push('/history')} style={mobileTopBtnStyle}>История</button>
@@ -174,8 +180,8 @@ export default function CalculatorLayout() {
       <div style={{ display: 'flex', flex: 1, minHeight: 0, overflow: 'hidden' }}>
         <CalcPanel {...commonProps} isMobile metalGroups={orderedMetals} profiles={groupProfiles(orderedProfiles, getAllowedProfiles(state.metalGroup)).map(p => ({ key: p.key, name: p.name }))} />
       </div>
-      {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} />}
-      {showGost && <GostPanel initialCode={selectedGostCode} onClose={() => setShowGost(false)} />}
+      {showSettings && <DeferredCalculatorDialog title="Настройки" load={loadSettings} onClose={() => setShowSettings(false)} />}
+      {showGost && <DeferredCalculatorDialog title="Справочник ГОСТ" load={loadGost} initialCode={selectedGostCode} onClose={() => setShowGost(false)} />}
     </div>
   )
 }
@@ -212,7 +218,7 @@ function getDesktopShellStyle(targetHeight: number): React.CSSProperties {
 const desktopPageStyle: React.CSSProperties = { height: '100dvh', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '12px 16px 10px', overflow: 'hidden' }
 const desktopNavStyle: React.CSSProperties = { width: '100%', maxWidth: 'clamp(980px, 92vw, 1180px)', display: 'flex', alignItems: 'center', marginBottom: 8, gap: 4, flexShrink: 0 }
 const footerNoteStyle: React.CSSProperties = { marginTop: 6, marginBottom: 0, fontSize: 'var(--text-xs)', color: 'var(--on-surface-variant)', textAlign: 'center', flexShrink: 0 }
-const mobilePageStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', height: '100dvh', minHeight: 0, background: 'var(--surface-variant)', overflow: 'hidden' }
+const mobilePageStyle: React.CSSProperties = { display: 'flex', flexDirection: 'column', height: 'var(--mobile-viewport-height, 100dvh)', minHeight: 0, background: 'var(--surface-variant)', overflow: 'hidden' }
 const mobileNavStyle: React.CSSProperties = { background: 'var(--surface)', borderBottom: '1px solid var(--outline-variant)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, minHeight: 48, padding: '0 12px', flexShrink: 0 }
 const utilBtnStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, background: 'transparent', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--on-surface-variant)', fontSize: 'var(--text-xs)', fontWeight: 500, fontFamily: 'Manrope, sans-serif', height: 32, minBlockSize: 32, padding: '0 10px', whiteSpace: 'nowrap' }
 const topbarIconBtnStyle: React.CSSProperties = { width: 32, padding: 0, gap: 0, flexShrink: 0 }

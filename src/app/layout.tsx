@@ -1,7 +1,9 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import './theme-green.css'
 import './ui-system.css'
+
+export const viewport: Viewport = { width: 'device-width', initialScale: 1, viewportFit: 'cover' }
 
 export const metadata: Metadata = {
   title: 'Калькулятор металла',
@@ -33,6 +35,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               } else if (theme === 'system') {
                 root.classList.add('theme-system');
               }
+              var desktop = window.matchMedia('(min-width: 768px) and (pointer: fine), (min-width: 1024px)');
+              function loadDesktopFont() {
+                if (!desktop.matches || document.getElementById('desktop-font')) return;
+                var link = document.createElement('link');
+                link.id = 'desktop-font';
+                link.rel = 'stylesheet';
+                link.href = 'https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap';
+                document.head.appendChild(link);
+              }
+              loadDesktopFont();
+              desktop.addEventListener('change', loadDesktopFont);
               root.dataset.accent = allowedAccents.indexOf(accentScheme) >= 0 ? accentScheme : 'green';
             } catch(e) {}
           })();

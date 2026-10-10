@@ -195,9 +195,9 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
         </section>}
 
         <div style={{ display: 'grid', gridTemplateColumns: gridCols, gap: 8 }}>
-          {state.profile.params.map(p => <div key={p.key}><Label>{p.label}</Label><UnitInput id={`calc-param-${p.key}`} name={`param-${p.key}`} label={p.label} value={state.params[p.key] ?? ''} unit={p.unit} onChange={v => setParam(p.key, v)} /></div>)}
-          {!state.profile.isVolume && <div><Label>{mode === 'length' ? 'Масса' : 'Длина L'}</Label><UnitInput id={mode === 'length' ? 'calc-mass' : 'calc-length'} name={mode === 'length' ? 'mass' : 'length'} label={mode === 'length' ? 'Масса' : 'Длина L'} value={mode === 'length' ? state.mass ?? '' : displayLength} unit={mode === 'length' ? 'кг.' : lengthUnit} onChange={setSource} /></div>}
-          <div><Label>Количество</Label><div style={st.qty}><button type="button" aria-label="Уменьшить количество" onClick={decrementQty} style={st.qtyBtn}>−</button><input id="calc-quantity" name="quantity" aria-label="Количество" type="number" min={1} step={1} value={state.quantity} onChange={e => setQuantity(e.target.value ? Number(e.target.value) : 1)} style={st.qtyInput} /><button type="button" aria-label="Увеличить количество" onClick={incrementQty} style={st.qtyBtn}>+</button></div></div>
+          {state.profile.params.map(p => <div key={p.key}><Label>{p.label}</Label><UnitInput mobile={isMobile} id={`calc-param-${p.key}`} name={`param-${p.key}`} label={p.label} value={state.params[p.key] ?? ''} unit={p.unit} onChange={v => setParam(p.key, v)} /></div>)}
+          {!state.profile.isVolume && <div><Label>{mode === 'length' ? 'Масса' : 'Длина L'}</Label><UnitInput mobile={isMobile} id={mode === 'length' ? 'calc-mass' : 'calc-length'} name={mode === 'length' ? 'mass' : 'length'} label={mode === 'length' ? 'Масса' : 'Длина L'} value={mode === 'length' ? state.mass ?? '' : displayLength} unit={mode === 'length' ? 'кг.' : lengthUnit} onChange={setSource} /></div>}
+          <div><Label>Количество</Label><div className="calc-quantity-input" style={st.qty}><button type="button" aria-label="Уменьшить количество" onClick={decrementQty} style={st.qtyBtn}>−</button><input id="calc-quantity" name="quantity" aria-label="Количество" inputMode="numeric" type="number" min={1} step={1} value={state.quantity} onChange={e => setQuantity(e.target.value ? Number(e.target.value) : 1)} style={st.qtyInput} /><button type="button" aria-label="Увеличить количество" onClick={incrementQty} style={st.qtyBtn}>+</button></div></div>
         </div>
         {state.error && <ErrorMessage error={state.error} />}
         {state.snackbar && <div style={st.note}>{state.snackbar.message}</div>}
@@ -242,9 +242,9 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
             {state.tapeOptions.manufacturing === 'rolled' && <FieldSelect id="tape-edges" name="tape-edges" label="Кромки" value={state.tapeOptions.edges} onChange={v => calc.setTapeOptions({ edges: v as 'trimmed' | 'untrimmed' })} options={[{ value: 'trimmed', label: 'Обрезанные' }, { value: 'untrimmed', label: 'Без обрезки' }]} />}
           </div>
           {state.tapeOptions.manufacturing === 'slit' && <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(140px,1fr))', gap: 8 }}>
-            <div><Label>Исходная ширина</Label><UnitInput id="tape-parent-width" name="tape-parent-width" label="Исходная ширина" value={state.tapeOptions.parentWidth ?? ''} unit="мм" onChange={v => calc.setTapeOptions({ parentWidth: v })} /></div>
-            <div><Label>Допуск ширины −</Label><UnitInput id="tape-width-minus" name="tape-width-minus" label="Минусовое отклонение ширины" value={state.tapeOptions.widthMinus ?? ''} unit="мм" onChange={v => calc.setTapeOptions({ widthMinus: v })} /></div>
-            <div><Label>Допуск ширины +</Label><UnitInput id="tape-width-plus" name="tape-width-plus" label="Плюсовое отклонение ширины" value={state.tapeOptions.widthPlus ?? ''} unit="мм" onChange={v => calc.setTapeOptions({ widthPlus: v })} /></div>
+            <div><Label>Исходная ширина</Label><UnitInput mobile={isMobile} id="tape-parent-width" name="tape-parent-width" label="Исходная ширина" value={state.tapeOptions.parentWidth ?? ''} unit="мм" onChange={v => calc.setTapeOptions({ parentWidth: v })} /></div>
+            <div><Label>Допуск ширины −</Label><UnitInput mobile={isMobile} id="tape-width-minus" name="tape-width-minus" label="Минусовое отклонение ширины" value={state.tapeOptions.widthMinus ?? ''} unit="мм" onChange={v => calc.setTapeOptions({ widthMinus: v })} /></div>
+            <div><Label>Допуск ширины +</Label><UnitInput mobile={isMobile} id="tape-width-plus" name="tape-width-plus" label="Плюсовое отклонение ширины" value={state.tapeOptions.widthPlus ?? ''} unit="мм" onChange={v => calc.setTapeOptions({ widthPlus: v })} /></div>
           </div>}
           {typeof tape === 'string' ? <div role="status" style={st.warn}>{tape}</div> : tape && <>
             <div style={st.hint}>Толщина: {tape.thicknessMin.toFixed(3)}–{tape.thicknessMax.toFixed(3)} мм ({tape.symmetric ? 'симметричные отклонения' : 'минусовой допуск'}); ширина: {tape.widthMin.toFixed(2)}–{tape.widthMax.toFixed(2)} мм.</div>
@@ -270,7 +270,21 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
 }
 
 function Label({ children }: { children: React.ReactNode }) { return <div style={st.label}>{children}</div> }
-function UnitInput({ id, name, label, value, unit, onChange }: { id: string; name: string; label: string; value: number | string; unit: string; onChange: (v: number | null) => void }) { return <div style={st.unitWrap}><input id={id} name={name} aria-label={label} type="number" min={0} step={0.1} value={value} onChange={e => onChange(e.target.value ? parseFloat(e.target.value) : null)} style={st.input} /><span style={st.unit}>{unit}</span></div> }
+function UnitInput({ id, name, label, value, unit, onChange, mobile = false }: { id: string; name: string; label: string; value: number | string; unit: string; onChange: (v: number | null) => void; mobile?: boolean }) {
+  const [draft, setDraft] = useState(String(value))
+  const focused = useRef(false)
+  useEffect(() => {
+    const parsed = draft === '' || draft === '.' || draft === ',' ? null : Number(draft.replace(',', '.'))
+    if (!focused.current || parsed !== (value === '' ? null : Number(value))) setDraft(String(value))
+  }, [value, draft])
+  return <div className="calc-unit-input" style={st.unitWrap}><input id={id} name={name} aria-label={label} type={mobile ? "text" : "number"} min={0} step={0.1} inputMode="decimal" autoComplete="off" value={draft} onFocus={() => { focused.current = true }} onBlur={() => { focused.current = false; setDraft(String(value)) }} onChange={e => {
+    const next = e.target.value
+    if (!/^\d*(?:[.,]\d*)?$/.test(next)) return
+    setDraft(next)
+    const number = Number(next.replace(',', '.'))
+    onChange(next === '' || next === '.' || next === ',' ? null : number)
+  }} style={st.input} /><span style={st.unit}>{unit}</span></div>
+}
 function FieldSelect({ id, name, label, value, onChange, options }: { id: string; name: string; label: string; value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) { return <label htmlFor={id} style={{ display: 'flex', flexDirection: 'column', gap: 4 }}><Label>{label}</Label><select id={id} name={name} value={value} onChange={e => onChange(e.target.value)} style={st.mobileSelect}>{options.map(x => <option key={x.value} value={x.value}>{x.label}</option>)}</select></label> }
 function status(kind: QuickStatus['kind']): React.CSSProperties { return { padding: '7px 9px', borderRadius: 7, fontSize: 'var(--text-xs)', background: kind === 'error' ? 'var(--error-container)' : kind === 'warning' ? 'var(--warning-container)' : 'var(--success-container)', color: kind === 'error' ? 'var(--error)' : kind === 'warning' ? 'var(--warning)' : 'var(--success)' } }
 
