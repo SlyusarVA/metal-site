@@ -80,6 +80,9 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
   }, [onExpandedHeight, expanded])
   const tape = isAluminumTape ? tapeBasis(state.grade, state.params.t ?? NaN, state.params.b ?? NaN, state.tapeOptions) : null
   const plate = isAluminumPlate ? plateBasis(state.grade, state.params.t ?? NaN, state.params.b ?? NaN, state.plateOptions) : null
+  const normalPlate = isAluminumPlate ? plateBasis(state.grade, state.params.t ?? NaN, state.params.b ?? NaN, { accuracy: 'normal' }) : null
+  const highPlate = isAluminumPlate ? plateBasis(state.grade, state.params.t ?? NaN, state.params.b ?? NaN, { accuracy: 'high' }) : null
+  const plateAccuracyChangesRange = !normalPlate || !highPlate || typeof normalPlate === 'string' || typeof highPlate === 'string' || normalPlate.thicknessMin !== highPlate.thicknessMin || normalPlate.thicknessMax !== highPlate.thicknessMax
   const basis = isAluminumSheet ? sheetBasis(state.grade, state.params.t ?? NaN, state.params.b ?? NaN, state.sheetOptions) : null
   const mode = state.profile.isVolume && selectedMode === 'length' ? 'mass' : selectedMode
   const [quickInput, setQuickInput] = useState('Сталь 20 круг 16 масса 120 кг')
@@ -254,10 +257,10 @@ export default function CalcPanelLean({ calc, getGrades, onGostResult, onGostCle
         </section>}
         {exactOpen && isAluminumPlate && <section id="plate-exact-settings" style={st.card} aria-label="Расчёт по ГОСТ 17232-2023">
           <div style={st.cardTitle}>ГОСТ 17232-2023</div>
-          <FieldSelect id="plate-accuracy" name="plate-accuracy" label="Точность толщины" value={state.plateOptions.accuracy} onChange={v => calc.setPlateOptions({ accuracy: v as 'normal' | 'high' })} options={[{ value: 'normal', label: 'Нормальная — базовое исполнение' }, { value: 'high', label: 'Повышенная' }]} />
+          {plateAccuracyChangesRange && <FieldSelect id="plate-accuracy" name="plate-accuracy" label="Точность толщины" value={state.plateOptions.accuracy} onChange={v => calc.setPlateOptions({ accuracy: v as 'normal' | 'high' })} options={[{ value: 'normal', label: 'Нормальная — базовое исполнение' }, { value: 'high', label: 'Повышенная' }]} />}
           {typeof plate === 'string' ? <div role="status" style={st.warn}>{plate}</div> : plate && <>
             <div style={st.hint}>{plate.method === 'table' ? 'Масса по таблице А.1' : 'В таблице А.1 этих размеров нет: расчёт по средним предельным размерам'} · коэффициент Б.1: {plate.coefficient.toFixed(3)}. Базовая масса: {plate.referenceMass.toFixed(3)} кг/м × {plate.coefficient.toFixed(3)} = {plate.linearMass.toFixed(4)} кг/м.</div>
-            <div style={st.hint}>Толщина: {plate.thicknessMin.toFixed(2)}–{plate.thicknessMax.toFixed(2)} мм; ширина: {plate.widthMin}–{plate.widthMax} мм. Допуск толщины симметричный: точность меняет границы размера, а не табличную массу.</div>
+            <div style={st.hint}>Толщина: {plate.thicknessMin.toFixed(2)}–{plate.thicknessMax.toFixed(2)} мм; ширина: {plate.widthMin}–{plate.widthMax} мм. {plateAccuracyChangesRange ? 'Допуск толщины симметричный: точность меняет диапазон веса, а не табличную массу.' : 'Для этих размеров допуски нормальной и повышенной точности совпадают.'}</div>
             {plate.warning && <div role="status" style={st.warn}>{plate.warning}</div>}
           </>}
           <div style={st.hint}>Расчёт на введённую длину. Допуски длины и специальные условия поставки не включены; для резаных заготовок размеры уточняются по заказу.</div>
