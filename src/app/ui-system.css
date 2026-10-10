@@ -94,12 +94,12 @@
     color: var(--on-surface);
   }
 
-  @media (max-width: 767px) {
+  @media (max-width: 767px), (max-width: 1023px) and (pointer: coarse) {
     html,
     body {
       block-size: 100%;
       overflow: hidden;
-      overscroll-behavior: none;
+      overscroll-behavior: auto;
     }
 
     body {
@@ -109,8 +109,8 @@
     }
 
     body > div {
-      block-size: 100svh !important;
-      max-block-size: 100dvh !important;
+      block-size: var(--mobile-viewport-height, 100svh) !important;
+      max-block-size: var(--mobile-viewport-height, 100dvh) !important;
       min-block-size: 0 !important;
       overflow: hidden !important;
     }
@@ -141,7 +141,7 @@
       overflow: auto !important;
       overflow-y: auto !important;
       overscroll-behavior-y: auto !important;
-      touch-action: pan-y !important;
+      touch-action: auto !important;
       -webkit-overflow-scrolling: touch;
     }
 
