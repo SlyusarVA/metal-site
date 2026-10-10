@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import VisitorCounter from '@/components/VisitorCounter'
 import './globals.css'
 import './theme-green.css'
 import './ui-system.css'
@@ -38,7 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           })();
         `}} />
       </head>
-      <body>{children}</body>
+      <body>{children}<VisitorCounter /></body>
     </html>
   )
 }
