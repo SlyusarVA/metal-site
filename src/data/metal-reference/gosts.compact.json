@@ -1,0 +1,135 @@
+{
+  "metadata": {
+    "status": "partial-seed",
+    "source": "reference-sources/verified-metal-facts.json",
+    "sourceScope": "7 primary ГОСТов",
+    "generatedFor": "metal designation decoder",
+    "warning": "not a full ГОСТ database"
+  },
+  "gosts": [
+    {
+      "id": "gost-7417-75",
+      "token": "ГОСТ 7417-75",
+      "key": "7417-75",
+      "type": "product-standard",
+      "meaning": "стандарт сортамента для калиброванной круглой стали.",
+      "confidence": "verified",
+      "sourceGosts": [
+        "7417-75"
+      ],
+      "appliesTo": [
+        "calibrated-round-steel",
+        "assortment",
+        "product-standard-reference"
+      ],
+      "displayWarning": null,
+      "sourceFactId": "gost-7417-75-product-standard"
+    },
+    {
+      "id": "gost-4543-2016",
+      "token": "ГОСТ 4543-2016",
+      "key": "4543-2016",
+      "type": "material-standard",
+      "meaning": "стандарт для металлопродукции из конструкционной легированной стали.",
+      "confidence": "verified",
+      "sourceGosts": [
+        "4543-2016"
+      ],
+      "appliesTo": [
+        "alloy-structural-steel",
+        "material-standard-reference"
+      ],
+      "displayWarning": null,
+      "sourceFactId": "gost-4543-2016-material-standard"
+    },
+    {
+      "id": "gost-1051-73",
+      "token": "ГОСТ 1051-73",
+      "key": "1051-73",
+      "type": "technical-condition-standard",
+      "meaning": "стандарт общих технических условий для калиброванного проката.",
+      "confidence": "verified",
+      "sourceGosts": [
+        "1051-73"
+      ],
+      "appliesTo": [
+        "calibrated-rolled-products",
+        "general-technical-conditions"
+      ],
+      "displayWarning": null,
+      "sourceFactId": "gost-1051-73-technical-condition-standard"
+    },
+    {
+      "id": "gost-14955-77",
+      "token": "ГОСТ 14955-77",
+      "key": "14955-77",
+      "type": "technical-condition-standard",
+      "meaning": "стандарт технических условий для качественной круглой стали со специальной отделкой поверхности.",
+      "confidence": "verified",
+      "sourceGosts": [
+        "14955-77"
+      ],
+      "appliesTo": [
+        "quality-round-steel",
+        "special-surface-finish",
+        "technical-condition-reference"
+      ],
+      "displayWarning": null,
+      "sourceFactId": "gost-14955-77-technical-condition-standard"
+    },
+    {
+      "id": "gost-2590-2006",
+      "token": "ГОСТ 2590-2006",
+      "key": "2590-2006",
+      "type": "product-standard",
+      "meaning": "стандарт сортамента горячекатаного круглого стального проката.",
+      "confidence": "verified",
+      "sourceGosts": [
+        "2590-2006"
+      ],
+      "appliesTo": [
+        "hot-rolled-round-steel",
+        "assortment",
+        "product-standard-reference"
+      ],
+      "displayWarning": null,
+      "sourceFactId": "gost-2590-2006-product-standard"
+    },
+    {
+      "id": "gost-19903-2015",
+      "token": "ГОСТ 19903-2015",
+      "key": "19903-2015",
+      "type": "product-standard",
+      "meaning": "стандарт сортамента горячекатаного листового проката.",
+      "confidence": "verified",
+      "sourceGosts": [
+        "19903-2015"
+      ],
+      "appliesTo": [
+        "hot-rolled-sheet",
+        "assortment",
+        "product-standard-reference"
+      ],
+      "displayWarning": null,
+      "sourceFactId": "gost-19903-2015-product-standard"
+    },
+    {
+      "id": "gost-19904-90",
+      "token": "ГОСТ 19904-90",
+      "key": "19904-90",
+      "type": "product-standard",
+      "meaning": "стандарт сортамента холоднокатаного листового проката.",
+      "confidence": "verified",
+      "sourceGosts": [
+        "19904-90"
+      ],
+      "appliesTo": [
+        "cold-rolled-sheet",
+        "assortment",
+        "product-standard-reference"
+      ],
+      "displayWarning": null,
+      "sourceFactId": "gost-19904-90-product-standard"
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { designationTerms, type NormativeRef } from '@/data/markochnik'
+import MetalDesignationDecoderPreview from '@/components/markochnik/MetalDesignationDecoderPreview'
 
 export const metadata = {
   title: 'Расшифровки обозначений в марочнике',
@@ -28,6 +29,8 @@ export default function MarkochnikDesignationsPage() {
           ))}
         </div>
       </section>
+
+      <MetalDesignationDecoderPreview />
 
       <section style={st.grid}>
         {designationTerms.map(term => (
